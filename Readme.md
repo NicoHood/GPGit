@@ -11,6 +11,14 @@ This script is meant to provide a simple way to:
 * Compare the github tarball against the local files
 * Sign and hash the tarball of the release
 
+How to generate a github token:
+* Go to preferences
+* Developer settings section on the left
+* Personal access tokens
+* Generate a new token
+* Check "public_repo"
+* Generate the token and store it safe
+
 ## Version History
 ```
 Untagged Release (16.12.2016)
