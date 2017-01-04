@@ -1,12 +1,13 @@
 # GPGit
-GPGit is meant to bring GPG to everybody as easy as possible.
-It is not only a shell script that automates the process of creating new
-signed releases with GPG but also a step by step guide for you to understand
-the process with GPG and gives your further reading information.
+GPGit is meant to bring GPG to the masses. It is not only a shell script that
+automates the process of creating new signed git releases with GPG but also a
+step-by-step readme guide for learning how to use GPG.
 
 ## Index
+* [Script Usage](#script-usage)
 * [GPG quick start guide](#gpg-quick-start-guide)
-* [A template for contacting upstream](#a-template-for-contacting-upstream)
+* [Appendix](#appendix)
+* [A template for contacting upstreams](#a-template-for-contacting-upstreams)
 * [Links](#links)
 * [Version History](#version-history)
 
@@ -16,7 +17,7 @@ The script guides you through all 5 steps of the
 beside the tag are required. Follow the instructions and you are good to go.
 
 ```bash
-gpgit 1.0.0
+$ gpgit 1.0.0
 ```
 
 For additional tweaks you may use some optional parameters:
@@ -62,7 +63,8 @@ If you don't have a GPG key yet, create a new one first. You can use RSA
 (4096 bits) or ECC (Curve 25519) for a strong key. The latter one does currently
 not work with Github. You want to stay with RSA for now.
 
-**Make sure that your secret key is stored somewhere safe and use a unique strong password.**
+**Make sure that your secret key is stored somewhere safe and use a unique
+strong password.**
 
 Crucial key generation settings:
 * (1) RSA and RSA
@@ -202,7 +204,7 @@ git config --global commit.gpgsign true
 #### 3.3 Create signed git tag
 Git tags need to be created from the command line and always need a switch to
 enable tag signing.
-```
+```bash
 # Creates a signed tag
 git tag -s mytag
 
@@ -218,8 +220,8 @@ highly recommended to use `.xz -9` for compression as it gives you the best
 compression possible which is especially beneficial for those countries with slow
 and unstable internet connections.
 
-```
-git archive --format=tar --prefix "gpgit-1.0.0" 1.0.0 | xz -9 > gpgit-1.0.0.tar.xz"
+```bash
+git archive --format=tar --prefix gpgit-1.0.0 1.0.0 | xz -9 > gpgit-1.0.0.tar.xz
 ```
 [[Read more]](https://git-scm.com/docs/git-archive)
 
@@ -240,7 +242,7 @@ gpg --armor --detach-sign gpgit-1.0.0.tar.xz
 ```
 Do not blindly sign the Github source downloads unless you have compared its
 content with the local files via `diff.`
-[Read more](https://wiki.archlinux.org/index.php/GnuPG#Make_a_detached_signature)
+[[Read more]](https://wiki.archlinux.org/index.php/GnuPG#Make_a_detached_signature)
 
 To not need to retype your password every time for signing you can also use
 [gpg-agent](https://wiki.archlinux.org/index.php/GnuPG#gpg-agent).
@@ -252,7 +254,7 @@ to first verify the signature after downloading.
 ```bash
 gpg --verify mysoftware-0.4.tar.gz.asc
 ```
-[Read more](https://wiki.archlinux.org/index.php/GnuPG#Verify_a_signature)
+[[Read more]](https://wiki.archlinux.org/index.php/GnuPG#Verify_a_signature)
 
 ### 5. Upload the release
 #### 5.1 Github
@@ -270,15 +272,15 @@ How to generate a Github token:
 * Check "public_repo"
 * Generate the token and store it safely
 
-### Appendix
+## Appendix
 
-#### Email encryption
+### Email encryption
 You can also use this key for email encryption
 with [enigmail and thunderbird](https://wiki.archlinux.org/index.php/thunderbird#EnigMail_-_Encryption).
 [[Read more]](https://www.enigmail.net/index.php/en/)
 
 
-## A template for contacting upstream
+## A template for contacting upstreams
 If you try to contact an upstream source about missing GPG signatures you can
 use this template. It will give them an overview of the importance of GPG, the
 required steps to do and how they can be accomplished.
