@@ -11,7 +11,7 @@ ARGS=( "$@" )
 
 usage()
 {
-    echo 'Usage: ${PROGNAME} <tag> [options]'
+    echo "Usage: ${PROGNAME} <tag> [options]"
     echo
     echo 'Mandatory parameters:'
     echo '<tag>           Tagname'
@@ -33,7 +33,7 @@ usage()
     echo '                Default: "git config user.signingkey"'
 	echo '-m, --message   Specify the tag message.'
 	echo '                Default: "Release <tag>"'
-	echo '-y, --yes       Assume "yes" to all prompts.'
+	echo '-y, --yes       Assume "yes" on all questions.'
 }
 
 ################################################################################
