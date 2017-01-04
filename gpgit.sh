@@ -92,7 +92,7 @@ info() {
     printf "${YELLOW}[!]:${ALL_OFF}${BOLD} ${mesg}${ALL_OFF}\n" "$@" >&2
 }
 
-gpgithub_yesno() {
+gpgit_yesno() {
 	[[ "${config[YES]}" == true ]] && return
     read -rp "${BOLD}    Continue? [Y/n]${ALL_OFF}" yesno
     if [[ "${yesno}" != [Yy]"es" && "${yesno}" != [Yy] && -n "${yesno}" ]]; then
@@ -206,7 +206,7 @@ if [[ -z "${config[GPG]}" ]]; then
         exit 1
     else
         plain "Generating an RSA 4096 GPG key for ${config[USERNAME]} <${config[EMAIL]}> valid for 3 years."
-        gpgithub_yesno
+        gpgit_yesno
 
         # Generate ECC key command (currently not supported by Github)
         #gpg --quick-generate-key "testuser (comment) <name@mail.com>" future-default default 3y
@@ -272,20 +272,20 @@ if [[ "${NEW_GPG_KEY}" = true ]]; then
     # Upload key
     msg2 "2.1 Submit your key to a key server"
     plain "Uploading key ${config[GPG]} to hkps://hkps.pool.sks-keyservers.net"
-    gpgithub_yesno
+    gpgit_yesno
     gpg --keyserver hkps://hkps.pool.sks-keyservers.net --send-keys "${config[GPG]}"
 
     # Generate public key
     msg2 "2.2 Associate GPG key with github"
     plain "Please visit Github and add the following GPG key to your profile."
     plain "https://github.com/settings/keys"
-    gpgithub_yesno
+    gpgit_yesno
     gpg --armor --export "${config[GPG]}"
 
     msg2 "2.3 Publish your fingerprint"
     plain "Publish your GPG fingerprint (${config[GPG]}) on your project site."
     plain "Also see https://wiki.debian.org/Keysigning"
-    gpgithub_yesno
+    gpgit_yesno
 else
 	plain "Assuming key was already publish with its generation. If not please do so."
 fi
@@ -307,7 +307,7 @@ if [[ "${config[GPG]}" != "$(git config user.signingkey)" ]]; then
     # If the key differs from the local>global>system configured key, set it locally
 	plain "Git is not configured with this key."
     plain "Configuring ${GIT_CONFIG} git settings with your GPG key."
-    gpgithub_yesno
+    gpgit_yesno
     git config --"${GIT_CONFIG}" user.signingkey "${config[GPG]}"
 else
     plain "Git already configured with your GPG key"
@@ -317,7 +317,7 @@ fi
 msg2 "3.2 Commit signing"
 if [[ $(git config commit.gpgsign) != true ]]; then
     warning "Commit signing is disabled. Will enable it now ${GIT_CONFIG}ly."
-    gpgithub_yesno
+    gpgit_yesno
     git config --"${GIT_CONFIG}" commit.gpgsign true
 else
     plain "Commit signing already enabled."
@@ -326,7 +326,7 @@ fi
 # Refresh tags
 msg2 "3.3 Create signed git tag"
 plain "Refreshing tags from upstream."
-gpgithub_yesno
+gpgit_yesno
 git pull --tags
 
 # Check if tag exists
@@ -334,12 +334,12 @@ if ! git tag | grep "^${config[TAG]}$" -q; then
     # Check if every added file has been commited
     if ! git diff --cached --exit-code; then
         warning "You have added new changes but did not commit them yet."
-        gpgithub_yesno
+        gpgit_yesno
     fi
 
     # Create new tag if not existant
     plain "Creating signed tag ${config[TAG]} and pushing it to the remote git."
-    gpgithub_yesno
+    gpgit_yesno
 
     # Create and push new git tag
     git tag -s "${config[TAG]}" -m "${config[MESSAGE]}"
@@ -355,7 +355,7 @@ msg "4. Creation of a signed compressed release archive"
 # Check if output path exists and ask for creation
 if [[ ! -d "${config[OUTPUT]}" ]]; then
     plain "Output path does not exist. Create ${config[OUTPUT]} ?"
-    gpgithub_yesno
+    gpgit_yesno
     mkdir -p "${config[OUTPUT]}"
 fi
 
@@ -366,26 +366,26 @@ config[TAR]="${config[OUTPUT]}/${config[PROJECT]}-${config[TAG]}.tar"
 msg2 "4.1 Create compressed archive"
 if [[ -f "${config[TAR]}.xz" ]]; then
     plain "Archive ${config[TAR]}.xz already exists."
-    gpgithub_yesno
+    gpgit_yesno
 else
     plain "Creating release archive file ${config[TAR]}.xz"
-	gpgithub_yesno
+	gpgit_yesno
     git archive --format=tar --prefix "${config[PROJECT]}-${config[TAG]}/" "${config[TAG]}" | xz -9 > "${config[TAR]}.xz"
 fi
 
 # Create sha512 of the .tar.xz
 msg2 "4.2 Create the message digest"
-gpgithub_yesno
+gpgit_yesno
 sha512sum "${config[TAR]}.xz" > "${config[TAR]}.xz.sha512"
 
 # Sign .tar.xz if not existant
 msg2 "4.3 Sign the sources"
 if [[ -f "${config[TAR]}.xz.sig" ]]; then
     plain "Signature for ${config[TAR]}.xz already exists."
-    gpgithub_yesno
+    gpgit_yesno
 else
     plain "Creating signature for file ${config[TAR]}.xz"
-	gpgithub_yesno
+	gpgit_yesno
     gpg --local-user "${config[GPG]}" --output "${config[TAR]}.xz.sig" --armor --detach-sign "${config[TAR]}.xz"
 fi
 
