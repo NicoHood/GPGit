@@ -9,60 +9,32 @@ export LANG=C
 PROGNAME=$(basename "$0")
 ARGS=( "$@" )
 
-
-# Usage: gpgithub <tag> [options]
-# <tag>         tagname
-# Actions:
-# -h --help     Show this help message
-# -g --generate Helps you creating a new GPG key and upload it to a keyserver
-# -t --tag      Creates a new release tag
-# -v --verify   Verifies a release against the github download
-# -s --sign     Signs the release (creates .sig and .sha512)
-# -x --upload   Uploads the detached signature and the message digest to GitHub
-# Settings:
-# -o --output   The output path of the .tar.gz, .sig and sha512
-#               Defaults to ./archive
-# -n --username Username of the Github repository. Used for Github url parsing.
-# -p --project  The name of the project. Used for Github url parsing
-# -u --url      Use user-specified URL for source download to verify
-#               Example URL: https://github.com/NicoHood/gpgithub
-
-#
-# # Parse input params an ovrwrite possible default or config loaded options
-# GETOPT_ARGS=$(getopt -o "hd:c:a:l:d:u:o:" \
-#             -l "help,config:,apconfig:,length:,dict:,umask:,output:"\
-#             -n "$PROGNAME" -- "$@")
-# eval set -- "$GETOPT_ARGS"
-#
-# # Handle all params
-# while true ; do
-#     case "$1" in
-#         # Settings
-#         -o|--output)
-#             config[OUTPUT]="$2"
-#             shift
-#             ;;
-#
-#         # Internal
-#         -h|--help)
-#             usage
-#             exit 0
-#             ;;
-#         --)
-#             # No more options left.
-#             shift
-#             break
-#            ;;
-#         *)
-#             echo "Internal error!" 1>&2
-#             exit 1
-#             ;;
-#     esac
-#
-#     shift
-# done
-#
-
+usage()
+{
+    echo 'Usage: ${PROGNAME} <tag> [options]'
+    echo
+    echo 'Mandatory parameters:'
+    echo '<tag>           Tagname'
+    echo
+    echo 'Actions:'
+    echo '-h --help       Show this help message'
+    echo
+    echo 'Options:'
+    echo '-o, --output    The output path of the .tar.gz, .sig and sha512'
+    echo '                Default: "git rev-parse --show-toplevel)/archive"'
+    echo '-u, --username  Username of the user. Used for GPG key generation.'
+    echo '                Default: git config user.name'
+    echo '-e, --email     Email of the user. Used for GPG key generation.'
+    echo '                Default: "git config user.email"'
+    echo '-p, --project   The name of the project. Used for archive geneation.'
+    echo "                Default: \"git config --local remote.origin.url \\"
+    echo "                           | sed -n \'s#.*/\([^.]*\)\.git#\1#p\'\""
+	echo '-g, --gpg       Specify (full) GPG fingerprint to use for signing.'
+    echo '                Default: "git config user.signingkey"'
+	echo '-m, --message   Specify the tag message.'
+	echo '                Default: "Release <tag>"'
+	echo '-y, --yes       Assume "yes" to all prompts.'
+}
 
 ################################################################################
 # Functions
@@ -121,6 +93,7 @@ info() {
 }
 
 gpgithub_yesno() {
+	[[ "${config[YES]}" == true ]] && return
     read -rp "${BOLD}    Continue? [Y/n]${ALL_OFF}" yesno
     if [[ "${yesno}" != [Yy]"es" && "${yesno}" != [Yy] && -n "${yesno}" ]]; then
         warning "Aborted by user"
@@ -132,21 +105,22 @@ gpgithub_yesno() {
 # Parameters
 ################################################################################
 
+# Check if inside a git folder
+if [[ "$(git rev-parse --is-inside-work-tree)" != "true" ]]; then
+    error "Not a git repository."
+fi
+
 # Check input param number
-if [[ $# -ne 1 ]]; then
+if [[ $# -lt 1 ]]; then
     error "Usage: ${PROGNAME} <tag>" 1>&2
+    plain "Use --help for more information."
     exit 1
 fi
 
 # Print help
 if [[ "$1" == "-h" || "$1" == "--help" ]]; then
-    plain "Usage: ${PROGNAME} <tag>" 1>&2
+    usage 1>&2
     exit 0
-fi
-
-# Check if inside a git folder
-if [[ "$(git rev-parse --is-inside-work-tree)" != "true" ]]; then
-    error "Not a git repository."
 fi
 
 # Set default values in config array
@@ -156,9 +130,67 @@ config=(
     [OUTPUT]="$(git rev-parse --show-toplevel)/archive"
     [USERNAME]="$(git config user.name)"
     [EMAIL]="$(git config user.email)"
-    [PROJECT]="$(git config --local remote.origin.url|sed -n 's#.*/\([^.]*\)\.git#\1#p')"
-    [GPG]="$(git config --global user.signingkey)"
+    [PROJECT]="$(git config --local remote.origin.url | sed -n 's#.*/\([^.]*\)\.git#\1#p')"
+    [GPG]="$(git config user.signingkey)"
+	[MESSAGE]="Release $1"
+	[YES]=false
 )
+shift
+
+# Parse input params an ovrwrite possible default or config loaded options
+GETOPT_ARGS=$(getopt -o "ho:u:e:p:g:m:y" \
+            -l "help,output:,username:,email:,project:,gpg:,message:,yes"\
+            -n "$PROGNAME" -- "$@")
+eval set -- "$GETOPT_ARGS"
+
+# Handle all params
+while true ; do
+    case "$1" in
+        # Options
+        -o|--output)
+            config[OUTPUT]="$2"
+            shift
+            ;;
+        -u|--username)
+            config[USERNAME]="$2"
+            shift
+            ;;
+        -e|--email)
+            config[EMAIL]="$2"
+            shift
+            ;;
+        -p|--project)
+            config[PROJECT]="$2"
+            shift
+            ;;
+		-g|--gpg)
+            config[GPG]="$2"
+            shift
+            ;;
+		-m|--message)
+			config[MESSAGE]="$2"
+			shift
+			;;
+		-y|--yes)
+			config[YES]=true
+			;;
+        # Internal
+        -h|--help)
+            usage 1>&2
+            exit 0
+            ;;
+        --)
+            # No more options left.
+            shift
+            break
+           ;;
+        *)
+            error "Internal error!"
+            exit 1
+            ;;
+    esac
+    shift
+done
 
 ################################################################################
 msg "1. Generate new GPG key"
@@ -170,19 +202,19 @@ if [[ -z "${config[GPG]}" ]]; then
         error "GPG seems to be already configured on your system but git is not."
         plain "Please use gpg --list-secret-keys to show existing keys."
         plain "Afterwards set the key with git config --global user.signingkey <key>."
-        plain "See the readme for mor information."
+        plain "See the readme for more information."
         exit 1
     else
         plain "Generating an RSA 4096 GPG key for ${config[USERNAME]} <${config[EMAIL]}> valid for 3 years."
         gpgithub_yesno
 
-        # ECC command (currently not supported by Github)
+        # Generate ECC key command (currently not supported by Github)
         #gpg --quick-generate-key "testuser (comment) <name@mail.com>" future-default default 3y
 
-        # RSA command
+        # Generate RSA key command
         # https://www.gnupg.org/documentation/manuals/gnupg/Unattended-GPG-key-generation.html
         # gpg: revocation certificate stored as '/tmp/tmp.81v03YSxmI/openpgp-revocs.d/F4EDF85EFF03D746D17094D3C28B8F6BCCDF8671.rev'
-        GPGFINGERPRINT="$(gpg --batch --generate-key <( cat << EOF
+        config[GPG]="$(gpg --batch --generate-key <( cat << EOF
             Key-Type: RSA
             Key-Length: 4096
             Key-Usage: cert sign auth
@@ -204,16 +236,27 @@ if [[ -z "${config[GPG]}" ]]; then
 EOF
         ) 2>&1 | tee -a /dev/fd/2 | grep "revocation certificate stored as " \
                | sed 's,.*/\(.*\).rev.*,\1,')"
+        NEW_GPG_KEY=true
 
         # Print new fingerprint
-        echo "Your new GPG fingerprint is: $GPGFINGERPRINT"
-        gpg --list-secret-keys --keyid-format LONG "${GPGFINGERPRINT}"
+        plain "Your new GPG fingerprint is: ${config[GPG]}"
+        gpg -u "${config[GPG]}" --list-secret-keys --keyid-format LONG
+    fi
+else
+    plain "Key already generated. Using key: ${config[GPG]}"
+	NEW_GPG_KEY=false
 
-        # 3.1 Configure git GPG key
-        msg2 "For the simplicity of the script git will be configured with the new key now."
-        plain "This equals to step: 3.1 Configure git GPG key"
-        gpgithub_yesno
-        git config --global user.signingkey "${GPGFINGERPRINT}"
+	# Check if the full fingerprint is used
+	if [[ ${#config[GPG]} -ne 40 ]]; then
+		error "Please specify the full fingerprint."
+		exit 1
+	fi
+
+    # Check if key exists
+    if ! gpg --keyid-format LONG --list-secret-keys "0x${config[GPG]}"; then
+        error "This GPG key is not known on this system."
+        plain "Check your git config or your GNUPGHOME variable."
+        exit 1
     fi
 fi
 
@@ -222,12 +265,14 @@ msg "2. Publish your key"
 ################################################################################
 
 # Check if key was just created
-if [[ -z "${config[GPG]}" ]]; then
+if [[ "${NEW_GPG_KEY}" = true ]]; then
     # Refresh setting
     config[GPG]="$(git config --global user.signingkey)"
 
     # Upload key
     msg2 "2.1 Submit your key to a key server"
+    plain "Uploading key ${config[GPG]} to hkps://hkps.pool.sks-keyservers.net"
+    gpgithub_yesno
     gpg --keyserver hkps://hkps.pool.sks-keyservers.net --send-keys "${config[GPG]}"
 
     # Generate public key
@@ -241,21 +286,39 @@ if [[ -z "${config[GPG]}" ]]; then
     plain "Publish your GPG fingerprint (${config[GPG]}) on your project site."
     plain "Also see https://wiki.debian.org/Keysigning"
     gpgithub_yesno
+else
+	plain "Assuming key was already publish with its generation. If not please do so."
 fi
 
 ################################################################################
 msg "3. Usage of GPG by git"
 ################################################################################
 
-# Check if commit signing is enabled for this repo and ask for a switch if not
-msg2 "3.1 Configure git GPG key"
-plain "Already configured in step 1 (for script simplicity)"
+# Differenciate between new created key and (temporary) different key
+if [[ "${NEW_GPG_KEY}" = true ]]; then
+    GIT_CONFIG="global"
+else
+    GIT_CONFIG="local"
+fi
 
-msg2 "3.2 Commit signing"
-if [[ $(git config commit.gpgsign) != "true" ]]; then
-    warning 'Commit signing is disabled. Will enable it now.'
+#  3.1 Configure git GPG key
+msg2 "3.1 Configure git GPG key"
+if [[ "${config[GPG]}" != "$(git config user.signingkey)" ]]; then
+    # If the key differs from the local>global>system configured key, set it locally
+	plain "Git is not configured with this key."
+    plain "Configuring ${GIT_CONFIG} git settings with your GPG key."
     gpgithub_yesno
-    git config --global commit.gpgsign true
+    git config --"${GIT_CONFIG}" user.signingkey "${config[GPG]}"
+else
+    plain "Git already configured with your GPG key"
+fi
+
+# Check if commit signing is enabled for this repo and ask for a switch if not
+msg2 "3.2 Commit signing"
+if [[ $(git config commit.gpgsign) != true ]]; then
+    warning "Commit signing is disabled. Will enable it now ${GIT_CONFIG}ly."
+    gpgithub_yesno
+    git config --"${GIT_CONFIG}" commit.gpgsign true
 else
     plain "Commit signing already enabled."
 fi
@@ -263,6 +326,7 @@ fi
 # Refresh tags
 msg2 "3.3 Create signed git tag"
 plain "Refreshing tags from upstream."
+gpgithub_yesno
 git pull --tags
 
 # Check if tag exists
@@ -278,7 +342,7 @@ if ! git tag | grep "^${config[TAG]}$" -q; then
     gpgithub_yesno
 
     # Create and push new git tag
-    git tag -s "${config[TAG]}" -m "Release ${config[TAG]}"
+    git tag -s "${config[TAG]}" -m "${config[MESSAGE]}"
     git push --tags
 else
     plain "Tag ${config[TAG]} already exists."
@@ -305,11 +369,13 @@ if [[ -f "${config[TAR]}.xz" ]]; then
     gpgithub_yesno
 else
     plain "Creating release archive file ${config[TAR]}.xz"
+	gpgithub_yesno
     git archive --format=tar --prefix "${config[PROJECT]}-${config[TAG]}/" "${config[TAG]}" | xz -9 > "${config[TAR]}.xz"
 fi
 
 # Create sha512 of the .tar.xz
 msg2 "4.2 Create the message digest"
+gpgithub_yesno
 sha512sum "${config[TAR]}.xz" > "${config[TAR]}.xz.sha512"
 
 # Sign .tar.xz if not existant
@@ -319,13 +385,15 @@ if [[ -f "${config[TAR]}.xz.sig" ]]; then
     gpgithub_yesno
 else
     plain "Creating signature for file ${config[TAR]}.xz"
-    gpg --output "${config[TAR]}.xz.sig" --armor --detach-sign "${config[TAR]}.xz"
+	gpgithub_yesno
+    gpg --local-user "${config[GPG]}" --output "${config[TAR]}.xz.sig" --armor --detach-sign "${config[TAR]}.xz"
 fi
 
 ################################################################################
 msg "5. Upload the release"
 ################################################################################
 
+#TODO
 msg2 "5.1 Github"
 plain "TODO"
 # Create new Github release if not existant
