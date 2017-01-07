@@ -1,20 +1,36 @@
 # GPGit
 GPGit is meant to bring GPG to the masses. It is not only a shell script that
-automates the process of creating new signed git releases with GPG but also a
-step-by-step readme guide for learning how to use GPG.
+automates the process of creating new signed git releases with GPG but also
+comes with this step-by-step readme guide for learning how to use GPG.
 
 ## Index
+* [Installation](#installation)
 * [Script Usage](#script-usage)
 * [GPG quick start guide](#gpg-quick-start-guide)
 * [Appendix](#appendix)
 * [A template for contacting upstreams](#a-template-for-contacting-upstreams)
+* [Contacted upstreams](#contacted-upstreams)
 * [Links](#links)
 * [Version History](#version-history)
 
+## Installation
+### ArchLinux
+You can install gpgit from [AUR](https://aur.archlinux.org/packages/gpgit/).
+Make sure to [build in a Clean Chroot](https://wiki.archlinux.org/index.php/DeveloperWiki:Building_in_a_Clean_Chroot).
+
+### Manual Installation
+##### Dependencies:
+* gpg
+* git
+
+```bash
+PREFIX=/usr/local sudo make install
+```
+
 ## Script Usage
 The script guides you through all 5 steps of the
-[GPG quick start guide](#gpg-quick-start-guide). By default no extra arguments
-beside the tag are required. Follow the instructions and you are good to go.
+[GPG quick start guide](#gpg-quick-start-guide). **By default no extra arguments
+beside the tag are required.** Follow the instructions and you are good to go.
 
 ```bash
 $ gpgit 1.0.0
@@ -76,58 +92,12 @@ Crucial key generation settings:
 ##### Example key generation:
 ```
 $ gpg --full-gen-key --expert
-gpg (GnuPG) 2.1.17; Copyright (C) 2016 Free Software Foundation, Inc.
-This is free software: you are free to change and redistribute it.
-There is NO WARRANTY, to the extent permitted by law.
-
-Please select what kind of key you want:
-   (1) RSA and RSA (default)
-   (2) DSA and Elgamal
-   (3) DSA (sign only)
-   (4) RSA (sign only)
-   (7) DSA (set your own capabilities)
-   (8) RSA (set your own capabilities)
-   (9) ECC and ECC
-  (10) ECC (sign only)
-  (11) ECC (set your own capabilities)
-Your selection? 1
-RSA keys may be between 1024 and 4096 bits long.
-What keysize do you want? (2048) 4096
-Requested keysize is 4096 bits
-RSA keys may be between 1024 and 4096 bits long.
-What keysize do you want for the subkey? (2048) 4096
-Requested keysize is 4096 bits
-Please specify how long the key should be valid.
-         0 = key does not expire
-      <n>  = key expires in n days
-      <n>w = key expires in n weeks
-      <n>m = key expires in n months
-      <n>y = key expires in n years
-Key is valid for? (0) 3y
-Key expires at Sat 04 Jan 2020 03:31:16 PM CET
-Is this correct? (y/N) y
-
-GnuPG needs to construct a user ID to identify your key.
-
-Real name: John Doe
-Email address: john@doe.com
-Comment: gpgit example
-You selected this USER-ID:
-    "John Doe (gpgit example) <john@doe.com>"
-
-Change (N)ame, (C)omment, (E)mail or (O)kay/(Q)uit? o
-We need to generate a lot of random bytes. It is a good idea to perform
-some other action (type on the keyboard, move the mouse, utilize the
-disks) during the prime generation; this gives the random number
-generator a better chance to gain enough entropy.
-We need to generate a lot of random bytes. It is a good idea to perform
-some other action (type on the keyboard, move the mouse, utilize the
-disks) during the prime generation; this gives the random number
-generator a better chance to gain enough entropy.
-gpg: /tmp/tmp.0Mw2k1KDcH/trustdb.gpg: trustdb created
+[...]
+gpg: /tmp/trustdb.gpg: trustdb created
 gpg: key 61D68FF6279DF9A6 marked as ultimately trusted
-gpg: directory '/tmp/tmp.0Mw2k1KDcH/openpgp-revocs.d' created
-gpg: revocation certificate stored as '/tmp/tmp.0Mw2k1KDcH/openpgp-revocs.d/3D6B9B41CCDC16D0E4A66AC461D68FF6279DF9A6.rev'
+gpg: directory '/tmp/openpgp-revocs.d' created
+gpg: revocation certificate stored as
+'/tmp/openpgp-revocs.d/3D6B9B41CCDC16D0E4A66AC461D68FF6279DF9A6.rev'
 public and secret key created and signed.
 
 pub   rsa4096 2017-01-04 [SC] [expires: 2020-01-04]
@@ -135,7 +105,6 @@ pub   rsa4096 2017-01-04 [SC] [expires: 2020-01-04]
       3D6B9B41CCDC16D0E4A66AC461D68FF6279DF9A6
 uid                      John Doe (gpgit example) <john@doe.com>
 sub   rsa4096 2017-01-04 [E] [expires: 2020-01-04]
-
 ```
 
 The generated key has the fingerprint `3D6B9B41CCDC16D0E4A66AC461D68FF6279DF9A6`
@@ -150,19 +119,22 @@ contains the private key and the revocation certificate. Handle it with care.
 
 #### 2.1 Submit your key to a key server
 To make the public key widely available, upload it to a key server.
-```bash
-gpg --keyserver hkps://hkps.pool.sks-keyservers.net --send-keys 3D6B9B41CCDC16D0E4A66AC461D68FF6279DF9A6
-```
-
 Now the user can get your key by requesting the fingerprint from the keyserver:
+[[Read more]](https://wiki.archlinux.org/index.php/GnuPG#Use_a_keyserver)
+
 ```bash
+# Publish key
+gpg --keyserver hkps://hkps.pool.sks-keyservers.net --send-keys 3D6B9B41CCDC16D0E4A66AC461D68FF6279DF9A6
+
+# Import key
 gpg --keyserver hkps://hkps.pool.sks-keyservers.net --recv-keys 3D6B9B41CCDC16D0E4A66AC461D68FF6279DF9A6
 ```
-[[Read more]](https://wiki.archlinux.org/index.php/GnuPG#Use_a_keyserver)
 
 #### 2.2 Associate GPG key with github
 To make Github display your commits as "verified" you also need to add your
 public [GPG key to your Github profile](https://github.com/settings/keys).
+[[Read more]](https://help.github.com/articles/generating-a-gpg-key/)
+
 ```bash
 # List keys + full fingerprint
 gpg --list-secret-keys --keyid-format LONG
@@ -170,8 +142,6 @@ gpg --list-secret-keys --keyid-format LONG
 # Generate public key
 gpg --armor --export <fingerprint>
 ```
-[[Read more]](https://help.github.com/articles/generating-a-new-gpg-key/)
-[[Read more]](https://help.github.com/articles/adding-a-new-gpg-key-to-your-github-account/)
 
 #### 2.3 Publish your fingerprint
 To make it easy for everyone else to find your key it is crucial that you
@@ -183,13 +153,14 @@ To give the key more trust other users can sign your key too.
 #### 3.1 Configure git GPG key
 In order to make git use your GPG key you need to set the default signing key
 for git.
+[[Read more]](https://help.github.com/articles/telling-git-about-your-gpg-key/)
+
 ```bash
 # List keys + full fingerprint
 gpg --list-secret-keys --keyid-format LONG
 
 git config --global user.signingkey <fingerprint>
 ```
-[[Read more]](https://help.github.com/articles/telling-git-about-your-gpg-key/)
 
 #### 3.2 Commit signing
 To verify the git history, git commits needs to be signed. You can manually sign
@@ -204,6 +175,8 @@ git config --global commit.gpgsign true
 #### 3.3 Create signed git tag
 Git tags need to be created from the command line and always need a switch to
 enable tag signing.
+[[Read more]](https://help.github.com/articles/signing-tags-using-gpg/)
+
 ```bash
 # Creates a signed tag
 git tag -s mytag
@@ -211,19 +184,24 @@ git tag -s mytag
 # Verifies the signed tag
 git tag -v mytag
 ```
-[[Read more]](https://help.github.com/articles/signing-tags-using-gpg/)
 
 ### 4. Creation of a signed compressed release archive
 #### 4.1 Create compressed archive
 You can use `git archive` to create archives of your tagged git release. It is
-highly recommended to use `.xz -9` for compression as it gives you the best
-compression possible which is especially beneficial for those countries with slow
-and unstable internet connections.
+highly recommended to use a strong compression which is especially beneficial
+for those countries with slow and unstable internet connections.
+[[Read more]](https://git-scm.com/docs/git-archive)
 
 ```bash
+# .tar.gz
+git archive --format=tar.gz -o gpgit-1.0.0.tar.gz --prefix gpgit-1.0.0 1.0.0
+
+# .tar.xz
 git archive --format=tar --prefix gpgit-1.0.0 1.0.0 | xz -9 > gpgit-1.0.0.tar.xz
+
+# .tar.lz
+git archive --format=tar --prefix gpgit-1.0.0 1.0.0 | lzip --best > gpgit-1.0.0.tar.xz
 ```
-[[Read more]](https://git-scm.com/docs/git-archive)
 
 #### 4.2 Create the message digest
 Message digests are used to ensure the integrity of a file. It can also serve as
@@ -250,11 +228,11 @@ To not need to retype your password every time for signing you can also use
 This gives you a file called `gpgit-1.0.0.tar.xz.asc` which is the GPG
 signature. Release it along with your source tarball and let everyone know
 to first verify the signature after downloading.
+[[Read more]](https://wiki.archlinux.org/index.php/GnuPG#Verify_a_signature)
 
 ```bash
-gpg --verify mysoftware-0.4.tar.gz.asc
+gpg --verify gpgit-1.0.0.tar.xz.asc
 ```
-[[Read more]](https://wiki.archlinux.org/index.php/GnuPG#Verify_a_signature)
 
 ### 5. Upload the release
 #### 5.1 Github
@@ -303,11 +281,10 @@ in order to verify easily and quickly your source code releases.
 * Sign every new git commit and tag.
 * Create signed compressed release archives.
 
-[GPGit](https://github.com/NicoHood/gpgit) is meant to bring GPG to
-everybody as easy as possible. It is not only a shell script that automates the
-process of creating new signed releases with GPG but also a step by step guide
-for you to understand the process with GPG and gives your further reading
-information.
+[GPGit](https://github.com/NicoHood/gpgit) is meant to bring GPG to the masses.
+It is not only a shell script that automates the process of creating new signed
+git releases with GPG but also comes with this step-by-step readme guide for
+learning how to use GPG.
 
 **Additional Information:**
 * https://github.com/NicoHood/gpgit
@@ -370,8 +347,9 @@ the large number of projects who decided to use GPG. Thanks for all the support!
 
 ## Version History
 ```
-1.0.0 (xx.xx.201x)
+1.0.0 (07.01.2017)
 * Merged all scripts into gpgit.sh
+* First release with all functions working except the uploading
 
 Untagged Release (16.12.2016)
 * Initial release of the software
