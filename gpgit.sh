@@ -7,7 +7,6 @@ set -e -u -o pipefail
 export LANG=C
 
 PROGNAME=$(basename "$0")
-ARGS=( "$@" )
 
 usage()
 {
@@ -332,8 +331,8 @@ git pull --tags
 # Check if tag exists
 if ! git tag | grep "^${config[TAG]}$" -q; then
     # Check if every added file has been commited
-    if ! git diff --cached --exit-code; then
-        warning "You have added new changes but did not commit them yet."
+    if ! git diff --cached --exit-code > /dev/null; then
+        warning 'You have added new changes but did not commit them yet. See "git status" or "git diff".'
         gpgit_yesno
     fi
 
@@ -363,6 +362,7 @@ fi
 config[TAR]="${config[OUTPUT]}/${config[PROJECT]}-${config[TAG]}.tar"
 
 # Create .tar.xz archive with maximum compression if not existant
+# TODO detect for github url and download + compare archive instead
 msg2 "4.1 Create compressed archive"
 if [[ -f "${config[TAR]}.xz" ]]; then
     plain "Archive ${config[TAR]}.xz already exists."
