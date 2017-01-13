@@ -243,7 +243,7 @@ compression_utility=(
 case "${config[COMPRESSION]}" in
     @(${config[COMPRESSION_ALGS]}))
         # Check if compression programm is available
-        gpgit_check_tool ${compression_utility[${config[COMPRESSION]}]}
+        gpgit_check_tool "${compression_utility[${config[COMPRESSION]}]}"
         ;;
     *)
         error "Invalid compression option. Available compressions: ${config[COMPRESSION_ALGS]}"
@@ -451,7 +451,7 @@ if [[ ! -f "${config[COMPRESSED_TAR]}" && -n "${config[URL]}" ]]; then
     msg2 "4.0 Download archive from online source"
     # Check if compression algorithm is valid
     if [[ "${config[COMPRESSION]}" != "${config[URL]##*.}" ]]; then
-        error "Online binary format ("${config[URL]##*.}") does not match selected compression format ("${config[COMPRESSION]}")."
+        error "Online binary format (${config[URL]##*.}) does not match selected compression format (${config[COMPRESSION]})."
         exit 1
     fi
     gpgit_check_tool wget
