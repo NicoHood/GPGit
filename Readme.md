@@ -56,13 +56,13 @@ Make sure to [build in a Clean Chroot](https://wiki.archlinux.org/index.php/Deve
 ### Manual Installation
 ##### Dependencies:
 * bash
-* gpg
+* gnupg
 * git
-* tar
 * coreutils
 
 ##### Optional Dependencies:
 * wget (online source verification)
+* curl (Github uploading)
 * gzip (compression algorithm)
 * xz (compression algorithm)
 * lzip (compression algorithm)
@@ -414,6 +414,10 @@ the large number of projects who decided to use GPG. Thanks for all the support!
 
 ## Version History
 ```
+1.1.1 (14.01.2017)
+* Verify existing signatures
+* Added upload to Github functionality
+
 1.1.0 (13.01.2017)
 * Added online source download
 * Added source verification
