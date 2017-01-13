@@ -21,7 +21,7 @@ usage()
     echo '-h --help       Show this help message'
     echo
     echo 'Options:'
-    echo '-o, --output    The output path of the archive, signature and message digest.'
+    echo '-o, --output    The output path of the compressed archive, signature and message digest.'
     echo '                Default: "git rev-parse --show-toplevel)/archive"'
     echo '-u, --username  Username of the user. Used for GPG key generation.'
     echo '                Default: git config user.name'
@@ -33,10 +33,10 @@ usage()
     echo '-g, --gpg       Specify (full) GPG fingerprint to use for signing.'
     echo '                Default: "git config user.signingkey"'
     echo '-w, --wget      Download source from a user-specified URL.'
-    echo '                Default: Autodetection for Github URL'
-    echo "-t, --tar       Format used to compress tar archive: ${config[COMPRESSION_ALGS]}"
+    echo '                Default: Auto detection for Github URL'
+    echo "-t, --tar       Valid compression options: ${config[COMPRESSION_ALGS]}"
     echo '                Default: gz'
-    echo "-s, --sha       Message digest algorithm to use: ${config[HASH_ALGS]}"
+    echo "-s, --sha       Valid message digest options: ${config[HASH_ALGS]}"
     echo '                Default: sha512'
     echo '-m, --message   Specify the tag message.'
     echo '                Default: "Release <tag>"'
@@ -359,7 +359,7 @@ if [[ "${NEW_GPG_KEY}" = true ]]; then
     plain "Also see https://wiki.debian.org/Keysigning"
     gpgit_yesno
 else
-    plain "Assuming key was already publish after its creation. If not please do so."
+    plain "Assuming key was already published after its creation. If not please do so."
 fi
 
 ################################################################################
@@ -402,7 +402,7 @@ gpgit_yesno
 git pull --tags
 
 # Check if tag exists
-if ! git tag | grep "^${config[TAG]}$" -q; then
+if ! git tag | grep -Fxq "${config[TAG]}"; then
     # Check if every added file has been commited
     if ! git diff --cached --exit-code > /dev/null; then
         warning 'You have added new changes but did not commit them yet. See "git status" or "git diff".'
@@ -532,6 +532,7 @@ if git config --local remote.origin.url | grep 'github.com' -q; then
     # http://www.barrykooij.com/create-github-releases-via-command-line/
     # https://developer.github.com/v3/repos/releases/
     # https://developer.github.com/changes/2013-09-25-releases-api/
+    # https://developer.github.com/guides/getting-started/
     while read -r -t 0; do read -r; done
     read -rsp "${BOLD}    Enter your Github token:${ALL_OFF}" TOKEN
     plain ""
@@ -544,14 +545,14 @@ if git config --local remote.origin.url | grep 'github.com' -q; then
     fi
 
     # Check for error
-    if grep -E '"message": ?"Bad credentials"' <(echo "${RESULT}") -q; then
+    if grep -Eq '"message": ?"Bad credentials"' <(echo "${RESULT}"); then
         error "Bad Github credentials."
         exit 1
     fi
 
     # Check if release already exists
-    if grep -E '"message": ?"Validation Failed"' <(echo "${RESULT}") -q; then
-        if grep -E '"code": ?"already_exists"' <(echo "${RESULT}") -q; then
+    if grep -Eq '"message": ?"Validation Failed"' <(echo "${RESULT}"); then
+        if grep -Eq '"code": ?"already_exists"' <(echo "${RESULT}"); then
             warning "Release already exists."
 
             # Get release id for an existing release
@@ -561,7 +562,7 @@ if git config --local remote.origin.url | grep 'github.com' -q; then
                 error "Accessing Github Release failed."
                 exit 1
             fi
-        elif grep -E '"message": ?"Published releases must have a valid tag"' <(echo "${RESULT}") -q; then
+        elif grep -Eq '"message": ?"Published releases must have a valid tag"' <(echo "${RESULT}"); then
             error "Published releases must have a valid tag. Please try again later."
             exit 1
         else
@@ -585,8 +586,8 @@ if git config --local remote.origin.url | grep 'github.com' -q; then
     fi
 
     # Check if signature already exists
-    if grep -E '"message": ?"Validation Failed"' <(echo "${RESULT}") -q  && \
-       grep -E '"code": ?"already_exists"' <(echo "${RESULT}") -q; then
+    if grep -Eq '"message": ?"Validation Failed"' <(echo "${RESULT}") && \
+       grep -Eq '"code": ?"already_exists"' <(echo "${RESULT}"); then
         warning "Signature already exists."
     else
         plain "Signature uploaded."
@@ -603,14 +604,14 @@ if git config --local remote.origin.url | grep 'github.com' -q; then
     fi
 
     # Check if message digest already exists
-    if grep -E '"message": ?"Validation Failed"' <(echo "${RESULT}") -q  && \
-       grep -E '"code": ?"already_exists"' <(echo "${RESULT}") -q; then
+    if grep -Eq '"message": ?"Validation Failed"' <(echo "${RESULT}") && \
+       grep -Eq '"code": ?"already_exists"' <(echo "${RESULT}"); then
         warning "Message digest already exists."
     else
         plain "Message digest uploaded."
     fi
 else
-    plain "Please upload the archive, signature and message digest manually."
+    plain "Please upload the compressed archive, signature and message digest manually."
 fi
 
 msg "Finished without errors"
