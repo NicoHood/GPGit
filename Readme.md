@@ -33,10 +33,9 @@ possible to verify easily and quickly source code releases.
 * Configure https for your download server
 
 ### Explanation
-Only a secure future-proof GPG key can guarantee the source authenticity in long
-term. It is crucial to secure this key with a strong unique passphrase so nobody
-is able to fake releases of your software. Do not put this key on an untrusted
-device such as a Windows PC or a smartphone.
+Only a large key can remain secure for a long period of time. It is crucial to
+secure this key with a strong unique passphrase so nobody is able to fake
+releases of your software. Do not store the key in untrusted devices.
 
 Every git commit/tag/release needs to be signed in order to verify the history
 of the whole software as well as the latest source files. As an alternative
@@ -59,6 +58,7 @@ Make sure to [build in a Clean Chroot](https://wiki.archlinux.org/index.php/Deve
 * gnupg
 * git
 * coreutils
+* grep
 
 ##### Optional Dependencies:
 * wget (online source verification)
@@ -92,7 +92,7 @@ Actions:
 -h --help       Show this help message
 
 Options:
--o, --output    The output path of the archive, signature and message digest.
+-o, --output    The output path of the compressed archive, signature and message digest.
                 Default: "git rev-parse --show-toplevel)/archive"
 -u, --username  Username of the user. Used for GPG key generation.
                 Default: git config user.name
@@ -104,10 +104,10 @@ Options:
 -g, --gpg       Specify (full) GPG fingerprint to use for signing.
                 Default: "git config user.signingkey"
 -w, --wget      Download source from a user-specified URL.
-                Default: Autodetection for Github URL
--t, --tar       Format used to compress tar archive: gz|xz|lz
+                Default: Auto detection for Github URL
+-t, --tar       Valid compression options: gz|xz|lz
                 Default: gz
--s, --sha       Message digest algorithm to use: sha256|sha384|sha512
+-s, --sha       Valid message digest options: sha256|sha384|sha512
                 Default: sha512
 -m, --message   Specify the tag message.
                 Default: "Release <tag>"
@@ -118,11 +118,11 @@ Options:
 GPGit guides you through 5 simple steps to get your software project ready
 with GPG signatures. Further details can be found below.
 
-1. Generate a new GPG key
-2. Publish your key
-3. Usage of GPG by git
-4. Creation of a signed compressed release archive
-5. Upload the release
+1. [Generate a new GPG key](#1-generate-a-new-gpg-key)
+2. [Publish your key](#2-publish-your-key)
+3. [Usage of GPG by git](#3-usage-of-gpg-by-git)
+4. [Creation of a signed compressed release archive](#4-creation-of-a-signed-compressed-release-archive)
+5. [Upload the release](#5-upload-the-release)
 
 ### 1. Generate a new GPG key
 If you don't have a GPG key yet, create a new one first. You can use RSA
@@ -362,7 +362,7 @@ Thanks in advance.
 * https://www.qubes-os.org/doc/verifying-signatures/
 * https://developers.google.com/web/fundamentals/security/encrypt-in-transit/why-https
 
-### Hacks
+### Security Incidents
 * [Backdoored Linux Mint, and the Perils of Checksums](https://micahflee.com/2016/02/backdoored-linux-mint-and-the-perils-of-checksums/)
 * [Backdoored vsftpd Source Code Served from Official Site](http://news.softpedia.com/news/Backdoored-vsftpd-Build-Served-from-Official-Website-209559.shtml)
 * [TOR Exit Server Delivers Malicious Binaries](http://news.softpedia.com/news/TOR-Exit-Server-Delivers-Malicious-Binaries-463168.shtml)
