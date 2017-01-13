@@ -1,17 +1,52 @@
 # GPGit
+A shell script that automates the process of signing git sources via GPG.
+
 GPGit is meant to bring GPG to the masses. It is not only a shell script that
 automates the process of creating new signed git releases with GPG but also
 comes with this step-by-step readme guide for learning how to use GPG.
 
 ## Index
+* [Introduction](#introduction)
 * [Installation](#installation)
 * [Script Usage](#script-usage)
 * [GPG quick start guide](#gpg-quick-start-guide)
 * [Appendix](#appendix)
 * [A template for contacting upstreams](#a-template-for-contacting-upstreams)
-* [Contacted upstreams](#contacted-upstreams)
 * [Links](#links)
+* [Contacted upstreams](#contacted-upstreams)
 * [Version History](#version-history)
+
+## Introduction
+As we all know, today more than ever before, it is crucial to be able to trust
+our computing environments. One of the main difficulties that package
+maintainers of Linux distributions face, is the difficulty to verify the
+authenticity and the integrity of the source code. With GPG signatures it is
+possible to verify easily and quickly source code releases.
+
+##### Overview of the required tasks:
+* Create and/or use a 4096-bit RSA keypair for the file signing.
+* Keep your key secret, use a strong unique passphrase for the key.
+* Upload the public key to a key server and publish the [full fingerprint](https://lkml.org/lkml/2016/8/15/445).
+* Sign every new git commit and tag.
+* Create signed compressed (xz --best) release archives
+* Upload a strong message digest (sha512) of the archive
+* Configure https for your download server
+
+### Explanation
+Only a secure future-proof GPG key can guarantee the source authenticity in long
+term. It is crucial to secure this key with a strong unique passphrase so nobody
+is able to fake releases of your software. Do not put this key on an untrusted
+device such as a Windows PC or a smartphone.
+
+Every git commit/tag/release needs to be signed in order to verify the history
+of the whole software as well as the latest source files. As an alternative
+strong message digest can help to add another layer of securing the source
+integrity.
+
+Https ensure that your sources are downloaded over an encrypted, secure channel.
+It also gives your public fingerprint and the message digest more trust.
+
+Also see: [A template for contacting upstreams](#a-template-for-contacting-upstreams)
 
 ## Installation
 ### ArchLinux
@@ -20,8 +55,17 @@ Make sure to [build in a Clean Chroot](https://wiki.archlinux.org/index.php/Deve
 
 ### Manual Installation
 ##### Dependencies:
+* bash
 * gpg
 * git
+* tar
+* coreutils
+
+##### Optional Dependencies:
+* wget (online source verification)
+* gzip (compression algorithm)
+* xz (compression algorithm)
+* lzip (compression algorithm)
 
 ```bash
 PREFIX=/usr/local sudo make install
@@ -48,7 +92,7 @@ Actions:
 -h --help       Show this help message
 
 Options:
--o, --output    The output path of the .tar.gz, .sig and sha512
+-o, --output    The output path of the archive, signature and message digest.
                 Default: "git rev-parse --show-toplevel)/archive"
 -u, --username  Username of the user. Used for GPG key generation.
                 Default: git config user.name
@@ -59,6 +103,12 @@ Options:
                            | sed -n \'s#.*/\([^.]*\)\.git#\1#p\'"
 -g, --gpg       Specify (full) GPG fingerprint to use for signing.
                 Default: "git config user.signingkey"
+-w, --wget      Download source from a user-specified URL.
+                Default: Autodetection for Github URL
+-t, --tar       Format used to compress tar archive: gz|xz|lz
+                Default: gz
+-s, --sha       Message digest algorithm to use: sha256|sha384|sha512
+                Default: sha512
 -m, --message   Specify the tag message.
                 Default: "Release <tag>"
 -y, --yes       Assume "yes" on all questions.
@@ -201,6 +251,9 @@ git archive --format=tar --prefix gpgit-1.0.0 1.0.0 | xz -9 > gpgit-1.0.0.tar.xz
 
 # .tar.lz
 git archive --format=tar --prefix gpgit-1.0.0 1.0.0 | lzip --best > gpgit-1.0.0.tar.xz
+
+# Verify an existing archive
+git archive --format=tar --prefix gpgit-1.0.0 1.0.0 | cmp <(xz -dc gpgit-1.0.0.tar.xz)
 ```
 
 #### 4.2 Create the message digest
@@ -277,9 +330,11 @@ in order to verify easily and quickly your source code releases.
 **Overview of the required tasks:**
 * Create and/or use a 4096-bit RSA keypair for the file signing.
 * Keep your key secret, use a strong unique passphrase for the key.
-* Upload the public key to a key server and publish the [full fingerprint](https://lkml.org/lkml/2016/8/15/445).
+* Upload the public key to a key server and publish the full fingerprint.
 * Sign every new git commit and tag.
-* Create signed compressed release archives.
+* Create signed compressed (xz --best) release archives
+* Upload a strong message digest (sha512) of the archive
+* Configure https for your download server
 
 [GPGit](https://github.com/NicoHood/gpgit) is meant to bring GPG to the masses.
 It is not only a shell script that automates the process of creating new signed
@@ -292,6 +347,7 @@ learning how to use GPG.
 * https://wiki.archlinux.org/index.php/GnuPG
 * https://git-scm.com/book/en/v2/Git-Tools-Signing-Your-Work
 * https://www.qubes-os.org/doc/verifying-signatures/
+* https://lkml.org/lkml/2016/8/15/445
 * https://developers.google.com/web/fundamentals/security/encrypt-in-transit/why-https
 * https://www.enigmail.net/index.php/en/
 
@@ -299,11 +355,21 @@ Thanks in advance.
 ```
 
 ## Links
+### Resources
 * https://help.github.com/categories/gpg/
 * https://wiki.archlinux.org/index.php/GnuPG
 * https://git-scm.com/book/en/v2/Git-Tools-Signing-Your-Work
 * https://www.qubes-os.org/doc/verifying-signatures/
 * https://developers.google.com/web/fundamentals/security/encrypt-in-transit/why-https
+
+### Hacks
+* [Backdoored Linux Mint, and the Perils of Checksums](https://micahflee.com/2016/02/backdoored-linux-mint-and-the-perils-of-checksums/)
+* [Backdoored vsftpd Source Code Served from Official Site](http://news.softpedia.com/news/Backdoored-vsftpd-Build-Served-from-Official-Website-209559.shtml)
+* [TOR Exit Server Delivers Malicious Binaries](http://news.softpedia.com/news/TOR-Exit-Server-Delivers-Malicious-Binaries-463168.shtml)
+* [Fake Linus Torvalds' Key Found in the Wild, No More Short-IDs.](https://lkml.org/lkml/2016/8/15/445)
+* [Forensics of Chinese MITM on GitHub](http://www.netresec.com/?page=Blog&month=2013-02&post=Forensics-of-Chinese-MITM-on-GitHub)
+* [Faking Git Commits](https://github.com/aguerrero/Faking-Git-Commits)
+* [Malicious Git and Mercurial HTTP Server For CVE-2014-9390](https://www.rapid7.com/db/modules/exploit/multi/http/git_client_command_exec)
 
 ## Contacted upstreams
 The following list summarizes the projects that I've contacted about using GPG.
@@ -311,7 +377,7 @@ The data might be outdated or semi correct. The intention behind the list is
 to keep track of the projects that miss GPG signatures as well to show off about
 the large number of projects who decided to use GPG. Thanks for all the support!
 
-### Upstreams that started using GPG (Hall of fame):
+### Upstreams that started using GPG:
 * [arc-gtk theme](https://github.com/horst3180/arc-theme/issues/695#issuecomment-261723347)
 * [arc-icon theme](https://github.com/horst3180/arc-icon-theme/issues/35)
 * [create_ap](https://github.com/oblique/create_ap/issues/214)
@@ -324,8 +390,10 @@ the large number of projects who decided to use GPG. Thanks for all the support!
 * [duc](https://github.com/zevv/duc/issues/155)
 * [libsodium](https://github.com/jedisct1/libsodium/issues/446)
 * [libfilteraudio](https://github.com/irungentoo/filter_audio/issues/37)
+* [tuntox](https://github.com/gjedeer/tuntox/issues/29)
+* [ipod-shuffle-4g](https://github.com/nims11/IPod-Shuffle-4g/issues/39)
 
-### Upstreams that refuse to use GPG (Hall of shame):
+### Upstreams that refuse/postponed to use GPG:
 * [atom](https://github.com/atom/atom/issues/13301)
 * [mooltipass](https://github.com/limpkin/mooltipass/issues/289)
 * [whipper](https://github.com/JoeLametta/whipper/issues/77)
@@ -337,16 +405,23 @@ the large number of projects who decided to use GPG. Thanks for all the support!
 * [snapper](https://github.com/openSUSE/snapper/issues/295)
 * [antox](https://github.com/Antox/Antox/issues/368)
 * [moolticute](https://github.com/raoulh/moolticute/issues/11)
-* [ipod-shuffle-4g](https://github.com/nims11/IPod-Shuffle-4g/issues/39)
 * [fontbuilder](https://github.com/andryblack/fontbuilder/issues/26)
 * [pypng](https://github.com/drj11/pypng/issues/74)
 * [libarchive](https://github.com/libarchive/libarchive/issues/847)
-* [tuntox](https://github.com/gjedeer/tuntox/issues/29)
 * QT -> email to feedback@qt.io
 * [compton](https://github.com/chjj/compton/issues/401)
+* [icu](https://ssl.icu-project.org/trac/ticket/12871)
 
 ## Version History
 ```
+1.1.0 (13.01.2017)
+* Added online source download
+* Added source verification
+* Added multiple compression algorithms
+* Added multiple sha algorithms
+* Minor fixes
+* Updated Readme
+
 1.0.0 (07.01.2017)
 * Merged all scripts into gpgit.sh
 * First release with all functions working except the uploading
