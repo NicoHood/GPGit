@@ -522,6 +522,7 @@ msg "5. Upload the release"
 # Github
 if git config --local remote.origin.url | grep 'github.com' -q; then
     msg2 "5.1 Github"
+    gpgit_check_tool curl
     plain "Uploading to Github. Please setup a Github token first:"
     plain "(Github->Settings->Personal access tokens; public repo access)"
     gpgit_yesno
@@ -531,32 +532,83 @@ if git config --local remote.origin.url | grep 'github.com' -q; then
     # https://developer.github.com/v3/repos/releases/
     # https://developer.github.com/changes/2013-09-25-releases-api/
     read -rsp "${BOLD}    Enter your Github token:${ALL_OFF}" TOKEN
+    plain ""
     API_JSON=$(printf '{"tag_name": "%s","target_commitish": "%s","name": "%s","body": "Release %s","draft": false,"prerelease": false}' \
                "${config[TAG]}" "${config[BRANCH]}" "${config[TAG]}" "${config[TAG]}")
-    if ! RESULT=$(curl --data "${API_JSON}" "https://api.github.com/repos/${config[USERNAME]}/${config[PROJECT]}/releases" \
+    if ! RESULT=$(curl -s --data "${API_JSON}" "https://api.github.com/repos/${config[USERNAME]}/${config[PROJECT]}/releases" \
     -H "Accept: application/vnd.github.v3+json" -H "Authorization: token ${TOKEN}" ); then
-        error "Uploading failed. Release already exists or token is wrong?"
+        error "Uploading release to Github failed."
         exit 1
     fi
-    RELEASE_ID=$(echo "${RESULT}" | grep '^  "id": ' | tr -dc '[:digit:]')
 
-    if ! curl "https://uploads.github.com/repos/${config[USERNAME]}/${config[PROJECT]}/releases/${RELEASE_ID}/assets?name=${config[PROJECT]}-${config[TAG]}.tar.gz.sig" \
+    # Check for error
+    if grep -E '"message": ?"Bad credentials"' <(echo "${RESULT}") -q; then
+        error "Bad Github credentials."
+        exit 1
+    fi
+
+    # Check if release already exists
+    if grep -E '"message": ?"Validation Failed"' <(echo "${RESULT}") -q; then
+        if grep -E '"code": ?"already_exists"' <(echo "${RESULT}") -q; then
+            warning "Release already exists."
+
+            # Get release id for an existing release
+            # https://developer.github.com/v3/repos/releases/#get-a-release-by-tag-name
+            if ! RELEASE_ID=$(curl -s "https://api.github.com/repos/${config[USERNAME]}/${config[PROJECT]}/releases/tags/${config[TAG]}" \
+                              | grep '^  "id": ' | tr -dc '[:digit:]'); then
+                error "Accessing Github Release failed."
+                exit 1
+            fi
+        elif grep -E '"message": ?"Published releases must have a valid tag"' <(echo "${RESULT}") -q; then
+            error "Published releases must have a valid tag. Please try again later."
+            exit 1
+        else
+            error "Unknown Github error: $(grep '"message":' <(echo "${RESULT}"))"
+            exit 1
+        fi
+    else
+        # Parse release ID
+        RELEASE_ID=$(echo "${RESULT}" | grep '^  "id": ' | tr -dc '[:digit:]')
+        plain "Github release created."
+    fi
+
+    # Upload signature
+    if ! RESULT=$(curl -s "https://uploads.github.com/repos/${config[USERNAME]}/${config[PROJECT]}/releases/${RELEASE_ID}/assets?name=${config[PROJECT]}-${config[TAG]}.tar.gz.sig" \
     -H "Content-Type: application/pgp-signature" \
     -H "Accept: application/vnd.github.v3+json" \
     -H "Authorization: token ${TOKEN}" \
-    --data-binary @"${config[COMPRESSED_TAR]}.sig"; then
-        error "Uploading failed. Release already exists or token is wrong?"
+    --data-binary @"${config[COMPRESSED_TAR]}.sig"); then
+        error "Uploading signature to Github failed."
         exit 1
     fi
 
-    if ! curl "https://uploads.github.com/repos/${config[USERNAME]}/${config[PROJECT]}/releases/${RELEASE_ID}/assets?name=${config[PROJECT]}-${config[TAG]}.tar.gz.sha512" \
+    # Check if signature already exists
+    if grep -E '"message": ?"Validation Failed"' <(echo "${RESULT}") -q  && \
+       grep -E '"code": ?"already_exists"' <(echo "${RESULT}") -q; then
+        warning "Signature already exists."
+    else
+        plain "Signature uploaded."
+    fi
+
+    # Upload message digest
+    if ! RESULT=$(curl -s "https://uploads.github.com/repos/${config[USERNAME]}/${config[PROJECT]}/releases/${RELEASE_ID}/assets?name=${config[PROJECT]}-${config[TAG]}.tar.gz.sha512" \
     -H "Content-Type: text/sha512" \
     -H "Accept: application/vnd.github.v3+json" \
     -H "Authorization: token ${TOKEN}" \
-    --data-binary @"${config[COMPRESSED_TAR]}.${config[HASH]}"; then
-        error "Uploading failed. Release already exists or token is wrong?"
+    --data-binary @"${config[COMPRESSED_TAR]}.${config[HASH]}"); then
+        error "Uploading message digest to Github failed."
         exit 1
+    fi
+
+    # Check if message digest already exists
+    if grep -E '"message": ?"Validation Failed"' <(echo "${RESULT}") -q  && \
+       grep -E '"code": ?"already_exists"' <(echo "${RESULT}") -q; then
+        warning "Message digest already exists."
+    else
+        plain "Message digest uploaded."
     fi
 else
     plain "Please upload the archive, signature and message digest manually."
 fi
+
+msg "Finished without errors"
