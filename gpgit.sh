@@ -486,9 +486,19 @@ else
 fi
 
 # Create hash of the .tar.xz
-msg2 "4.2 Create message digest ${config[COMPRESSED_TAR]}.${config[HASH]}"
-gpgit_yesno
-"${config[HASH]}sum" "${config[COMPRESSED_TAR]}" > "${config[COMPRESSED_TAR]}.${config[HASH]}"
+msg2 "4.2 Create message digest"
+if [[ -f "${config[COMPRESSED_TAR]}.${config[HASH]}" ]]; then
+    plain "Message digest ${config[COMPRESSED_TAR]}.${config[HASH]} already exists. Verifying it now."
+    gpgit_yesno
+    if ! "${config[HASH]}sum" -c "${config[COMPRESSED_TAR]}.${config[HASH]}"; then
+        error "Message digest could not be verified."
+        exit 1
+    fi
+else
+    plain "Creating message digest ${config[COMPRESSED_TAR]}.${config[HASH]}"
+    gpgit_yesno
+    "${config[HASH]}sum" "${config[COMPRESSED_TAR]}" > "${config[COMPRESSED_TAR]}.${config[HASH]}"
+fi
 
 # Sign .tar.xz if not existant
 msg2 "4.3 Sign the sources"
