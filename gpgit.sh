@@ -6,6 +6,8 @@ set -e -u -o pipefail
 # Avoid any encoding problems
 export LANG=C
 
+shopt -s extglob
+
 PROGNAME=$(basename "$0")
 
 usage()
@@ -19,7 +21,7 @@ usage()
     echo '-h --help       Show this help message'
     echo
     echo 'Options:'
-    echo '-o, --output    The output path of the .tar.gz, .sig and sha512'
+    echo '-o, --output    The output path of the archive, signature and message digest.'
     echo '                Default: "git rev-parse --show-toplevel)/archive"'
     echo '-u, --username  Username of the user. Used for GPG key generation.'
     echo '                Default: git config user.name'
@@ -30,6 +32,12 @@ usage()
     echo "                           | sed -n \'s#.*/\([^.]*\)\.git#\1#p\'\""
 	echo '-g, --gpg       Specify (full) GPG fingerprint to use for signing.'
     echo '                Default: "git config user.signingkey"'
+    echo '-w, --wget      Download source from a user-specified URL.'
+    echo '                Default: Autodetection for Github URL'
+    echo "-t, --tar       Format used to compress tar archive: ${config[COMPRESSION_ALGS]}"
+    echo '                Default: gz'
+    echo "-s, --sha       Message digest algorithm to use: ${config[HASH_ALGS]}"
+    echo '                Default: sha512'
 	echo '-m, --message   Specify the tag message.'
 	echo '                Default: "Release <tag>"'
 	echo '-y, --yes       Assume "yes" on all questions.'
@@ -100,13 +108,27 @@ gpgit_yesno() {
     fi
 }
 
+gpgit_check_tool() {
+    if ! command -v "$1" &> /dev/null; then
+        error "Required tool $1 not found. Please check your PATH variable or install the missing dependency."
+        exit 1
+    fi
+}
+
 ################################################################################
 # Parameters
 ################################################################################
 
+# Check for gpg version
+if ! gpg --version | grep "gpg (GnuPG) 2" -q; then
+    error "No gpg version 2.x available. Please install the newest gpg version."
+    exit 1
+fi
+
 # Check if inside a git folder
 if [[ "$(git rev-parse --is-inside-work-tree)" != "true" ]]; then
     error "Not a git repository."
+    exit 1
 fi
 
 # Check input param number
@@ -116,29 +138,35 @@ if [[ $# -lt 1 ]]; then
     exit 1
 fi
 
-# Print help
-if [[ "$1" == "-h" || "$1" == "--help" ]]; then
-    usage 1>&2
-    exit 0
-fi
-
 # Set default values in config array
-typeset -A config
+declare -A config
 config=(
     [TAG]="$1"
     [OUTPUT]="$(git rev-parse --show-toplevel)/archive"
     [USERNAME]="$(git config user.name)"
     [EMAIL]="$(git config user.email)"
-    [PROJECT]="$(git config --local remote.origin.url | sed -n 's#.*/\([^.]*\)\.git#\1#p')"
+    [PROJECT]="$(git config --local remote.origin.url \
+                 | sed -n 's#.*/\([^.]*\)\.git#\1#p')"
     [GPG]="$(git config user.signingkey)"
 	[MESSAGE]="Release $1"
+    [COMPRESSION]="gz"
+    [COMPRESSION_ALGS]="gz|xz|lz"
+    [HASH]="sha512"
+    [HASH_ALGS]="sha256|sha384|sha512"
+    [URL]=""
 	[YES]=false
 )
+
+# Print help
+if [[ "$1" == "-h" || "$1" == "--help" ]]; then
+    usage 1>&2
+    exit 0
+fi
 shift
 
 # Parse input params an ovrwrite possible default or config loaded options
-GETOPT_ARGS=$(getopt -o "ho:u:e:p:g:m:y" \
-            -l "help,output:,username:,email:,project:,gpg:,message:,yes"\
+GETOPT_ARGS=$(getopt -o "ho:u:e:p:g:w:t:s:m:y" \
+            -l "help,output:,username:,email:,project:,gpg:,wget:,tar:,sha:,message:,yes"\
             -n "$PROGNAME" -- "$@")
 eval set -- "$GETOPT_ARGS"
 
@@ -166,6 +194,18 @@ while true ; do
             config[GPG]="$2"
             shift
             ;;
+        -w|--wget)
+            config[URL]="$2"
+            shift
+            ;;
+        -t|--tar)
+            config[COMPRESSION]="$2"
+            shift
+            ;;
+        -s|--sha)
+            config[HASH]="$2"
+            shift
+            ;;
 		-m|--message)
 			config[MESSAGE]="$2"
 			shift
@@ -190,6 +230,37 @@ while true ; do
     esac
     shift
 done
+
+declare -A compression_utility
+compression_utility=(
+    [gz]="gzip"
+    [xz]="xz"
+    [lz]="lzip"
+)
+
+# Validate compression parameter
+case "${config[COMPRESSION]}" in
+    @(${config[COMPRESSION_ALGS]}))
+        # Check if compression programm is available
+        gpgit_check_tool ${compression_utility[${config[COMPRESSION]}]}
+        ;;
+    *)
+        error "Invalid compression option. Available compressions: ${config[COMPRESSION_ALGS]}"
+        exit 1
+        ;;
+esac
+
+# Validate hash parameter
+case "${config[HASH]}" in
+    @(${config[HASH_ALGS]}))
+        # Check if hash programm is available
+        gpgit_check_tool "${config[HASH]}sum"
+        ;;
+    *)
+        error "Invalid message digest option. Available message digests: ${config[HASH_ALGS]}"
+        exit 1
+        ;;
+esac
 
 ################################################################################
 msg "1. Generate new GPG key"
@@ -286,7 +357,7 @@ if [[ "${NEW_GPG_KEY}" = true ]]; then
     plain "Also see https://wiki.debian.org/Keysigning"
     gpgit_yesno
 else
-	plain "Assuming key was already publish with its generation. If not please do so."
+	plain "Assuming key was already publish after its creation. If not please do so."
 fi
 
 ################################################################################
@@ -358,44 +429,89 @@ if [[ ! -d "${config[OUTPUT]}" ]]; then
     mkdir -p "${config[OUTPUT]}"
 fi
 
-# Build .tar path
-config[TAR]="${config[OUTPUT]}/${config[PROJECT]}-${config[TAG]}.tar"
+# Build archive path
+config[FILENAME]="${config[PROJECT]}-${config[TAG]}"
+config[EXTENSION]=".tar"
+config[FILE]="${config[FILENAME]}${config[EXTENSION]}"
+config[TAR]="${config[OUTPUT]}/${config[FILE]}"
+config[COMPRESSED_TAR]="${config[TAR]}.${config[COMPRESSION]}"
 
-# Create .tar.xz archive with maximum compression if not existant
-# TODO detect for github url and download + compare archive instead
-msg2 "4.1 Create compressed archive"
-if [[ -f "${config[TAR]}.xz" ]]; then
-    plain "Archive ${config[TAR]}.xz already exists."
-    gpgit_yesno
-else
-    plain "Creating release archive file ${config[TAR]}.xz"
-	gpgit_yesno
-    git archive --format=tar --prefix "${config[PROJECT]}-${config[TAG]}/" "${config[TAG]}" | xz -9 > "${config[TAR]}.xz"
+# Set github URL if not otherwise specified
+if [[ -z "${config[URL]}" ]]; then
+    # Download the github generated archive if available
+    if [[ "${config[COMPRESSION]}" == "gz" ]] && \
+       git config --local remote.origin.url | grep 'github.com' -q; then
+        config[URL]="https://github.com/${config[USERNAME]}/${config[PROJECT]}/archive/${config[TAG]}.tar.gz"
+    fi
 fi
 
-# Create sha512 of the .tar.xz
-msg2 "4.2 Create the message digest"
+# Download archive from URL
+if [[ ! -f "${config[COMPRESSED_TAR]}" && -n "${config[URL]}" ]]; then
+    msg2 "4.0 Download archive from online source"
+    # Check if compression algorithm is valid
+    if [[ "${config[COMPRESSION]}" != "${config[URL]##*.}" ]]; then
+        error "Online binary format ("${config[URL]##*.}") does not match selected compression format ("${config[COMPRESSION]}")."
+        exit 1
+    fi
+    gpgit_check_tool wget
+
+    plain "Downloading source from URL ${config[URL]}"
+    gpgit_yesno
+    wget -O "${config[COMPRESSED_TAR]}" "${config[URL]}"
+fi
+
+# Create or verify archive
+msg2 "4.1 Create compressed archive"
+if [[ -f "${config[COMPRESSED_TAR]}" ]]; then
+    plain "Archive ${config[COMPRESSED_TAR]} already exists."
+    plain "Verifying git against local source."
+    gpgit_yesno
+
+    # Verify local source against existing tar
+    if git archive --format=tar --prefix "${config[FILENAME]}/" "${config[TAG]}" \
+         | cmp <(${compression_utility[${config[COMPRESSION]}]} -dc ${config[COMPRESSED_TAR]}); then
+        plain "Existing archive successfully verified against local source."
+    else
+        error "Archive differs from local source."
+        exit 1
+    fi
+else
+    plain "Creating release archive file ${config[COMPRESSED_TAR]}"
+    gpgit_yesno
+
+    # Create new archive
+    git archive --format=tar --prefix "${config[FILENAME]}/" "${config[TAG]}" \
+                | ${compression_utility[${config[COMPRESSION]}]} --best > "${config[COMPRESSED_TAR]}"
+fi
+
+# Create hash of the .tar.xz
+msg2 "4.2 Create message digest ${config[COMPRESSED_TAR]}.${config[HASH]}"
 gpgit_yesno
-sha512sum "${config[TAR]}.xz" > "${config[TAR]}.xz.sha512"
+"${config[HASH]}sum" "${config[COMPRESSED_TAR]}" > "${config[COMPRESSED_TAR]}.${config[HASH]}"
 
 # Sign .tar.xz if not existant
 msg2 "4.3 Sign the sources"
-if [[ -f "${config[TAR]}.xz.sig" ]]; then
-    plain "Signature for ${config[TAR]}.xz already exists."
+if [[ -f "${config[COMPRESSED_TAR]}.sig" ]]; then
+    plain "Signature ${config[COMPRESSED_TAR]}.sig already exists."
     gpgit_yesno
 else
-    plain "Creating signature for file ${config[TAR]}.xz"
+    plain "Creating signature ${config[COMPRESSED_TAR]}.sig"
 	gpgit_yesno
-    gpg --local-user "${config[GPG]}" --output "${config[TAR]}.xz.sig" --armor --detach-sign "${config[TAR]}.xz"
+    gpg --local-user "${config[GPG]}" --output "${config[COMPRESSED_TAR]}.sig" --armor --detach-sign "${config[COMPRESSED_TAR]}"
 fi
 
 ################################################################################
 msg "5. Upload the release"
 ################################################################################
 
-#TODO
-msg2 "5.1 Github"
-plain "TODO"
+# Github
+if git config --local remote.origin.url | grep 'github.com' -q; then
+    msg2 "5.1 Github"
+    plain "TODO"
+else
+    plain "Please upload the archive, signature and message digest manually."
+fi
+
 # Create new Github release if not existant
 # Upload files to Github
 #
