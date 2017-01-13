@@ -155,6 +155,7 @@ config=(
     [HASH_ALGS]="sha256|sha384|sha512"
     [URL]=""
 	[YES]=false
+    [BRANCH]=$(git rev-parse --abbrev-ref HEAD)
 )
 
 # Print help
@@ -507,41 +508,41 @@ msg "5. Upload the release"
 # Github
 if git config --local remote.origin.url | grep 'github.com' -q; then
     msg2 "5.1 Github"
-    plain "TODO"
+    plain "Uploading to Github. Please setup a Github token first:"
+    plain "(Github->Settings->Personal access tokens; public repo access)"
+    gpgit_yesno
+
+    # Create github release and upload the signature
+    # http://www.barrykooij.com/create-github-releases-via-command-line/
+    # https://developer.github.com/v3/repos/releases/
+    # https://developer.github.com/changes/2013-09-25-releases-api/
+    read -rsp "${BOLD}    Enter your Github token:${ALL_OFF}" TOKEN
+    API_JSON=$(printf '{"tag_name": "%s","target_commitish": "%s","name": "%s","body": "Release %s","draft": false,"prerelease": false}' \
+               "${config[TAG]}" "${config[BRANCH]}" "${config[TAG]}" "${config[TAG]}")
+    if ! RESULT=$(curl --data "${API_JSON}" "https://api.github.com/repos/${config[USERNAME]}/${config[PROJECT]}/releases" \
+    -H "Accept: application/vnd.github.v3+json" -H "Authorization: token ${TOKEN}" ); then
+        error "Uploading failed. Release already exists or token is wrong?"
+        exit 1
+    fi
+    RELEASE_ID=$(echo "${RESULT}" | grep '^  "id": ' | tr -dc '[:digit:]')
+
+    if ! curl "https://uploads.github.com/repos/${config[USERNAME]}/${config[PROJECT]}/releases/${RELEASE_ID}/assets?name=${config[PROJECT]}-${config[TAG]}.tar.gz.sig" \
+    -H "Content-Type: application/pgp-signature" \
+    -H "Accept: application/vnd.github.v3+json" \
+    -H "Authorization: token ${TOKEN}" \
+    --data-binary @"${config[COMPRESSED_TAR]}.sig"; then
+        error "Uploading failed. Release already exists or token is wrong?"
+        exit 1
+    fi
+
+    if ! curl "https://uploads.github.com/repos/${config[USERNAME]}/${config[PROJECT]}/releases/${RELEASE_ID}/assets?name=${config[PROJECT]}-${config[TAG]}.tar.gz.sha512" \
+    -H "Content-Type: text/sha512" \
+    -H "Accept: application/vnd.github.v3+json" \
+    -H "Authorization: token ${TOKEN}" \
+    --data-binary @"${config[COMPRESSED_TAR]}.${config[HASH]}"; then
+        error "Uploading failed. Release already exists or token is wrong?"
+        exit 1
+    fi
 else
     plain "Please upload the archive, signature and message digest manually."
 fi
-
-# Create new Github release if not existant
-# Upload files to Github
-#
-# # Create github release and upload the signature
-# # http://www.barrykooij.com/create-github-releases-via-command-line/
-# # https://developer.github.com/v3/repos/releases/
-# # https://developer.github.com/changes/2013-09-25-releases-api/
-# read -rsp "Enter your Github token (Github->Settings->Personal access tokens; public repo access):" TOKEN
-# API_JSON=$(printf '{"tag_name": "%s","target_commitish": "%s","name": "%s","body": "Release %s","draft": false,"prerelease": false}' "${TAG}" "${BRANCH}" "${TAG}" "${TAG}")
-# if ! RESULT=$(curl --data "$API_JSON" "https://api.github.com/repos/${USER_NAME}/${PROJECT_NAME}/releases" \
-# -H "Accept: application/vnd.github.v3+json" -H "Authorization: token ${TOKEN}" ); then
-#     echo "Error: Uploading failed. Release already exists or token is wrong?" 1>&2
-#     exit 1
-# fi
-# RELEASE_ID=$(echo "${RESULT}" | grep '^  "id": ' | tr -dc '[:digit:]')
-#
-# if ! curl "https://uploads.github.com/repos/${USER_NAME}/${PROJECT_NAME}/releases/${RELEASE_ID}/assets?name=${PROJECT_NAME}-${TAG}.tar.gz.sig" \
-# -H "Content-Type: application/pgp-signature" \
-# -H "Accept: application/vnd.github.v3+json" \
-# -H "Authorization: token ${TOKEN}" \
-# --data-binary @"${TAR_GZ}.sig"; then
-#     echo "Error: Uploading failed. Release already exists or token is wrong?" 1>&2
-#     exit 1
-# fi
-#
-# if ! curl "https://uploads.github.com/repos/${USER_NAME}/${PROJECT_NAME}/releases/${RELEASE_ID}/assets?name=${PROJECT_NAME}-${TAG}.tar.gz.sha512" \
-# -H "Content-Type: text/sha512" \
-# -H "Accept: application/vnd.github.v3+json" \
-# -H "Authorization: token ${TOKEN}" \
-# --data-binary @"${TAR_GZ}.sha512"; then
-#     echo "Error: Uploading failed. Release already exists or token is wrong?" 1>&2
-#     exit 1
-# fi
