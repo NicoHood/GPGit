@@ -435,6 +435,7 @@ fi
 config[FILENAME]="${config[PROJECT]}-${config[TAG]}"
 config[EXTENSION]=".tar"
 config[FILE]="${config[FILENAME]}${config[EXTENSION]}"
+config[COMPRESSED_FILE]="${config[FILE]}.${config[COMPRESSION]}"
 config[TAR]="${config[OUTPUT]}/${config[FILE]}"
 config[COMPRESSED_TAR]="${config[TAR]}.${config[COMPRESSION]}"
 
@@ -575,8 +576,29 @@ if git config --local remote.origin.url | grep 'github.com' -q; then
         plain "Github release created."
     fi
 
+    # Upload the generated archive if its not gz
+    if [[ "${config[COMPRESSION]}" != "gz" ]]; then
+        # Upload archive
+        if ! RESULT=$(curl -s "https://uploads.github.com/repos/${config[USERNAME]}/${config[PROJECT]}/releases/${RELEASE_ID}/assets?name=${config[COMPRESSED_FILE]}" \
+        -H "Content-Type: application/tar" \
+        -H "Accept: application/vnd.github.v3+json" \
+        -H "Authorization: token ${TOKEN}" \
+        --data-binary @"${config[COMPRESSED_TAR]}"); then
+            error "Uploading archive to Github failed."
+            exit 1
+        fi
+
+        # Check if archive already exists
+        if grep -Eq '"message": ?"Validation Failed"' <(echo "${RESULT}") && \
+           grep -Eq '"code": ?"already_exists"' <(echo "${RESULT}"); then
+            warning "Archive already exists."
+        else
+            plain "Archive uploaded."
+        fi
+    fi
+
     # Upload signature
-    if ! RESULT=$(curl -s "https://uploads.github.com/repos/${config[USERNAME]}/${config[PROJECT]}/releases/${RELEASE_ID}/assets?name=${config[PROJECT]}-${config[TAG]}.tar.gz.sig" \
+    if ! RESULT=$(curl -s "https://uploads.github.com/repos/${config[USERNAME]}/${config[PROJECT]}/releases/${RELEASE_ID}/assets?name=${config[FILE]}.sig" \
     -H "Content-Type: application/pgp-signature" \
     -H "Accept: application/vnd.github.v3+json" \
     -H "Authorization: token ${TOKEN}" \
@@ -594,7 +616,7 @@ if git config --local remote.origin.url | grep 'github.com' -q; then
     fi
 
     # Upload message digest
-    if ! RESULT=$(curl -s "https://uploads.github.com/repos/${config[USERNAME]}/${config[PROJECT]}/releases/${RELEASE_ID}/assets?name=${config[PROJECT]}-${config[TAG]}.tar.gz.sha512" \
+    if ! RESULT=$(curl -s "https://uploads.github.com/repos/${config[USERNAME]}/${config[PROJECT]}/releases/${RELEASE_ID}/assets?name=${config[FILE]}.${config[HASH]}" \
     -H "Content-Type: text/sha512" \
     -H "Accept: application/vnd.github.v3+json" \
     -H "Authorization: token ${TOKEN}" \
