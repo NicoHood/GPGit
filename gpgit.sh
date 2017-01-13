@@ -493,8 +493,12 @@ gpgit_yesno
 # Sign .tar.xz if not existant
 msg2 "4.3 Sign the sources"
 if [[ -f "${config[COMPRESSED_TAR]}.sig" ]]; then
-    plain "Signature ${config[COMPRESSED_TAR]}.sig already exists."
+    plain "Signature ${config[COMPRESSED_TAR]}.sig already exists. Verifying it with gpg."
     gpgit_yesno
+    if ! gpg --verify "${config[COMPRESSED_TAR]}.sig"; then
+        error "Signature could not be verified with gpg."
+        exit 1
+    fi
 else
     plain "Creating signature ${config[COMPRESSED_TAR]}.sig"
 	gpgit_yesno
