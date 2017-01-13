@@ -101,6 +101,7 @@ info() {
 
 gpgit_yesno() {
     [[ "${config[YES]}" == true ]] && return
+    while read -r -t 0; do read -r; done
     read -rp "${BOLD}    Continue? [Y/n]${ALL_OFF}" yesno
     if [[ "${yesno}" != [Yy]"es" && "${yesno}" != [Yy] && -n "${yesno}" ]]; then
         warning "Aborted by user"
@@ -531,6 +532,7 @@ if git config --local remote.origin.url | grep 'github.com' -q; then
     # http://www.barrykooij.com/create-github-releases-via-command-line/
     # https://developer.github.com/v3/repos/releases/
     # https://developer.github.com/changes/2013-09-25-releases-api/
+    while read -r -t 0; do read -r; done
     read -rsp "${BOLD}    Enter your Github token:${ALL_OFF}" TOKEN
     plain ""
     API_JSON=$(printf '{"tag_name": "%s","target_commitish": "%s","name": "%s","body": "Release %s","draft": false,"prerelease": false}' \
