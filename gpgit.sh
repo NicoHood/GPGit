@@ -30,7 +30,7 @@ usage()
     echo '-p, --project   The name of the project. Used for archive geneation.'
     echo "                Default: \"git config --local remote.origin.url \\"
     echo "                           | sed -n \'s#.*/\([^.]*\)\.git#\1#p\'\""
-	echo '-g, --gpg       Specify (full) GPG fingerprint to use for signing.'
+    echo '-g, --gpg       Specify (full) GPG fingerprint to use for signing.'
     echo '                Default: "git config user.signingkey"'
     echo '-w, --wget      Download source from a user-specified URL.'
     echo '                Default: Autodetection for Github URL'
@@ -38,9 +38,9 @@ usage()
     echo '                Default: gz'
     echo "-s, --sha       Message digest algorithm to use: ${config[HASH_ALGS]}"
     echo '                Default: sha512'
-	echo '-m, --message   Specify the tag message.'
-	echo '                Default: "Release <tag>"'
-	echo '-y, --yes       Assume "yes" on all questions.'
+    echo '-m, --message   Specify the tag message.'
+    echo '                Default: "Release <tag>"'
+    echo '-y, --yes       Assume "yes" on all questions.'
 }
 
 ################################################################################
@@ -100,7 +100,7 @@ info() {
 }
 
 gpgit_yesno() {
-	[[ "${config[YES]}" == true ]] && return
+    [[ "${config[YES]}" == true ]] && return
     read -rp "${BOLD}    Continue? [Y/n]${ALL_OFF}" yesno
     if [[ "${yesno}" != [Yy]"es" && "${yesno}" != [Yy] && -n "${yesno}" ]]; then
         warning "Aborted by user"
@@ -148,13 +148,13 @@ config=(
     [PROJECT]="$(git config --local remote.origin.url \
                  | sed -n 's#.*/\([^.]*\)\.git#\1#p')"
     [GPG]="$(git config user.signingkey)"
-	[MESSAGE]="Release $1"
+    [MESSAGE]="Release $1"
     [COMPRESSION]="gz"
     [COMPRESSION_ALGS]="gz|xz|lz"
     [HASH]="sha512"
     [HASH_ALGS]="sha256|sha384|sha512"
     [URL]=""
-	[YES]=false
+    [YES]=false
     [BRANCH]=$(git rev-parse --abbrev-ref HEAD)
 )
 
@@ -191,7 +191,7 @@ while true ; do
             config[PROJECT]="$2"
             shift
             ;;
-		-g|--gpg)
+        -g|--gpg)
             config[GPG]="$2"
             shift
             ;;
@@ -207,13 +207,13 @@ while true ; do
             config[HASH]="$2"
             shift
             ;;
-		-m|--message)
-			config[MESSAGE]="$2"
-			shift
-			;;
-		-y|--yes)
-			config[YES]=true
-			;;
+        -m|--message)
+            config[MESSAGE]="$2"
+            shift
+            ;;
+        -y|--yes)
+            config[YES]=true
+            ;;
         # Internal
         -h|--help)
             usage 1>&2
@@ -315,13 +315,13 @@ EOF
     fi
 else
     plain "Key already generated. Using key: ${config[GPG]}"
-	NEW_GPG_KEY=false
+    NEW_GPG_KEY=false
 
-	# Check if the full fingerprint is used
-	if [[ ${#config[GPG]} -ne 40 ]]; then
-		error "Please specify the full fingerprint."
-		exit 1
-	fi
+    # Check if the full fingerprint is used
+    if [[ ${#config[GPG]} -ne 40 ]]; then
+        error "Please specify the full fingerprint."
+        exit 1
+    fi
 
     # Check if key exists
     if ! gpg --keyid-format LONG --list-secret-keys "0x${config[GPG]}"; then
@@ -358,7 +358,7 @@ if [[ "${NEW_GPG_KEY}" = true ]]; then
     plain "Also see https://wiki.debian.org/Keysigning"
     gpgit_yesno
 else
-	plain "Assuming key was already publish after its creation. If not please do so."
+    plain "Assuming key was already publish after its creation. If not please do so."
 fi
 
 ################################################################################
@@ -376,7 +376,7 @@ fi
 msg2 "3.1 Configure git GPG key"
 if [[ "${config[GPG]}" != "$(git config user.signingkey)" ]]; then
     # If the key differs from the local>global>system configured key, set it locally
-	plain "Git is not configured with this key."
+    plain "Git is not configured with this key."
     plain "Configuring ${GIT_CONFIG} git settings with your GPG key."
     gpgit_yesno
     git config --"${GIT_CONFIG}" user.signingkey "${config[GPG]}"
@@ -501,7 +501,7 @@ if [[ -f "${config[COMPRESSED_TAR]}.sig" ]]; then
     fi
 else
     plain "Creating signature ${config[COMPRESSED_TAR]}.sig"
-	gpgit_yesno
+    gpgit_yesno
     gpg --local-user "${config[GPG]}" --output "${config[COMPRESSED_TAR]}.sig" --armor --detach-sign "${config[COMPRESSED_TAR]}"
 fi
 
