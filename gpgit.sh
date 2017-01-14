@@ -325,9 +325,15 @@ else
     fi
 
     # Check if key exists
-    if ! gpg --keyid-format LONG --list-secret-keys "0x${config[GPG]}"; then
+    if ! GPG_KEY=$(gpg --keyid-format LONG --list-secret-keys "0x${config[GPG]}"); then
         error "This GPG key is not known on this system."
         plain "Check your git config or your GNUPGHOME variable."
+        exit 1
+    fi
+
+    # Check key algorithm for key
+    if grep -iq "[rd]sa1024" <(echo "${GPG_KEY}"); then
+        error "This key uses an insecure key algorithm. Please generate a new, secure key."
         exit 1
     fi
 fi
