@@ -6,15 +6,20 @@ automates the process of creating new signed git releases with GPG but also
 comes with this step-by-step readme guide for learning how to use GPG.
 
 ## Index
+* [GPGit Wiki](#gpgit-wiki)
 * [Introduction](#introduction)
 * [Installation](#installation)
 * [Script Usage](#script-usage)
 * [GPG quick start guide](#gpg-quick-start-guide)
 * [Appendix](#appendix)
-* [A template for contacting upstreams](#a-template-for-contacting-upstreams)
-* [Links](#links)
 * [Contacted upstreams](#contacted-upstreams)
 * [Version History](#version-history)
+
+## GPGit Wiki
+The [GPGit wiki](https://github.com/NicoHood/gpgit) provides a huge information
+database about package security status and security guidelines for packagers.
+It gives you also further information about security related topics. The wiki is
+a work in progress and under heavy development. Feel free to participate.
 
 ## Introduction
 As we all know, today more than ever before, it is crucial to be able to trust
@@ -44,8 +49,6 @@ integrity.
 
 Https ensure that your sources are downloaded over an encrypted, secure channel.
 It also gives your public fingerprint and the message digest more trust.
-
-Also see: [A template for contacting upstreams](#a-template-for-contacting-upstreams)
 
 ## Installation
 ### ArchLinux
@@ -309,67 +312,6 @@ How to generate a Github token:
 You can also use this key for email encryption
 with [enigmail and thunderbird](https://wiki.archlinux.org/index.php/thunderbird#EnigMail_-_Encryption).
 [[Read more]](https://www.enigmail.net/index.php/en/)
-
-
-## A template for contacting upstreams
-If you try to contact an upstream source about missing GPG signatures you can
-use this template. It will give them an overview of the importance of GPG, the
-required steps to do and how they can be accomplished.
-
-```
-GPG signatures for source validation
-
-As we all know, today more than ever before, it is crucial to be able to trust
-our computing environments. One of the main difficulties that package
-maintainers of Linux distributions face, is the difficulty to verify the
-authenticity and the integrity of the source code.
-
-The Arch Linux team would appreciate it if you would provide us GPG signatures
-in order to verify easily and quickly your source code releases.
-
-**Overview of the required tasks:**
-* Create and/or use a 4096-bit RSA keypair for the file signing.
-* Keep your key secret, use a strong unique passphrase for the key.
-* Upload the public key to a key server and publish the full fingerprint.
-* Sign every new git commit and tag.
-* Create signed compressed (xz --best) release archives
-* Upload a strong message digest (sha512) of the archive
-* Configure https for your download server
-
-[GPGit](https://github.com/NicoHood/gpgit) is meant to bring GPG to the masses.
-It is not only a shell script that automates the process of creating new signed
-git releases with GPG but also comes with this step-by-step readme guide for
-learning how to use GPG.
-
-**Additional Information:**
-* https://github.com/NicoHood/gpgit
-* https://help.github.com/categories/gpg/
-* https://wiki.archlinux.org/index.php/GnuPG
-* https://git-scm.com/book/en/v2/Git-Tools-Signing-Your-Work
-* https://www.qubes-os.org/doc/verifying-signatures/
-* https://lkml.org/lkml/2016/8/15/445
-* https://developers.google.com/web/fundamentals/security/encrypt-in-transit/why-https
-* https://www.enigmail.net/index.php/en/
-
-Thanks in advance.
-```
-
-## Links
-### Resources
-* https://help.github.com/categories/gpg/
-* https://wiki.archlinux.org/index.php/GnuPG
-* https://git-scm.com/book/en/v2/Git-Tools-Signing-Your-Work
-* https://www.qubes-os.org/doc/verifying-signatures/
-* https://developers.google.com/web/fundamentals/security/encrypt-in-transit/why-https
-
-### Security Incidents
-* [Backdoored Linux Mint, and the Perils of Checksums](https://micahflee.com/2016/02/backdoored-linux-mint-and-the-perils-of-checksums/)
-* [Backdoored vsftpd Source Code Served from Official Site](http://news.softpedia.com/news/Backdoored-vsftpd-Build-Served-from-Official-Website-209559.shtml)
-* [TOR Exit Server Delivers Malicious Binaries](http://news.softpedia.com/news/TOR-Exit-Server-Delivers-Malicious-Binaries-463168.shtml)
-* [Fake Linus Torvalds' Key Found in the Wild, No More Short-IDs.](https://lkml.org/lkml/2016/8/15/445)
-* [Forensics of Chinese MITM on GitHub](http://www.netresec.com/?page=Blog&month=2013-02&post=Forensics-of-Chinese-MITM-on-GitHub)
-* [Faking Git Commits](https://github.com/aguerrero/Faking-Git-Commits)
-* [Malicious Git and Mercurial HTTP Server For CVE-2014-9390](https://www.rapid7.com/db/modules/exploit/multi/http/git_client_command_exec)
 
 ## Contacted upstreams
 The following list summarizes the projects that I've contacted about using GPG.
