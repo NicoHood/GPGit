@@ -16,7 +16,7 @@ comes with this step-by-step readme guide for learning how to use GPG.
 * [Version History](#version-history)
 
 ## GPGit Wiki
-The [GPGit wiki](https://github.com/NicoHood/gpgit) provides a huge information
+The [GPGit wiki](https://github.com/NicoHood/gpgit/wiki) provides a huge information
 database about package security status and security guidelines for packagers.
 It gives you also further information about security related topics. The wiki is
 a work in progress and under heavy development. Feel free to participate.
