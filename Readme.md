@@ -12,7 +12,6 @@ comes with this step-by-step readme guide for learning how to use GPG.
 * [Script Usage](#script-usage)
 * [GPG quick start guide](#gpg-quick-start-guide)
 * [Appendix](#appendix)
-* [Contacted upstreams](#contacted-upstreams)
 * [Version History](#version-history)
 
 ## GPGit Wiki
