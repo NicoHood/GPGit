@@ -53,7 +53,7 @@ It also gives your public fingerprint and the message digest more trust.
 ## Installation
 ### ArchLinux
 You can install gpgit from [AUR](https://aur.archlinux.org/packages/gpgit/).
-Make sure to [build in a Clean Chroot](https://wiki.archlinux.org/index.php/DeveloperWiki:Building_in_a_Clean_Chroot).
+Make sure to [build in a clean chroot](https://wiki.archlinux.org/index.php/DeveloperWiki:Building_in_a_Clean_Chroot).
 
 ### Manual Installation
 ##### Dependencies:
@@ -313,52 +313,12 @@ You can also use this key for email encryption
 with [enigmail and thunderbird](https://wiki.archlinux.org/index.php/thunderbird#EnigMail_-_Encryption).
 [[Read more]](https://www.enigmail.net/index.php/en/)
 
-## Contacted upstreams
-The following list summarizes the projects that I've contacted about using GPG.
-The data might be outdated or semi correct. The intention behind the list is
-to keep track of the projects that miss GPG signatures as well to show off about
-the large number of projects who decided to use GPG. Thanks for all the support!
-
-### Upstreams that started using GPG:
-* [arc-gtk theme](https://github.com/horst3180/arc-theme/issues/695#issuecomment-261723347)
-* [arc-icon theme](https://github.com/horst3180/arc-icon-theme/issues/35)
-* [create_ap](https://github.com/oblique/create_ap/issues/214)
-* [qtox](https://github.com/qTox/qTox/issues/3912)
-* [utox](https://github.com/uTox/uTox/issues/502)
-* [toxic](https://github.com/JFreegman/toxic/issues/417)
-* [toxcore](https://github.com/irungentoo/toxcore/issues/1624)
-* [snap-pac](https://github.com/wesbarnett/snap-pac/issues/9)
-* [snap-sync](https://github.com/wesbarnett/snap-sync/issues/18)
-* [duc](https://github.com/zevv/duc/issues/155)
-* [libsodium](https://github.com/jedisct1/libsodium/issues/446)
-* [libfilteraudio](https://github.com/irungentoo/filter_audio/issues/37)
-* [tuntox](https://github.com/gjedeer/tuntox/issues/29)
-* [ipod-shuffle-4g](https://github.com/nims11/IPod-Shuffle-4g/issues/39)
-
-### Upstreams that refuse/postponed to use GPG:
-* [atom](https://github.com/atom/atom/issues/13301)
-* [mooltipass](https://github.com/limpkin/mooltipass/issues/289)
-* [whipper](https://github.com/JoeLametta/whipper/issues/77)
-* xfce -> irc, mail to xfce@xfce.org
-
-### Upstreams that do not use GPG yet:
-* [arduino](https://github.com/arduino/Arduino/issues/5619)
-* [hyperion](https://github.com/hyperion-project/hyperion/issues/730)
-* [snapper](https://github.com/openSUSE/snapper/issues/295)
-* [antox](https://github.com/Antox/Antox/issues/368)
-* [moolticute](https://github.com/raoulh/moolticute/issues/11)
-* [fontbuilder](https://github.com/andryblack/fontbuilder/issues/26)
-* [pypng](https://github.com/drj11/pypng/issues/74)
-* [libarchive](https://github.com/libarchive/libarchive/issues/847)
-* QT -> email to feedback@qt.io
-* [compton](https://github.com/chjj/compton/issues/401)
-* [icu](https://ssl.icu-project.org/trac/ticket/12871)
-
 ## Version History
 ```
-1.1.1 (14.01.2017)
+1.1.1 (17.01.2017)
 * Verify existing signatures
 * Added upload to Github functionality
+* Only allow secure GPG keys
 
 1.1.0 (13.01.2017)
 * Added online source download
