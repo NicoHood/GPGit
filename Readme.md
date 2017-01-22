@@ -314,6 +314,9 @@ with [enigmail and thunderbird](https://wiki.archlinux.org/index.php/thunderbird
 
 ## Version History
 ```
+1.1.2 (22.01.2017)
+* Fixed Github uploading name
+
 1.1.1 (17.01.2017)
 * Verify existing signatures
 * Added upload to Github functionality

@@ -604,7 +604,7 @@ if git config --local remote.origin.url | grep 'github.com' -q; then
     fi
 
     # Upload signature
-    if ! RESULT=$(curl -s "https://uploads.github.com/repos/${config[USERNAME]}/${config[PROJECT]}/releases/${RELEASE_ID}/assets?name=${config[FILE]}.sig" \
+    if ! RESULT=$(curl -s "https://uploads.github.com/repos/${config[USERNAME]}/${config[PROJECT]}/releases/${RELEASE_ID}/assets?name=${config[COMPRESSED_FILE]}.sig" \
     -H "Content-Type: application/pgp-signature" \
     -H "Accept: application/vnd.github.v3+json" \
     -H "Authorization: token ${TOKEN}" \
@@ -622,7 +622,7 @@ if git config --local remote.origin.url | grep 'github.com' -q; then
     fi
 
     # Upload message digest
-    if ! RESULT=$(curl -s "https://uploads.github.com/repos/${config[USERNAME]}/${config[PROJECT]}/releases/${RELEASE_ID}/assets?name=${config[FILE]}.${config[HASH]}" \
+    if ! RESULT=$(curl -s "https://uploads.github.com/repos/${config[USERNAME]}/${config[PROJECT]}/releases/${RELEASE_ID}/assets?name=${config[COMPRESSED_FILE]}.${config[HASH]}" \
     -H "Content-Type: text/sha512" \
     -H "Accept: application/vnd.github.v3+json" \
     -H "Authorization: token ${TOKEN}" \
