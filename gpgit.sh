@@ -45,7 +45,7 @@ function usage()
 }
 
 # Check if messages are to be printed using color
-unset ALL_OFF BOLD BLUE GREEN RED YELLOW
+unset ALL_OFF BOLD BLUE GREEN RED YELLOW MAGENTA CYAN
 if [[ -t 2 ]]; then
     # prefer terminal safe colored and bold text when tput is supported
     if tput setaf 0 &>/dev/null; then
@@ -55,6 +55,8 @@ if [[ -t 2 ]]; then
         GREEN="${BOLD}$(tput setaf 2)"
         RED="${BOLD}$(tput setaf 1)"
         YELLOW="${BOLD}$(tput setaf 3)"
+        MAGENTA="${BOLD}$(tput setaf 5)"
+        CYAN="${BOLD}$(tput setaf 6)"
     else
         ALL_OFF="\e[1;0m"
         BOLD="\e[1;1m"
@@ -62,9 +64,11 @@ if [[ -t 2 ]]; then
         GREEN="${BOLD}\e[1;32m"
         RED="${BOLD}\e[1;31m"
         YELLOW="${BOLD}\e[1;33m"
+        MAGENTA="${BOLD}\e[1;35m"
+        CYAN="${BOLD}\e[1;36m"
     fi
 fi
-readonly ALL_OFF BOLD BLUE GREEN RED YELLOW
+readonly ALL_OFF BOLD BLUE GREEN RED YELLOW MAGENTA CYAN
 
 function msg() {
     local mesg=$1; shift
