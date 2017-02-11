@@ -7,7 +7,27 @@ shopt -s extglob
 
 PROGNAME=$(basename "$0")
 
-usage()
+################################################################################
+# Functions
+################################################################################
+
+function error_exit
+{
+    error "Exited due to error."
+    exit 1
+}
+
+function kill_exit
+{
+    error "Exited due to user intervention."
+    exit 1
+}
+
+# Trap errors
+trap error_exit ERR
+trap kill_exit SIGTERM SIGINT
+
+function usage()
 {
     echo "Usage: ${PROGNAME} <tag> [options]"
     echo
@@ -40,26 +60,6 @@ usage()
     echo '-y, --yes       Assume "yes" on all questions.'
 }
 
-################################################################################
-# Functions
-################################################################################
-
-function error_exit
-{
-    error "Exited due to error."
-    exit 1
-}
-
-function kill_exit
-{
-    error "Exited due to user intervention."
-    exit 1
-}
-
-# Trap errors
-trap error_exit ERR
-trap kill_exit SIGTERM SIGINT
-
 # Check if messages are to be printed using color
 unset ALL_OFF BOLD BLUE GREEN RED YELLOW
 if [[ -t 2 ]]; then
@@ -82,37 +82,37 @@ if [[ -t 2 ]]; then
 fi
 readonly ALL_OFF BOLD BLUE GREEN RED YELLOW
 
-msg() {
+function msg() {
     local mesg=$1; shift
     printf "${GREEN}==>${ALL_OFF}${BOLD} ${mesg}${ALL_OFF}\n" "$@" >&2
 }
 
-msg2() {
+function msg2() {
     local mesg=$1; shift
     printf "${BLUE}  ->${ALL_OFF}${BOLD} ${mesg}${ALL_OFF}\n" "$@" >&2
 }
 
-plain() {
+function plain() {
     local mesg=$1; shift
     printf "${BOLD}    ${mesg}${ALL_OFF}\n" "$@" >&2
 }
 
-warning() {
+function warning() {
     local mesg=$1; shift
     printf "${YELLOW}==> WARNING:${ALL_OFF}${BOLD} ${mesg}${ALL_OFF}\n" "$@" >&2
 }
 
-error() {
+function error() {
     local mesg=$1; shift
     printf "${RED}==> ERROR:${ALL_OFF}${BOLD} ${mesg}${ALL_OFF}\n" "$@" >&2
 }
 
-info() {
+function info() {
     local mesg=$1; shift
     printf "${YELLOW}[!]:${ALL_OFF}${BOLD} ${mesg}${ALL_OFF}\n" "$@" >&2
 }
 
-gpgit_yesno() {
+function gpgit_yesno() {
     [[ "${config[YES]}" == true ]] && return
     while read -r -t 0; do read -r; done
     read -rp "${BOLD}    Continue? [Y/n]${ALL_OFF}" yesno
@@ -122,7 +122,7 @@ gpgit_yesno() {
     fi
 }
 
-gpgit_check_tool() {
+function gpgit_check_tool() {
     if ! command -v "$1" &> /dev/null; then
         error "Required tool $1 not found. Please check your PATH variable or install the missing dependency."
         exit 1
