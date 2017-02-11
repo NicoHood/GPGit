@@ -4,8 +4,10 @@
 export LANG=C
 
 shopt -s extglob
+set -u
 
 PROGNAME=$(basename "$0")
+VERSION=1.2.0
 
 ################################################################################
 # Functions
@@ -13,6 +15,7 @@ PROGNAME=$(basename "$0")
 
 function usage()
 {
+    echo "${PROGNAME} ${VERSION}"
     echo "Usage: ${PROGNAME} <tag> [options]"
     echo
     echo 'Mandatory parameters:'
@@ -144,7 +147,7 @@ function gpgit_check_tool() {
 
 # Trap errors
 trap 'error_exit ${LINENO}' ERR
-trap kill_exit SIGTERM SIGINT
+trap kill_exit SIGTERM SIGINT SIGHUP
 
 # Check for gpg version
 if ! gpg --version | grep "gpg (GnuPG) 2" -q; then
