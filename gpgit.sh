@@ -1,8 +1,5 @@
 #!/bin/bash
 
-# Stop on errors
-set -e -u -o pipefail
-
 # Avoid any encoding problems
 export LANG=C
 
@@ -46,6 +43,22 @@ usage()
 ################################################################################
 # Functions
 ################################################################################
+
+function error_exit
+{
+    error "Exited due to error."
+    exit 1
+}
+
+function kill_exit
+{
+    error "Exited due to user intervention."
+    exit 1
+}
+
+# Trap errors
+trap error_exit ERR
+trap kill_exit SIGTERM SIGINT
 
 # Check if messages are to be printed using color
 unset ALL_OFF BOLD BLUE GREEN RED YELLOW
