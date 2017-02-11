@@ -11,22 +11,6 @@ PROGNAME=$(basename "$0")
 # Functions
 ################################################################################
 
-function error_exit
-{
-    error "Exited due to error."
-    exit 1
-}
-
-function kill_exit
-{
-    error "Exited due to user intervention."
-    exit 1
-}
-
-# Trap errors
-trap error_exit ERR
-trap kill_exit SIGTERM SIGINT
-
 function usage()
 {
     echo "Usage: ${PROGNAME} <tag> [options]"
@@ -112,6 +96,27 @@ function info() {
     printf "${YELLOW}[!]:${ALL_OFF}${BOLD} ${mesg}${ALL_OFF}\n" "$@" >&2
 }
 
+function error_exit
+{
+    local parent_lineno="$1"
+    local message="$2"
+    local code="${3:-1}"
+    if [[ -n "${message}" ]] ; then
+        error "Error on or near line ${parent_lineno}: ${message}; exiting with status ${code}"
+    else
+        error "Error on or near line ${parent_lineno}; exiting with status ${code}"
+    fi
+    plain "Please report this error with the full bash output to:"
+    plain "https://github.com/NicoHood/gpgit/issues"
+    exit "${code}"
+}
+
+function kill_exit
+{
+    error "Exited due to user intervention."
+    exit 1
+}
+
 function gpgit_yesno() {
     [[ "${config[YES]}" == true ]] && return
     while read -r -t 0; do read -r; done
@@ -132,6 +137,10 @@ function gpgit_check_tool() {
 ################################################################################
 # Parameters
 ################################################################################
+
+# Trap errors
+trap 'error_exit ${LINENO}' ERR
+trap kill_exit SIGTERM SIGINT
 
 # Check for gpg version
 if ! gpg --version | grep "gpg (GnuPG) 2" -q; then
