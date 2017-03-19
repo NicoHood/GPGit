@@ -6,7 +6,6 @@ automates the process of creating new signed git releases with GPG but also
 comes with this step-by-step readme guide for learning how to use GPG.
 
 ## Index
-* [GPGit Wiki](#gpgit-wiki)
 * [Introduction](#introduction)
 * [Installation](#installation)
 * [Script Usage](#script-usage)
