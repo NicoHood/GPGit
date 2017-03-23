@@ -120,10 +120,16 @@ gpgit_check_tool() {
 # Parameters
 ################################################################################
 
-# Check for gpg version
+# Check for gpg version. On some distribution gpg 2.x is installed as gpg2.
 if ! gpg --version | grep "gpg (GnuPG) 2" -q; then
-    error "No gpg version 2.x available. Please install the newest gpg version."
-    exit 1
+    if ! gpg2 --version | grep "gpg (GnuPG) 2" -q; then
+        error "No gpg version 2.x available. Please install the newest gpg version."
+        exit 1
+    else
+        GPG_BIN=gpg2
+    fi
+else
+    GPG_BIN=gpg
 fi
 
 # Check if inside a git folder
@@ -270,7 +276,7 @@ msg "1. Generate new GPG key"
 
 # Check for existing key
 if [[ -z "${config[GPG]}" ]]; then
-    if gpg --list-secret-keys | grep uid | grep -v -q revoked; then
+    if $GPG_BIN --list-secret-keys | grep uid | grep -v -q revoked; then
         error "GPG seems to be already configured on your system but git is not."
         plain "Please use gpg --list-secret-keys to show existing keys."
         plain "Afterwards set the key with git config --global user.signingkey <key>."
@@ -281,12 +287,12 @@ if [[ -z "${config[GPG]}" ]]; then
         gpgit_yesno
 
         # Generate ECC key command (currently not supported by Github)
-        #gpg --quick-generate-key "testuser (comment) <name@mail.com>" future-default default 3y
+        #$GPG_BIN --quick-generate-key "testuser (comment) <name@mail.com>" future-default default 3y
 
         # Generate RSA key command
         # https://www.gnupg.org/documentation/manuals/gnupg/Unattended-GPG-key-generation.html
         # gpg: revocation certificate stored as '/tmp/tmp.81v03YSxmI/openpgp-revocs.d/F4EDF85EFF03D746D17094D3C28B8F6BCCDF8671.rev'
-        config[GPG]="$(gpg --batch --generate-key <( cat << EOF
+        config[GPG]="$($GPG_BIN --batch --generate-key <( cat << EOF
             Key-Type: RSA
             Key-Length: 4096
             Key-Usage: cert sign auth
@@ -312,7 +318,7 @@ EOF
 
         # Print new fingerprint
         plain "Your new GPG fingerprint is: ${config[GPG]}"
-        gpg -u "${config[GPG]}" --list-secret-keys --keyid-format LONG
+        $GPG_BIN -u "${config[GPG]}" --list-secret-keys --keyid-format LONG
     fi
 else
     plain "Key already generated. Using key: ${config[GPG]}"
@@ -325,7 +331,7 @@ else
     fi
 
     # Check if key exists
-    if ! GPG_KEY=$(gpg --keyid-format LONG --list-secret-keys "0x${config[GPG]}"); then
+    if ! GPG_KEY=$($GPG_BIN --keyid-format LONG --list-secret-keys "0x${config[GPG]}"); then
         error "This GPG key is not known on this system."
         plain "Check your git config or your GNUPGHOME variable."
         exit 1
@@ -351,14 +357,14 @@ if [[ "${NEW_GPG_KEY}" = true ]]; then
     msg2 "2.1 Submit your key to a key server"
     plain "Uploading key ${config[GPG]} to hkps://hkps.pool.sks-keyservers.net"
     gpgit_yesno
-    gpg --keyserver hkps://hkps.pool.sks-keyservers.net --send-keys "${config[GPG]}"
+    $GPG_BIN --keyserver hkps://hkps.pool.sks-keyservers.net --send-keys "${config[GPG]}"
 
     # Generate public key
     msg2 "2.2 Associate GPG key with github"
     plain "Please visit Github and add the following GPG key to your profile."
     plain "https://github.com/settings/keys"
     gpgit_yesno
-    gpg --armor --export "${config[GPG]}"
+    $GPG_BIN --armor --export "${config[GPG]}"
 
     msg2 "2.3 Publish your fingerprint"
     plain "Publish your GPG fingerprint (${config[GPG]}) on your project site."
@@ -513,14 +519,14 @@ msg2 "4.3 Sign the sources"
 if [[ -f "${config[COMPRESSED_TAR]}.sig" ]]; then
     plain "Signature ${config[COMPRESSED_TAR]}.sig already exists. Verifying it with gpg."
     gpgit_yesno
-    if ! gpg --verify "${config[COMPRESSED_TAR]}.sig"; then
+    if ! $GPG_BIN --verify "${config[COMPRESSED_TAR]}.sig"; then
         error "Signature could not be verified with gpg."
         exit 1
     fi
 else
     plain "Creating signature ${config[COMPRESSED_TAR]}.sig"
     gpgit_yesno
-    gpg --local-user "${config[GPG]}" --output "${config[COMPRESSED_TAR]}.sig" --armor --detach-sign "${config[COMPRESSED_TAR]}"
+    $GPG_BIN --local-user "${config[GPG]}" --output "${config[COMPRESSED_TAR]}.sig" --armor --detach-sign "${config[COMPRESSED_TAR]}"
 fi
 
 ################################################################################
