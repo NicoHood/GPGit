@@ -411,7 +411,7 @@ fi
 msg2 "3.3 Create signed git tag"
 plain "Refreshing tags from upstream."
 gpgit_yesno
-git pull --tags
+git fetch origin --tags
 
 # Check if tag exists
 if ! git tag | grep -Fxq "${config[TAG]}"; then
