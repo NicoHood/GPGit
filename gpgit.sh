@@ -427,7 +427,7 @@ if ! git tag | grep -Fxq "${config[TAG]}"; then
 
     # Create and push new git tag
     git tag -s "${config[TAG]}" -m "${config[MESSAGE]}"
-    git push --tags
+    git push origin "${config[TAG]}"
 else
     plain "Tag ${config[TAG]} already exists."
 fi
