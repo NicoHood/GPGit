@@ -29,7 +29,7 @@ usage()
     echo '                Default: "git config user.email"'
     echo '-p, --project   The name of the project. Used for archive geneation.'
     echo "                Default: \"git config --local remote.origin.url \\"
-    echo "                           | sed -n \'s#.*/\([^.]*\)\.git#\1#p\'\""
+    echo "                           | sed -n 's#.*/\([^.]*\)\.git#\1#p'\""
     echo '-g, --gpg       Specify (full) GPG fingerprint to use for signing.'
     echo '                Default: "git config user.signingkey"'
     echo '-w, --wget      Download source from a user-specified URL.'
