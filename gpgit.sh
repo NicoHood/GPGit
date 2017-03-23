@@ -456,7 +456,8 @@ if [[ -z "${config[URL]}" ]]; then
     # Download the github generated archive if available
     if [[ "${config[COMPRESSION]}" == "gz" ]] && \
        git config --local remote.origin.url | grep 'github.com' -q; then
-        config[URL]="https://github.com/${config[USERNAME]}/${config[PROJECT]}/archive/${config[TAG]}.tar.gz"
+        GITHUB_REPO=`git config --local remote.origin.url | sed -e 's/.*github.com[:/]//' | sed -e 's/.git$//'`
+        config[URL]="https://github.com/$GITHUB_REPO/archive/${config[TAG]}.tar.gz"
     fi
 fi
 
