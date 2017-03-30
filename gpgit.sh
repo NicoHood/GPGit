@@ -148,7 +148,6 @@ fi
 # Set default values in config array
 declare -A config
 config=(
-    [TAG]="$1"
     [OUTPUT]="$(git rev-parse --show-toplevel)/archive"
     [USERNAME]="$(git config user.name)"
     [EMAIL]="$(git config user.email)"
@@ -170,12 +169,11 @@ if [[ "$1" == "-h" || "$1" == "--help" ]]; then
     usage 1>&2
     exit 0
 fi
-shift
 
 # Parse input params an ovrwrite possible default or config loaded options
 GETOPT_ARGS=$(getopt -o "ho:u:e:p:g:w:t:s:m:y" \
             -l "help,output:,username:,email:,project:,gpg:,wget:,tar:,sha:,message:,yes"\
-            -n "$PROGNAME" -- "$@")
+            -n "$PROGNAME" -- $@)
 eval set -- "$GETOPT_ARGS"
 
 # Handle all params
@@ -238,6 +236,8 @@ while true ; do
     esac
     shift
 done
+
+config[TAG]=$1
 
 declare -A compression_utility
 compression_utility=(
