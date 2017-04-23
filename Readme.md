@@ -1,4 +1,7 @@
 # GPGit
+
+![gpgit.png](img/gpgit.png)
+
 A shell script that automates the process of signing git sources via GPG.
 
 GPGit is meant to bring GPG to the masses. It is not only a shell script that
