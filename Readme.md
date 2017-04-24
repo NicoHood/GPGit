@@ -1,24 +1,18 @@
 # GPGit
-A shell script that automates the process of signing git sources via GPG.
+
+![gpgit.png](img/gpgit.png)
 
 GPGit is meant to bring GPG to the masses. It is not only a shell script that
 automates the process of creating new signed git releases with GPG but also
 comes with this step-by-step readme guide for learning how to use GPG.
 
 ## Index
-* [GPGit Wiki](#gpgit-wiki)
 * [Introduction](#introduction)
 * [Installation](#installation)
 * [Script Usage](#script-usage)
 * [GPG quick start guide](#gpg-quick-start-guide)
 * [Appendix](#appendix)
 * [Version History](#version-history)
-
-## GPGit Wiki
-The [GPGit wiki](https://github.com/NicoHood/gpgit/wiki) provides a huge information
-database about package security status and security guidelines for packagers.
-It gives you also further information about security related topics. The wiki is
-a work in progress and under heavy development. Feel free to participate.
 
 ## Introduction
 As we all know, today more than ever before, it is crucial to be able to trust
@@ -398,3 +392,9 @@ with [enigmail and thunderbird](https://wiki.archlinux.org/index.php/thunderbird
 Untagged Release (16.12.2016)
 * Initial release of the software
 ```
+
+## Legal Notes
+The GPGit logo is a mix of the gnupg and the git logo which are both distributed as Creative Commons Attribution-ShareAlike 3.0 Unported (CC BY-SA 3.0). See [LICENSE](img/LICENSE) for more details.
+
+* https://www.gnupg.org/copying.html
+* https://git-scm.com/downloads/logos
