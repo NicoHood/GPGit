@@ -369,6 +369,13 @@ with [enigmail and thunderbird](https://wiki.archlinux.org/index.php/thunderbird
 
 ## Version History
 ```
+1.2.0 (24.04.2017)
+* Trap on errors
+* Detect gpg2
+* Fix git tags pull/push
+* Small code fixes
+* Thanks @cmaglie with #3
+
 1.1.2 (22.01.2017)
 * Fixed Github uploading name
 
