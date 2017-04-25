@@ -494,6 +494,7 @@ class GPGit(object):
                 try:
                     with self.compressionAlgorithms[tar].open(tarfilepath, "rb") as tarstream:
                         cmptar = strmcmp(tarstream)
+                        # TODO catch error when archive exists but no tag --> compare wont work
                         self.repo.archive(cmptar, treeish=self.config['tag'], prefix=filename + '/', format='tar')
                         if not cmptar.equal():
                             self.set_substep_status('4.1', 'FAIL',
@@ -783,9 +784,12 @@ def main(arguments):
     print()
     # TODO user selection
     # TODO check if even something needs to be done
-    input('Continue with the selected operations? [Y/n]')
-    print()
-    gpgit.run()
+    ret = input('Continue with the selected operations? [Y/n]')
+    if ret == 'y' or ret == '':
+        print()
+        #gpgit.run()
+    else:
+        gpgit.error('Aborted by user')
 
 
 
