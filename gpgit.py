@@ -303,8 +303,7 @@ class GPGit(object):
         # Check if a fingerprint was selected/found
         if self.config['fingerprint'] is None:
             # Check if gpg keys are available, but not yet configured
-            if private_keys is not None:
-                # TODO fancier print
+            if len(private_keys):
                 print('\r\033[K', end='')
                 print("GPG seems to be already configured on your system but git is not.")
                 print('Please select one of the existing keys below or generate a new one:')
@@ -316,13 +315,16 @@ class GPGit(object):
                     print(str(i) + ':', key['fingerprint'], key['uids'][0], key['algoname'], key['length'])
 
                 # User input
-                # TODO cannot do ctrl + c
-                userinput = -1
-                while userinput < 0 or userinput > len(private_keys):
-                    try:
-                        userinput = int(input("Please select a key number from above: "))
-                    except:
-                        userinput = -1
+                try:
+                    userinput = -1
+                    while userinput < 0 or userinput > len(private_keys):
+                        try:
+                            userinput = int(input("Please select a key number from above: "))
+                        except ValueError:
+                            userinput = -1
+                except KeyboardInterrupt:
+                    print()
+                    self.error('Aborted by user')
                 print()
 
                 # Safe new fingerprint
