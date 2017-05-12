@@ -178,14 +178,20 @@ class GPGit(object):
         #self.config['signingkey'] = None
         # self.config['gpgsign'] = None
 
-
+        # Github API
+        self.github = None
+        self.githubuser = None
+        self.githubrepo = None
+        self.release = None
         self.assets = []
         self.newassets = []
         self.todo = False
 
-
+        # GPG
         self.gpg = gnupg.GPG()
         self.gpgkey = None
+
+        # Git
         self.repo = None
 
         # Expand hash info list
@@ -611,14 +617,16 @@ class GPGit(object):
                 self.error('Error accessing Github API for project ' + self.config['project'])
 
             # Check Release and its assets
-            rel = None
             try:
-                rel = self.githubrepo.get_release(self.config['tag'])
+                self.release = self.githubrepo.get_release(self.config['tag'])
             except:
                 self.newassets = self.assets
+                self.set_substep_status('5.1', 'TODO',
+                    'Creating release and uploading release files to Github')
+                return
             else:
                 # Determine which assets need to be uploaded
-                asset_list = [x.name for x in rel.get_assets()]
+                asset_list = [x.name for x in self.release.get_assets()]
                 for asset in self.assets:
                     if asset not in asset_list:
                         self.newassets += [asset]
@@ -771,7 +779,21 @@ class GPGit(object):
 
     # Github
     def step_5_1(self):
-        pass
+        # Create release if not existant
+        if self.release is None:
+            self.release = self.githubrepo.create_git_release(
+                self.config['tag'],
+                self.config['project'] + ' ' + self.config['tag'],
+                self.config['message'],
+                draft=False, prerelease=self.config['prerelease'])
+
+        # Upload assets
+        for asset in self.newassets:
+            assetpath = os.path.join(self.config['output'], asset)
+            print(':: Uploading', assetpath)
+            # TODO not functional see https://github.com/PyGithub/PyGithub/pull/525#issuecomment-301132357
+            # TODO change label and mime type
+            self.release.upload_asset(assetpath, "Testlabel", "application/x-xz")
 
     # Configure HTTPS for your download server
     def step_5_2(self):
@@ -814,6 +836,7 @@ def main(arguments):
     parser.add_argument('-c', '--comment', action='store', help='comment used for gpg key generation')
     parser.add_argument('-k', '--keyserver', action='store', default='hkps://hkps.pool.sks-keyservers.net', help='keyserver to use for up/downloading gpg keys')
     parser.add_argument('-n', '--no-github', action='store_false', dest='github', help='disable Github API functionallity')
+    parser.add_argument('-a', '--prerelease', action='store_true', help='Flag as Github prerelease')
     parser.add_argument('-t', '--tar', choices=['gz', 'gzip', 'xz', 'bz2', 'bzip2'], default=['xz'], nargs='+', help='compression option')
     parser.add_argument('-s', '--sha', choices=['sha256', 'sha384', 'sha512'], default=['sha512'], nargs='+', help='message digest option')
     parser.add_argument('-b', '--no-armor', action='store_true', help='do not create ascii armored signature output')
