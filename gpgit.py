@@ -179,6 +179,11 @@ class GPGit(object):
         # self.config['gpgsign'] = None
 
 
+        self.assets = []
+        self.newassets = []
+        self.todo = False
+
+
         self.gpg = gnupg.GPG()
         self.gpgkey = None
         self.repo = None
@@ -246,22 +251,11 @@ class GPGit(object):
         # Default config level (repository == local)
         self.config['config_level'] = 'repository'
 
-        # Ask for Github token
-        #TODO
-        #if self.config['token'] is None:
-        #    self.config['token'] = input('Enter Github token to access release API: ')
-
-        # Create Github API instance
-        #TODO
-        # self.github = Github(self.config['token'])
-        #
-        # print(dir(self.github))
-        # self.githubuser = self.github.get_user()
-        # self.githubrepo = self.githubuser.get_repo(self.config['project'])
-        # rel = self.githubrepo.get_release(self.config['tag'])
-        # print(rel, dir(rel))
-
     def set_substep_status(self, number, status, msg, infos=[]):
+        # Flag execution of minimum one step
+        if status == 'TODO':
+            self.todo = True
+
         # Search for substep by number and add new data
         for step in self.Steps:
             for substep in step.substeps:
@@ -485,6 +479,7 @@ class GPGit(object):
         for tar in self.config['tar']:
             # Get tar filename
             tarfile = filename + '.tar.' + tar
+            self.assets += [tarfile]
             tarfilepath = os.path.join(self.config['output'], tarfile)
 
             # Check if compressed tar files exist
@@ -514,9 +509,11 @@ class GPGit(object):
 
             # Get signature filename from setting
             if self.config['no_armor']:
-                sigfilepath = tarfilepath + '.sig'
+                sigfile = tarfile + '.sig'
             else:
-                sigfilepath = tarfilepath + '.asc'
+                sigfile = tarfile + '.asc'
+            self.assets += [sigfile]
+            sigfilepath = os.path.join(self.config['output'], sigfile)
 
             # Check if signature is existant
             if os.path.isfile(sigfilepath):
@@ -550,7 +547,9 @@ class GPGit(object):
 
             # Verify all selected shasums if existant
             for sha in self.config['sha']:
-                shafilepath = tarfilepath + '.' + sha
+                shafile = tarfile + '.' + sha
+                self.assets += [shafile]
+                shafilepath = os.path.join(self.config['output'], shafile)
 
                 # Calculate hash of tarfile
                 if os.path.isfile(tarfilepath):
@@ -592,11 +591,44 @@ class GPGit(object):
     def analyze_step_5(self):
         # Check Github GPG key
         if self.config['github'] == True:
-            # TODO Check github API
-            self.set_substep_status('5.1', 'TODO',
-                'Uploading release files to Github')
             self.set_substep_status('5.2', 'OK',
                 'Github uses well configured https')
+
+            # Ask for Github token
+            if self.config['token'] is None:
+               self.config['token'] = input('Enter Github token to access release API: ')
+
+            # Create Github API instance
+            self.github = Github(self.config['token'])
+
+            # Acces Github API
+            try:
+                self.githubuser = self.github.get_user()
+                self.githubrepo = self.githubuser.get_repo(self.config['project'])
+            except:
+                self.error('Error accessing Github API for project ' + self.config['project'])
+
+            # Check Release and its assets
+            rel = None
+            try:
+                rel = self.githubrepo.get_release(self.config['tag'])
+            except:
+                self.newassets = self.assets
+            else:
+                # Determine which assets need to be uploaded
+                asset_list = [x.name for x in rel.get_assets()]
+                for asset in self.assets:
+                    if asset not in asset_list:
+                        self.newassets += [asset]
+
+            # Check if assets already uploaded
+            if len(self.newassets) == 0:
+                self.set_substep_status('5.1', 'OK',
+                    'Release already published on Github')
+            else:
+                self.set_substep_status('5.1', 'TODO',
+                    'Uploading release files to Github')
+
         else:
             self.set_substep_status('5.1', 'NOTE',
                 'Please upload the compressed archive, signature and message digest manually')
@@ -774,22 +806,27 @@ def main(arguments):
 
     args = parser.parse_args()
 
-    # TODO debug
-    #print(vars(args))
-
     gpgit = GPGit(vars(args))
     gpgit.load_defaults()
     gpgit.analyze()
     gpgit.printstatus()
     print()
-    # TODO user selection
-    # TODO check if even something needs to be done
-    ret = input('Continue with the selected operations? [Y/n]')
-    if ret == 'y' or ret == '':
-        print()
-        #gpgit.run()
+
+    # Check if even something needs to be done
+    if gpgit.todo:
+        # User selection
+        ret = input('Continue with the selected operations? [Y/n]')
+        if ret == 'y' or ret == '':
+            print()
+            if not gpgit.run():
+                print('Finished without errors')
+        else:
+            gpgit.error('Aborted by user')
     else:
-        gpgit.error('Aborted by user')
+        print(colors.GREEN + "==>", colors.RESET, 'Everything looks okay. Nothing to do.')
+
+
+
 
 
 
