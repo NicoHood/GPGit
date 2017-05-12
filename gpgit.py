@@ -825,33 +825,5 @@ def main(arguments):
     else:
         print(colors.GREEN + "==>", colors.RESET, 'Everything looks okay. Nothing to do.')
 
-
-
-
-
-
-    # rorepo is a Repo instance pointing to the git-python repository.
-    # For all you know, the first argument to Repo is a path to the repository
-    # you want to work with
-    # path = '.'
-    # repo = Repo(path, search_parent_directories=True)
-    # assert not repo.bare
-    # reader = repo.config_reader()             # get a config reader for read-only access
-    # with repo.config_writer():       # get a config writer to change configuration
-    #     pass                         # call release() to be sure changes are written and locks are released
-    # with repo.config_writer() as cw:
-    #     # TODO catch new section error
-    #     cw.set("gpgit", "test", "test")
-    #
-    # print(reader.sections())
-    # print(reader.get_value('user', 'email'))
-    # for entry in reader:
-    #     print(entry)
-    # #print(repo.untracked_files)
-    # print(repo.config_level)
-    #
-    # print("done")
-
-
 if __name__ == '__main__':
     sys.exit(main(sys.argv[1:]))
