@@ -492,12 +492,16 @@ class GPGit(object):
 
             # Check if compressed tar files exist
             if os.path.isfile(tarfilepath):
-                # TODO multiple compression algorithms
+                # Check if tag exists
+                if self.repo.tag('refs/tags/' + self.config['tag']) not in self.repo.tags:
+                    self.set_substep_status('4.1', 'FAIL',
+                        'Archive exists but no corresponding tag!?', [tarfilepath])
+                    return True
+
                 # Verify existing archive
                 try:
                     with self.compressionAlgorithms[tar].open(tarfilepath, "rb") as tarstream:
                         cmptar = strmcmp(tarstream)
-                        # TODO catch error when archive exists but no tag --> compare wont work
                         self.repo.archive(cmptar, treeish=self.config['tag'], prefix=filename + '/', format='tar')
                         if not cmptar.equal():
                             self.set_substep_status('4.1', 'FAIL',
