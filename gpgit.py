@@ -466,10 +466,6 @@ class GPGit(object):
                 self.repo.create_tag(self.config['tag'],
                     verify=True,
                     ref=None)
-                # # Check if every added file has been commited TODO
-                # if ! git diff --cached --exit-code &>/dev/null; then
-                #     print_step "INFO" 'You have added new changes but did not commit them yet. See "git status" or "git diff"'
-                # fi
             except:
                 self.set_substep_status('3.3', 'FAIL',
                     'Invalid signature for tag ' + self.config['tag'] + '. Was the tag even signed?')
