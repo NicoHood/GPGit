@@ -19,7 +19,7 @@ possible for packagers to verify easily and quickly source code releases.
 * Configure **[HTTPS][10]** for your download server
 
 #### GPGit
-[GPGit][11] is meant to bring GPG to the masses. It is not only a shell script
+[GPGit][11] is meant to bring GPG to the masses. It is not only a python script
 that automates the process of [creating new signed git releases with GPG][12]
 but also comes with a [step-by-step readme guide][13] for learning how to use
 GPG. GPGit integrates perfect with the [Github Release API][14] for uploading.
@@ -140,23 +140,23 @@ GPGit guides you through 5 simple steps to get your software project ready
 with GPG signatures. Further details can be found below.
 
 1. [Generate a new GPG key](#1-generate-a-new-gpg-key)
-  1. Strong, unique, secret passphrase
-  2. Key generation
+    1. [Strong, unique, secret passphrase](#11-strong-unique-secret-passphrase)
+    2. [Key generation](#12-key-generation)
 2. [Publish your key](#2-publish-your-key)
-  1. Submit your key to a key server
-  2. Associate GPG key with Github
-  3. Publish your full fingerprint
+    1. [Submit your key to a key server](#21-submit-your-key-to-a-key-server)
+    2. [Associate GPG key with Github](#22-associate-gpg-key-with-github)
+    3. [Publish your full fingerprint](#23-publish-your-full-fingerprint)
 3. [Usage of GPG by git](#3-usage-of-gpg-by-git)
-  1. Configure git GPG key
-  2. Commit signing
-  3. Create signed git tag
+    1. [Configure git GPG key](#31-configure-git-gpg-key)
+    2. [Commit signing](#32-commit-signing)
+    3. [Create signed git tag](#33-create-signed-git-tag)
 4. [Creation of a signed compressed release archive](#4-creation-of-a-signed-compressed-release-archive)
-  1. Create compressed archive
-  2. Create the message digest
-  3. Sign the sources
+    1. [Create compressed archive](#41-create-compressed-archive)
+    2. [Sign the sources](#42-create-the-message-digest)
+    3. [Create the message digest](#43-sign-the-sources)
 5. [Upload the release](#5-upload-the-release)
-  1. Github
-  2. Configure HTTPS for your download server
+    1. [Github](#51-github)
+    2. [Configure HTTPS for your download server](#52-configure-https-for-your-download-server)
 
 ### 1. Generate a new GPG key
 #### 1.1 Strong, unique, secret passphrase
@@ -301,17 +301,7 @@ git archive --format=tar --prefix gpgit-1.0.0 1.0.0 | lzip --best > gpgit-1.0.0.
 git archive --format=tar --prefix gpgit-1.0.0 1.0.0 | cmp <(xz -dc gpgit-1.0.0.tar.xz)
 ```
 
-#### 4.2 Create the message digest
-Message digests are used to ensure the integrity of a file. It can also serve as
-checksum to verify the download. Message digests **do not** replace GPG
-signatures. They rather provide and alternative simple way to verify the source.
-Make sure to provide message digest over a secure channel like https.
-
-```bash
-sha512 gpgit-1.0.0.tar.xz > gpgit-1.0.0.tar.xz.sha512
-```
-
-#### 4.3 Sign the sources
+#### 4.2 Sign the sources
 Type the filename of the tarball that you want to sign and then run:
 ```bash
 gpg --armor --detach-sign gpgit-1.0.0.tar.xz
@@ -330,6 +320,16 @@ to first verify the signature after downloading.
 
 ```bash
 gpg --verify gpgit-1.0.0.tar.xz.asc
+```
+
+#### 4.3 Create the message digest
+Message digests are used to ensure the integrity of a file. It can also serve as
+checksum to verify the download. Message digests **do not** replace GPG
+signatures. They rather provide and alternative simple way to verify the source.
+Make sure to provide message digest over a secure channel like https.
+
+```bash
+sha512 gpgit-1.0.0.tar.xz > gpgit-1.0.0.tar.xz.sha512
 ```
 
 ### 5. Upload the release

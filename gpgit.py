@@ -894,7 +894,7 @@ class GPGit(object):
 
 def main(arguments):
     parser = argparse.ArgumentParser(description=
-    'A Python script that automates the process of signing git sources via GPG.')
+    'A python script that automates the process of signing git sources via GPG.')
     parser.add_argument('tag', action='store', help='Tagname')
     parser.add_argument('-v', '--version', action='version', version='GPGit ' + GPGit.version)
     parser.add_argument('-m', '--message', action='store', help='tag message')
