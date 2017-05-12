@@ -148,6 +148,8 @@ class strmcmp(object):
             return True
 
 class GPGit(object):
+    version = '2.0.0'
+
     # RFC4880 9.1.  Public-Key Algorithms
     gpgAlgorithmIDs = {
         '1': 'RSA',
@@ -263,7 +265,7 @@ class GPGit(object):
 
         # Default message
         if self.config['message'] is None:
-            self.config['message'] = 'Release ' + self.config['tag'] + '\n\nCreated with GPGit\nhttps://github.com/NicoHood/gpgit'
+            self.config['message'] = 'Release ' + self.config['tag'] + '\n\nCreated with GPGit ' + self.version + '\nhttps://github.com/NicoHood/gpgit'
 
         # Default output path
         if self.config['output'] is None:
@@ -885,7 +887,7 @@ def main(arguments):
     parser = argparse.ArgumentParser(description=
     'A Python script that automates the process of signing git sources via GPG')
     parser.add_argument('tag', action='store', help='Tagname')
-    parser.add_argument('-v', '--version', action='version', version='GPGit 2.0.0')
+    parser.add_argument('-v', '--version', action='version', version='GPGit ' + GPGit.version)
     parser.add_argument('-m', '--message', action='store', help='tag message')
     parser.add_argument('-o', '--output', action='store', help='output path of the compressed archive, signature and message digest')
     parser.add_argument('-g', '--git-dir', action='store', default=os.getcwd(), help='path of the git project')
