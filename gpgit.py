@@ -690,7 +690,6 @@ class GPGit(object):
     def step_1_2(self):
         # Generate RSA key command
         # https://www.gnupg.org/documentation/manuals/gnupg/Unattended-GPG-key-generation.html
-        # Preferences: TODO https://security.stackexchange.com/questions/82216/how-to-change-default-cipher-in-gnupg-on-both-linux-and-windows
         input_data = """
         Key-Type: RSA
         Key-Length: 4096
@@ -884,7 +883,7 @@ class GPGit(object):
 
 def main(arguments):
     parser = argparse.ArgumentParser(description=
-    'A Python script that automates the process of signing git sources via GPG')
+    'A Python script that automates the process of signing git sources via GPG.')
     parser.add_argument('tag', action='store', help='Tagname')
     parser.add_argument('-v', '--version', action='version', version='GPGit ' + GPGit.version)
     parser.add_argument('-m', '--message', action='store', help='tag message')
