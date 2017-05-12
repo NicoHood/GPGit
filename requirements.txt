@@ -1,0 +1,3 @@
+GitPython
+python-gnupg
+PyGithub
