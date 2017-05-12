@@ -41,6 +41,7 @@ def time_limit(seconds):
 # TODO don't use plain except:, always specify which errors you'll get
 
 def flush_input():
+    # TODO removes in progress prints.
     try:
         import sys, termios
         termios.tcflush(sys.stdin, termios.TCIOFLUSH)
@@ -273,7 +274,17 @@ class GPGit(object):
 
         # Check if path exists
         if not os.path.isdir(self.config['output']):
-            self.error('Not a valid path: ' + self.config['output'])
+            # Create not existing path
+            print('Not a valid path: ' + self.config['output'])
+            try:
+                ret = input('Create non-existing output path? [Y/n]')
+            except KeyboardInterrupt:
+                print()
+                self.error('Aborted by user')
+            if ret == 'y' or ret == '':
+                os.makedirs(self.config['output'])
+            else:
+                self.error('Aborted by user')
 
         # Set default project name
         if self.config['project'] is None:
