@@ -24,6 +24,7 @@ import gnupg
 # TODO remove returns after self.error as it already exits
 # TODO document compression level default: gzip/bz2 max and lzma/xz 6. see note about level 6 https://docs.python.org/3/library/lzma.html
 # TODO replace armorfrom true/false to .sig/.asc?
+# TODO don't use plain except:, always specify which errors you'll get
 
 class colors(object):
     RED   = "\033[1;31m"
@@ -174,9 +175,8 @@ class GPGit(object):
                 ])
             ]
 
+        # Config via parameters
         self.config = config
-        #self.config['signingkey'] = None
-        # self.config['gpgsign'] = None
 
         # Github API
         self.github = None
