@@ -450,8 +450,10 @@ class GPGit(object):
                 'Enabling ' + self.config['config_level']
                 + ' git settings with commit signing')
 
+        # Refresh tags
+        self.repo.remotes.origin.fetch('--tags')
+
         # Check if tag was already created
-        # TODO refresh tags?
         if self.repo.tag('refs/tags/' + self.config['tag']) in self.repo.tags:
             # Verify signature
             try:
@@ -670,14 +672,26 @@ class GPGit(object):
 
     # Create signed git tag
     def step_3_3(self):
+        print(':: Creating, signing and pushing tag', self.config['tag'])
+
+        # Create a signed tag
+        newtag = None
         try:
-            self.repo.create_tag(self.config['tag'],
+            newtag = self.repo.create_tag(
+                self.config['tag'],
                 message=self.config['message'],
                 sign=True,
                 local_user=self.config['fingerprint'])
         except:
             self.error("Signing tag failed")
             return True
+
+        # Push tag
+        try:
+            self.repo.remotes.origin.push(newtag)
+        except:
+           self.error("Pushing tag failed")
+           return True
 
     # Create compressed archive
     def step_4_1(self):
