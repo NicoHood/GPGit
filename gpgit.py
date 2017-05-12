@@ -702,10 +702,9 @@ class GPGit(object):
         Name-Email: {1}
         Expire-Date: 1y
         Preferences: SHA512 SHA384 SHA256 AES256 AES192 AES ZLIB BZIP2 ZIP Uncompressed
-        Keyserver: {2}
         %ask-passphrase
         %commit
-        """.format(self.config['username'], self.config['email'], self.config['keyserver'])
+        """.format(self.config['username'], self.config['email'])
 
         # Execute gpg key generation command
         print(colors.BLUE + ':: ' + colors.RESET + 'We need to generate a lot of random bytes. It is a good idea to perform')
