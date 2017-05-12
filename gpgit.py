@@ -545,7 +545,7 @@ class GPGit(object):
                     'Existing archive(s) verified successfully', ['Path: ' + self.config['output'], 'Basename: ' + filename])
             else:
                 self.set_substep_status('4.1', 'TODO',
-                    'Creating new release archive(s)', ['Path: ' + self.config['output'], 'Basename: ' + filename])
+                    'Creating new release archive(s): ' + ', '.join(str(x) for x in self.config['tar']), ['Path: ' + self.config['output'], 'Basename: ' + filename])
 
             # Get signature filename from setting
             if self.config['no_armor']:
@@ -626,7 +626,7 @@ class GPGit(object):
                         'Existing message digest(s) verified successfully')
                 else:
                     self.set_substep_status('4.3', 'TODO',
-                        'Creating message digest(s) for archive(s)')
+                        'Creating message digest(s) for archive(s): ' + ', '.join(str(x) for x in self.config['sha']))
 
     def analyze_step_5(self):
         # Check Github GPG key
