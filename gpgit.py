@@ -620,7 +620,11 @@ class GPGit(object):
             # Ask for Github token
             if self.config['token'] is None:
                 flush_input()
-                self.config['token'] = input('Enter Github token to access release API: ')
+                try:
+                    self.config['token'] = input('Enter Github token to access release API: ')
+                except KeyboardInterrupt:
+                    print()
+                    gpgit.error('Aborted by user')
 
             # Create Github API instance
             self.github = Github(self.config['token'])
