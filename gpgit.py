@@ -14,7 +14,21 @@ from github import Github
 import git
 from git import Repo
 import gnupg
+import signal
+from contextlib import contextmanager
 
+class TimeoutException(Exception): pass
+
+@contextmanager
+def time_limit(seconds):
+    def signal_handler(signum, frame):
+        raise TimeoutException
+    signal.signal(signal.SIGALRM, signal_handler)
+    signal.alarm(seconds)
+    try:
+        yield
+    finally:
+        signal.alarm(0)
 
 # TODO: check == True to is True
 # TODO proper document functions with """ to generate __docnames___
@@ -429,13 +443,11 @@ class GPGit(object):
         # Only check if a fingerprint was specified
         if self.config['fingerprint'] is not None:
             # Check key on keyserver
-            # TODO catch receive exception
-            # TODO add timeout
-            # https://stackoverflow.com/questions/366682/how-to-limit-execution-time-of-a-function-call-in-python
             try:
-                key = self.gpg.recv_keys(self.config['keyserver'], self.config['fingerprint'])
-            except:
-                self.error('Unkown keyserver download error. Please try again alter.')
+                with time_limit(10):
+                    key = self.gpg.recv_keys(self.config['keyserver'], self.config['fingerprint'])
+            except TimeoutException:
+                self.error('Keyserver timed out. Please try again alter.')
 
             # Found key on keyserver
             if self.config['fingerprint'] in key.fingerprints:
@@ -472,7 +484,10 @@ class GPGit(object):
                 + ' git settings with commit signing')
 
         # Refresh tags
-        self.repo.remotes.origin.fetch('--tags')
+        try:
+            self.repo.remotes.origin.fetch('--tags')
+        except git.exc.GitCommandError:
+            self.error('Error fetching remote tags.')
 
         # Check if tag was already created
         if self.repo.tag('refs/tags/' + self.config['tag']) in self.repo.tags:
