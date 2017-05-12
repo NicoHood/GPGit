@@ -73,7 +73,68 @@ The script guides you through all 5 steps of the
 beside the tag are required.** Follow the instructions and you are good to go.
 
 ```bash
-$ gpgit 1.0.0
+$ gpgit 1.1.3
+==> 1. Generate new GPG key
+    Key already generated. Using key: 97312D5EB9D7AE7D0BD4307351DAE9B7C1AE9161
+==> 2. Publish your key
+    Assuming key was already published after its creation. If not please do so.
+==> 3. Usage of GPG by git
+  -> 3.1 Configure git GPG key
+    Git already configured with your GPG key
+  -> 3.2 Commit signing
+    Commit signing already enabled.
+  -> 3.3 Create signed git tag
+    Refreshing tags from upstream.
+    Continue? [Y/n]y
+Already up-to-date.
+    Creating signed tag 1.1.3 and pushing it to the remote git.
+    Continue? [Y/n]y
+Counting objects: 1, done.
+Writing objects: 100% (1/1), 794 bytes | 0 bytes/s, done.
+Total 1 (delta 0), reused 0 (delta 0)
+To github.com:NicoHood/gpgit.git
+ * [new tag]         1.1.3 -> 1.1.3
+==> 4. Creation of a signed compressed release archive
+  -> 4.0 Download archive from online source
+    Downloading source from URL https://github.com/NicoHood/gpgit/archive/1.1.3.tar.gz
+    Continue? [Y/n]y
+--2017-01-29 13:05:43--  https://github.com/NicoHood/gpgit/archive/1.1.3.tar.gz
+Resolving github.com (github.com)... 192.30.253.112, 192.30.253.113
+Connecting to github.com (github.com)|192.30.253.112|:443... connected.
+HTTP request sent, awaiting response... 302 Found
+Location: https://codeload.github.com/NicoHood/gpgit/tar.gz/1.1.3 [following]
+--2017-01-29 13:05:43--  https://codeload.github.com/NicoHood/gpgit/tar.gz/1.1.3
+Resolving codeload.github.com (codeload.github.com)... 192.30.253.121, 192.30.253.120
+Connecting to codeload.github.com (codeload.github.com)|192.30.253.121|:443... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: unspecified [application/x-gzip]
+Saving to: '/hackallthethings/gpgit/archive/gpgit-1.1.3.tar.gz'
+
+/hackallthethings/gpgit/archive/gpgit-1.1.3.tar.gz       [ <=> ]  10.90K  --.-KB/s    in 0.001s
+
+2017-01-29 13:05:44 (8.16 MB/s) - '/hackallthethings/gpgit/archive/gpgit-1.1.3.tar.gz' saved [11162]
+
+  -> 4.1 Create compressed archive
+    Archive /hackallthethings/gpgit/archive/gpgit-1.1.3.tar.gz already exists.
+    Verifying git against local source.
+    Continue? [Y/n]y
+    Existing archive successfully verified against local source.
+  -> 4.2 Create message digest
+    Creating message digest /hackallthethings/gpgit/archive/gpgit-1.1.3.tar.gz.sha512
+    Continue? [Y/n]y
+  -> 4.3 Sign the sources
+    Creating signature /hackallthethings/gpgit/archive/gpgit-1.1.3.tar.gz.sig
+    Continue? [Y/n]y
+==> 5. Upload the release
+  -> 5.1 Github
+    Uploading to Github. Please setup a Github token first:
+    (Github->Settings->Personal access tokens; public repo access)
+    Continue? [Y/n]y
+    Enter your Github token:
+    Github release created.
+    Signature uploaded.
+    Message digest uploaded.
+==> Finished without errors
 ```
 
 For additional tweaks you may use some optional parameters:
@@ -308,6 +369,13 @@ with [enigmail and thunderbird](https://wiki.archlinux.org/index.php/thunderbird
 
 ## Version History
 ```
+1.2.0 (24.04.2017)
+* Trap on errors
+* Detect gpg2
+* Fix git tags pull/push
+* Small code fixes
+* Thanks @cmaglie with #3
+
 1.1.2 (22.01.2017)
 * Fixed Github uploading name
 

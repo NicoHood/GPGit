@@ -1,17 +1,21 @@
 #!/bin/bash
 
-# Stop on errors
-set -e -u -o pipefail
-
 # Avoid any encoding problems
 export LANG=C
 
 shopt -s extglob
+set -u
 
 PROGNAME=$(basename "$0")
+VERSION=1.2.0
 
-usage()
+################################################################################
+# Functions
+################################################################################
+
+function usage()
 {
+    echo "${PROGNAME} ${VERSION}"
     echo "Usage: ${PROGNAME} <tag> [options]"
     echo
     echo 'Mandatory parameters:'
@@ -43,12 +47,8 @@ usage()
     echo '-y, --yes       Assume "yes" on all questions.'
 }
 
-################################################################################
-# Functions
-################################################################################
-
 # Check if messages are to be printed using color
-unset ALL_OFF BOLD BLUE GREEN RED YELLOW
+unset ALL_OFF BOLD BLUE GREEN RED YELLOW MAGENTA CYAN
 if [[ -t 2 ]]; then
     # prefer terminal safe colored and bold text when tput is supported
     if tput setaf 0 &>/dev/null; then
@@ -58,6 +58,8 @@ if [[ -t 2 ]]; then
         GREEN="${BOLD}$(tput setaf 2)"
         RED="${BOLD}$(tput setaf 1)"
         YELLOW="${BOLD}$(tput setaf 3)"
+        MAGENTA="${BOLD}$(tput setaf 5)"
+        CYAN="${BOLD}$(tput setaf 6)"
     else
         ALL_OFF="\e[1;0m"
         BOLD="\e[1;1m"
@@ -65,41 +67,64 @@ if [[ -t 2 ]]; then
         GREEN="${BOLD}\e[1;32m"
         RED="${BOLD}\e[1;31m"
         YELLOW="${BOLD}\e[1;33m"
+        MAGENTA="${BOLD}\e[1;35m"
+        CYAN="${BOLD}\e[1;36m"
     fi
 fi
-readonly ALL_OFF BOLD BLUE GREEN RED YELLOW
+readonly ALL_OFF BOLD BLUE GREEN RED YELLOW MAGENTA CYAN
 
-msg() {
+function msg() {
     local mesg=$1; shift
     printf "${GREEN}==>${ALL_OFF}${BOLD} ${mesg}${ALL_OFF}\n" "$@" >&2
 }
 
-msg2() {
+function msg2() {
     local mesg=$1; shift
     printf "${BLUE}  ->${ALL_OFF}${BOLD} ${mesg}${ALL_OFF}\n" "$@" >&2
 }
 
-plain() {
+function plain() {
     local mesg=$1; shift
     printf "${BOLD}    ${mesg}${ALL_OFF}\n" "$@" >&2
 }
 
-warning() {
+function warning() {
     local mesg=$1; shift
     printf "${YELLOW}==> WARNING:${ALL_OFF}${BOLD} ${mesg}${ALL_OFF}\n" "$@" >&2
 }
 
-error() {
+function error() {
     local mesg=$1; shift
     printf "${RED}==> ERROR:${ALL_OFF}${BOLD} ${mesg}${ALL_OFF}\n" "$@" >&2
 }
 
-info() {
+function info() {
     local mesg=$1; shift
     printf "${YELLOW}[!]:${ALL_OFF}${BOLD} ${mesg}${ALL_OFF}\n" "$@" >&2
 }
 
-gpgit_yesno() {
+function error_exit
+{
+    local parent_lineno="$1"
+    local message="$2"
+    local code="${3:-1}"
+    if [[ -n "${message}" ]] ; then
+        error "Error on or near line ${parent_lineno}: ${message}; exiting with status ${code}"
+    else
+        error "Error on or near line ${parent_lineno}; exiting with status ${code}"
+    fi
+    plain "Please report this error with the full bash output to:"
+    plain "https://github.com/NicoHood/gpgit/issues"
+    exit "${code}"
+}
+
+function kill_exit
+{
+    error "Exited due to user intervention."
+    exit 1
+}
+
+function gpgit_yesno() {
     [[ "${config[YES]}" == true ]] && return
     while read -r -t 0; do read -r; done
     read -rp "${BOLD}    Continue? [Y/n]${ALL_OFF}" yesno
@@ -109,7 +134,7 @@ gpgit_yesno() {
     fi
 }
 
-gpgit_check_tool() {
+function gpgit_check_tool() {
     if ! command -v "$1" &> /dev/null; then
         error "Required tool $1 not found. Please check your PATH variable or install the missing dependency."
         exit 1
@@ -119,6 +144,10 @@ gpgit_check_tool() {
 ################################################################################
 # Parameters
 ################################################################################
+
+# Trap errors
+trap 'error_exit ${LINENO}' ERR
+trap kill_exit SIGTERM SIGINT SIGHUP
 
 # Check for gpg version. On some distribution gpg 2.x is installed as gpg2.
 if ! gpg --version | grep "gpg (GnuPG) 2" -q; then
