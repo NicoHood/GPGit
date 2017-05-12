@@ -422,7 +422,10 @@ class GPGit(object):
             # TODO catch receive exception
             # TODO add timeout
             # https://stackoverflow.com/questions/366682/how-to-limit-execution-time-of-a-function-call-in-python
-            key = self.gpg.recv_keys(self.config['keyserver'], self.config['fingerprint'])
+            try:
+                key = self.gpg.recv_keys(self.config['keyserver'], self.config['fingerprint'])
+            except:
+                self.error('Unkown keyserver download error. Please try again alter.')
 
             # Found key on keyserver
             if self.config['fingerprint'] in key.fingerprints:
