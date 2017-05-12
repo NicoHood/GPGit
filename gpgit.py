@@ -26,6 +26,15 @@ import gnupg
 # TODO replace armorfrom true/false to .sig/.asc?
 # TODO don't use plain except:, always specify which errors you'll get
 
+def flush_input():
+    try:
+        import sys, termios
+        termios.tcflush(sys.stdin, termios.TCIOFLUSH)
+    except ImportError:
+        import msvcrt
+        while msvcrt.kbhit():
+            msvcrt.getch()
+
 class colors(object):
     RED   = "\033[1;31m"
     BLUE  = "\033[1;34m"
@@ -319,6 +328,7 @@ class GPGit(object):
                     userinput = -1
                     while userinput < 0 or userinput > len(private_keys):
                         try:
+                            flush_input()
                             userinput = int(input("Please select a key number from above: "))
                         except ValueError:
                             userinput = -1
@@ -609,7 +619,8 @@ class GPGit(object):
 
             # Ask for Github token
             if self.config['token'] is None:
-               self.config['token'] = input('Enter Github token to access release API: ')
+                flush_input()
+                self.config['token'] = input('Enter Github token to access release API: ')
 
             # Create Github API instance
             self.github = Github(self.config['token'])
@@ -882,7 +893,12 @@ def main(arguments):
     # Check if even something needs to be done
     if gpgit.todo:
         # User selection
-        ret = input('Continue with the selected operations? [Y/n]')
+        flush_input()
+        try:
+            ret = input('Continue with the selected operations? [Y/n]')
+        except KeyboardInterrupt:
+            print()
+            gpgit.error('Aborted by user')
         if ret == 'y' or ret == '':
             print()
             if not gpgit.run():
