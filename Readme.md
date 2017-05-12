@@ -46,6 +46,7 @@ GPG. GPGit integrates perfect with the [Github Release API][14] for uploading.
 * [Script Usage](#script-usage)
 * [GPG quick start guide](#gpg-quick-start-guide)
 * [Appendix](#appendix)
+* [Contact][#contact]
 * [Version History](#version-history)
 
 ## Installation
@@ -360,6 +361,7 @@ with [enigmail and thunderbird](https://wiki.archlinux.org/index.php/thunderbird
 ## Contact
 You can get securely in touch with me [here](http://contact.nicohood.de).
 Don't hesitate to [file a bug at Github](https://github.com/NicoHood/gpgit/issues).
+More cool projects from me can be found [here](http://www.nicohood.de).
 
 ## Version History
 ```
