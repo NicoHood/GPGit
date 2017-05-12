@@ -389,7 +389,7 @@ class GPGit(object):
                 'Generating an RSA 4096 GPG key for '
                 + self.config['username']
                 + ' ' + self.config['email']
-                + ' valid for 3 years.')
+                + ' valid for 1 year.')
 
             # Warn about strong passphrase
             self.set_substep_status('1.1', 'TODO',
@@ -653,8 +653,32 @@ class GPGit(object):
 
     # Key generation
     def step_1_2(self):
-        #TODO
-        pass
+        # Generate RSA key command
+        # https://www.gnupg.org/documentation/manuals/gnupg/Unattended-GPG-key-generation.html
+        # Preferences: TODO https://security.stackexchange.com/questions/82216/how-to-change-default-cipher-in-gnupg-on-both-linux-and-windows
+        input_data = """
+        Key-Type: RSA
+        Key-Length: 4096
+        Key-Usage: cert sign auth
+        Subkey-Type: RSA
+        Subkey-Length: 4096
+        Subkey-Usage: encrypt
+        Name-Real: {0}
+        Name-Email: {1}
+        Expire-Date: 1y
+        Preferences: SHA512 SHA384 SHA256 AES256 AES192 AES ZLIB BZIP2 ZIP Uncompressed
+        Keyserver: {2}
+        %ask-passphrase
+        %commit
+        """.format(self.config['username'], self.config['email'], self.config['keyserver'])
+
+        # Execute gpg key generation command
+        print(colors.BLUE + ':: ' + colors.RESET + 'We need to generate a lot of random bytes. It is a good idea to perform')
+        print(colors.BLUE + ':: ' + colors.RESET + 'some other action (type on the keyboard, move the mouse, utilize the')
+        print(colors.BLUE + ':: ' + colors.RESET + 'disks) during the prime generation; this gives the random number')
+        print(colors.BLUE + ':: ' + colors.RESET + 'generator a better chance to gain enough entropy.')
+        self.config['fingerprint'] = str(self.gpg.gen_key(input_data))
+        print(colors.BLUE + ':: ' + colors.RESET + 'Key generation finished. You new fingerprint is: ' + self.config['fingerprint'])
 
     # Submit your key to a key server
     def step_2_1(self):
