@@ -652,7 +652,7 @@ class GPGit(object):
 
     # Strong, unique, secret passphrase
     def step_1_1(self):
-        print('More infos: https://github.com/NicoHood/gpgit#11-strong-unique-secret-passphrase')
+        print(colors.BLUE + ':: ' + colors.RESET + 'More infos: https://github.com/NicoHood/gpgit#11-strong-unique-secret-passphrase')
 
     # Key generation
     def step_1_2(self):
@@ -685,6 +685,7 @@ class GPGit(object):
 
     # Submit your key to a key server
     def step_2_1(self):
+        print(colors.BLUE + ':: ' + colors.RESET + 'Publishing key ' + self.config['fingerprint'])
         self.gpg.send_keys(self.config['keyserver'], self.config['fingerprint'])
 
     # Associate GPG key with Github
@@ -709,7 +710,7 @@ class GPGit(object):
 
     # Create signed git tag
     def step_3_3(self):
-        print(':: Creating, signing and pushing tag', self.config['tag'])
+        print(colors.BLUE + ':: ' + colors.RESET + 'Creating, signing and pushing tag', self.config['tag'])
 
         # Create a signed tag
         newtag = None
@@ -741,7 +742,7 @@ class GPGit(object):
 
             # Create compressed tar files if it does not exist
             if not os.path.isfile(tarfilepath):
-                print(':: Creating', tarfilepath)
+                print(colors.BLUE + ':: ' + colors.RESET + 'Creating', tarfilepath)
                 with self.compressionAlgorithms[tar].open(tarfilepath, 'wb') as tarstream:
                     self.repo.archive(tarstream, treeish=self.config['tag'], prefix=filename + '/', format='tar')
 
@@ -764,7 +765,7 @@ class GPGit(object):
             if not os.path.isfile(sigfilepath):
                 # Sign tar file
                 with open(tarfilepath, 'rb') as tarstream:
-                    print(':: Creating', sigfilepath)
+                    print(colors.BLUE + ':: ' + colors.RESET + 'Creating', sigfilepath)
                     signed_data = self.gpg.sign_file(
                         tarstream,
                         keyid=self.config['fingerprint'],
@@ -802,7 +803,7 @@ class GPGit(object):
                         self.hash[sha][tarfile] = hash_sha.hexdigest()
 
                     # Write cached hash and filename
-                    print(':: Creating', shafilepath)
+                    print(colors.BLUE + ':: ' + colors.RESET + 'Creating', shafilepath)
                     with open(shafilepath, "w") as f:
                         f.write(self.hash[sha][tarfile] + '  ' + tarfile)
 
@@ -819,7 +820,7 @@ class GPGit(object):
         # Upload assets
         for asset in self.newassets:
             assetpath = os.path.join(self.config['output'], asset)
-            print(':: Uploading', assetpath)
+            print(colors.BLUE + ':: ' + colors.RESET + 'Uploading', assetpath)
             # TODO not functional see https://github.com/PyGithub/PyGithub/pull/525#issuecomment-301132357
             # TODO change label and mime type
             self.release.upload_asset(assetpath, "Testlabel", "application/x-xz")
