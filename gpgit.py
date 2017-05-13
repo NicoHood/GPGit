@@ -30,14 +30,6 @@ def time_limit(seconds):
     finally:
         signal.alarm(0)
 
-# TODO: check == True to is True
-# TODO proper document functions with """ to generate __docnames___
-# TODO pylint analysis
-# TODO add zip and lz support, make xz default
-# TODO remove returns after self.error as it already exits
-# TODO document compression level default: gzip/bz2 max and lzma/xz 6. see note about level 6 https://docs.python.org/3/library/lzma.html
-# TODO replace armorfrom true/false to .sig/.asc?
-
 class colors(object):
     RED   = "\033[1;31m"
     BLUE  = "\033[1;34m"
@@ -425,7 +417,7 @@ class GPGit(object):
             'Please publish the full GPG fingerprint on your project page')
 
         # Check Github GPG key
-        if self.config['github'] == True:
+        if self.config['github'] is True:
             # TODO Will associate your GPG key with Github
             self.set_substep_status('2.2', 'NOTE',
                 'Please associate your GPG key with Github')
@@ -475,7 +467,7 @@ class GPGit(object):
                 'Git already configured with your GPG key')
 
         # Check commit signing
-        if self.config['gpgsign'] == True:
+        if self.config['gpgsign'] is True:
             self.set_substep_status('3.2', 'OK',
                 'Commit signing already enabled')
         else:
@@ -632,7 +624,7 @@ class GPGit(object):
 
     def analyze_step_5(self):
         # Check Github GPG key
-        if self.config['github'] == True:
+        if self.config['github'] is True:
             self.set_substep_status('5.2', 'OK',
                 'Github uses well configured https')
 
@@ -772,7 +764,6 @@ class GPGit(object):
                     force = force)
             except git.exc.GitCommandError:
                 self.error("Signing tag failed.")
-                return True
 
         # Push tag
         #try:
@@ -780,7 +771,6 @@ class GPGit(object):
         # TODO check exception https://github.com/gitpython-developers/GitPython/issues/621
         # except ???:
         #    self.error("Pushing tag failed")
-        #    return True
 
     # Create compressed archive
     def step_4_1(self):
@@ -895,7 +885,6 @@ class GPGit(object):
         for step in self.Steps:
             if step.run():
                 self.error('Executing step failed')
-                return True
 
     def error(self, msg):
         print(colors.RED + '==> Error:' + colors.RESET, msg)
