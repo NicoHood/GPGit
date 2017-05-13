@@ -10,7 +10,7 @@ import hashlib
 import gzip
 import lzma
 import bz2
-from github import Github
+from github import Github, GithubException
 import git
 from git import Repo
 import gnupg
@@ -34,11 +34,9 @@ def time_limit(seconds):
 # TODO proper document functions with """ to generate __docnames___
 # TODO pylint analysis
 # TODO add zip and lz support, make xz default
-# TODO swap step 4.2 and 4.3
 # TODO remove returns after self.error as it already exits
 # TODO document compression level default: gzip/bz2 max and lzma/xz 6. see note about level 6 https://docs.python.org/3/library/lzma.html
 # TODO replace armorfrom true/false to .sig/.asc?
-# TODO don't use plain except:, always specify which errors you'll get
 
 class colors(object):
     RED   = "\033[1;31m"
@@ -650,16 +648,19 @@ class GPGit(object):
             self.github = Github(self.config['token'])
 
             # Acces Github API
+            print(dir(GithubException))
             try:
                 self.githubuser = self.github.get_user()
                 self.githubrepo = self.githubuser.get_repo(self.config['project'])
-            except:
-                self.error('Error accessing Github API for project ' + self.config['project'])
+            except GithubException:
+                # TODO improve: https://github.com/PyGithub/PyGithub/issues/152#issuecomment-301249927
+                self.error('Error accessing Github API for project ' + self.config['project'] + '. Wrong token?')
 
             # Check Release and its assets
             try:
                 self.release = self.githubrepo.get_release(self.config['tag'])
-            except:
+            except GithubException:
+                # TODO improve: https://github.com/PyGithub/PyGithub/issues/152#issuecomment-301249927
                 self.newassets = self.assets
                 self.set_substep_status('5.1', 'TODO',
                     'Creating release and uploading release files to Github')
@@ -774,11 +775,12 @@ class GPGit(object):
                 return True
 
         # Push tag
-        try:
-            self.repo.remotes.origin.push(newtag, force = force)
-        except:
-           self.error("Pushing tag failed")
-           return True
+        #try:
+        self.repo.remotes.origin.push(newtag, force = force)
+        # TODO check exception https://github.com/gitpython-developers/GitPython/issues/621
+        # except ???:
+        #    self.error("Pushing tag failed")
+        #    return True
 
     # Create compressed archive
     def step_4_1(self):
