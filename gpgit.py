@@ -905,7 +905,7 @@ def main(arguments):
     parser.add_argument('-e', '--email', action='store', help='email used for gpg key generation')
     parser.add_argument('-u', '--username', action='store', help='username used for gpg key generation')
     parser.add_argument('-c', '--comment', action='store', help='comment used for gpg key generation')
-    parser.add_argument('-k', '--keyserver', action='store', default='hkps://hkps.pool.sks-keyservers.net', help='keyserver to use for up/downloading gpg keys')
+    parser.add_argument('-k', '--keyserver', action='store', default='hkps://pgp.mit.edu', help='keyserver to use for up/downloading gpg keys')
     parser.add_argument('-n', '--no-github', action='store_false', dest='github', help='disable Github API functionallity')
     parser.add_argument('-a', '--prerelease', action='store_true', help='Flag as Github prerelease')
     parser.add_argument('-t', '--tar', choices=['gz', 'gzip', 'xz', 'bz2', 'bzip2'], default=['xz'], nargs='+', help='compression option')

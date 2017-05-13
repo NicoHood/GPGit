@@ -9,7 +9,7 @@ maintainers of Linux distributions face, is the difficulty to verify the
 authenticity and the integrity of the source code. With GPG signatures it is
 possible for packagers to verify easily and quickly source code releases.
 
-##### Overview of the required tasks:
+#### Overview of the required tasks:
 * Create and/or use a **[4096-bit RSA keypair][1]** for the file signing
 * Use a **[strong, unique, secret passphrase][2]** for the key
 * Upload the public key to a **[key server][3]** and **[publish the full fingerprint][4]**
@@ -18,7 +18,7 @@ possible for packagers to verify easily and quickly source code releases.
 * Upload a **[strong message digest][9]** (sha512) of the archive
 * Configure **[HTTPS][10]** for your download server
 
-#### GPGit
+### GPGit
 [GPGit][11] is meant to bring GPG to the masses. It is not only a python script
 that automates the process of [creating new signed git releases with GPG][12]
 but also comes with a [step-by-step readme guide][13] for learning how to use
@@ -46,7 +46,7 @@ GPG. GPGit integrates perfect with the [Github Release API][14] for uploading.
 * [Script Usage](#script-usage)
 * [GPG quick start guide](#gpg-quick-start-guide)
 * [Appendix](#appendix)
-* [Contact][#contact]
+* [Contact](#contact)
 * [Version History](#version-history)
 
 ## Installation
@@ -60,8 +60,24 @@ Please give the package a vote so I can move it to the official ArchLinux
 GPGit dependencies can be easily installed via [pip](https://pypi.python.org/pypi/pip).
 
 ```bash
-sudo apt-get install python pip gnupg git
-pip install --user -r requirements.txt
+# Install dependencies
+sudo apt-get install python3 python3-pip gnupg2 git
+VERSION=2.0.0
+
+# Download and verify source
+wget https://github.com/NicoHood/gpgit/releases/download/${VERSION}/gpgit-${VERSION}.tar.xz
+wget https://github.com/NicoHood/gpgit/releases/download/${VERSION}/gpgit-${VERSION}.tar.xz.asc
+gpg2 --keyserver hkps://pgp.mit.edu --recv-keys 97312D5EB9D7AE7D0BD4307351DAE9B7C1AE9161
+gpg2 --verify gpgit-${VERSION}.tar.xz.asc gpgit-${VERSION}.tar.xz
+
+# Extract and install dependencies
+tar -xf gpgit-${VERSION}.tar.xz
+cd gpgit-${VERSION}
+pip3 install --user -r requirements.txt
+
+# Install  and run GPGit
+sudo cp gpgit.py /usr/local/bin/gpgit
+gpgit --help
 ```
 
 ## Script Usage
@@ -124,16 +140,16 @@ Additional configuration can be made via [git config](https://git-scm.com/docs/g
 
 ```bash
 # GPGit settings
-git config user.githubtoken <githubtoken>
-git config user.gpgitoutput ~/gpgit
+git config --global user.githubtoken <githubtoken>
+git config --global user.gpgitoutput ~/gpgit
 
 # GPG settings
-git config user.signingkey <fingerprint>
-git config commit.gpgsign true
+git config --global user.signingkey <fingerprint>
+git config --global commit.gpgsign true
 
 # General settings
-git config user.name <username>
-git config user.email <email>
+git config --global user.name <username>
+git config --global user.email <email>
 ```
 
 ## GPG Quick Start Guide
@@ -208,7 +224,7 @@ in this example. Share it with others so they can verify your source.
 [[Read more]](https://wiki.archlinux.org/index.php/GnuPG#Create_key_pair)
 
 If you ever move your installation make sure to backup `~/.gnupg/` as it
-contains the private key and the revocation certificate. Handle it with care.
+contains the **private key** and the **revocation certificate**. Handle it with care.
 [[Read more]](https://wiki.archlinux.org/index.php/GnuPG#Revoking_a_key)
 
 ### 2. Publish your key
@@ -220,10 +236,10 @@ Now the user can get your key by requesting the fingerprint from the keyserver:
 
 ```bash
 # Publish key
-gpg --keyserver hkps://hkps.pool.sks-keyservers.net --send-keys <fingerprint>6
+gpg --keyserver hkps://pgp.mit.edu --send-keys <fingerprint>6
 
 # Import key
-gpg --keyserver hkps://hkps.pool.sks-keyservers.net --recv-keys <fingerprint>
+gpg --keyserver hkps://pgp.mit.edu --recv-keys <fingerprint>
 ```
 
 #### 2.2 Associate GPG key with Github
