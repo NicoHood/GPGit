@@ -503,19 +503,23 @@ class GPGit(object):
             self.error('Error fetching remote tags.')
 
         # Check if tag was already created
-        if self.repo.tag('refs/tags/' + self.config['tag']) in self.repo.tags:
+        tag = self.repo.tag('refs/tags/' + self.config['tag'])
+        if tag in self.repo.tags:
             # Verify signature
             try:
                 self.repo.create_tag(self.config['tag'],
                     verify=True,
                     ref=None)
-            except:
-                self.set_substep_status('3.3', 'FAIL',
-                    'Invalid signature for tag ' + self.config['tag'] + '. Was the tag even signed?')
-                return True
+            except git.exc.GitCommandError:
+                if hasattr(tag.tag, 'message') and '-----BEGIN PGP SIGNATURE-----' in tag.tag.message:
+                    self.set_substep_status('3.3', 'FAIL',
+                        'Invalid signature for tag ' + self.config['tag'])
+                    return True
+                self.set_substep_status('3.3', 'TODO',
+                    'Adding signature for unsigned tag: ' + self.config['tag'])
             else:
                 self.set_substep_status('3.3', 'OK',
-                    'Good signature for existing tag ' + self.config['tag'])
+                    'Good signature for existing tag: ' + self.config['tag'])
         else:
             self.set_substep_status('3.3', 'TODO',
                 'Creating signed tag ' + self.config['tag'] + ' and pushing it to the remote git')
@@ -753,21 +757,37 @@ class GPGit(object):
     def step_3_3(self):
         print(colors.BLUE + ':: ' + colors.RESET + 'Creating, signing and pushing tag', self.config['tag'])
 
+        # Check if tag needs to be recreated
+        force = False
+        ref = 'HEAD'
+        date = ''
+        tag = self.repo.tag('refs/tags/' + self.config['tag'])
+        if tag in self.repo.tags:
+            force = True
+            ref = self.config['tag']
+            if hasattr(tag.tag, 'message'):
+                self.config['message'] = tag.tag.message
+            if hasattr(tag.tag, 'tagged_date'):
+                date = str(tag.tag.tagged_date)
+
         # Create a signed tag
         newtag = None
-        try:
-            newtag = self.repo.create_tag(
-                self.config['tag'],
-                message=self.config['message'],
-                sign=True,
-                local_user=self.config['fingerprint'])
-        except:
-            self.error("Signing tag failed")
-            return True
+        with self.repo.git.custom_environment(GIT_COMMITTER_DATE=date):
+            try:
+                newtag = self.repo.create_tag(
+                    self.config['tag'],
+                    ref = ref,
+                    message = self.config['message'],
+                    sign = True,
+                    local_user = self.config['fingerprint'],
+                    force = force)
+            except git.exc.GitCommandError:
+                self.error("Signing tag failed.")
+                return True
 
         # Push tag
         try:
-            self.repo.remotes.origin.push(newtag)
+            self.repo.remotes.origin.push(newtag, force = force)
         except:
            self.error("Pushing tag failed")
            return True
