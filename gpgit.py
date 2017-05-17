@@ -95,9 +95,8 @@ class Step1(Step):
 
         # Initialize parent
         Step.__init__(self, 'Generate a new GPG key',
-            Substep('Strong, unique, secret passphrase', self.substep1),
-            Substep('Key generation', self.substep2),
-            )
+                      Substep('Strong, unique, secret passphrase', self.substep1),
+                      Substep('Key generation', self.substep2))
 
     def analyze(self):
         # Get private keys
@@ -144,9 +143,7 @@ class Step1(Step):
         if self.config['fingerprint'] is not None:
             # Check if the full fingerprint is used
             if len(self.config['fingerprint']) != 40:
-                self.setstatus(2, 'FAIL', 'Please specify the full fingerprint',
-                                        'GPG ID: ' + self.config['fingerprint'])
-                return True
+                return 'Please specify the full fingerprint. GPG ID: ' + self.config['fingerprint']
 
             # Find selected key
             for key in private_keys:
@@ -156,23 +153,17 @@ class Step1(Step):
 
             # Check if key is available in keyring
             if gpgkey is None:
-                self.setstatus(2, 'FAIL', 'Selected key is not available in keyring',
-                                        'GPG ID: ' + self.config['fingerprint'])
-                return True
+                return 'Selected key not found in keyring. GPG ID: ' + self.config['fingerprint']
 
             # Check key algorithm security
             if gpgkey['algo'] not in self.gpgSecureAlgorithmIDs \
                     or gpgkey['length'] not in self.gpgSecureKeyLength:
-                self.setstatus(2, 'FAIL', 'Insecure key algorithm used: '
-                                        + gpgkey['algoname'] + ' ' + gpgkey['length'],
-                                        'GPG ID: ' + self.config['fingerprint'])
-                return True
+                return 'Insecure key algorithm used: ' + gpgkey['algoname'] + ' ' \
+                       + gpgkey['length'] + ' GPG ID: ' + self.config['fingerprint']
 
             # Check key algorithm security
             if gpgkey['trust'] == 'r':
-                self.setstatus(2, 'FAIL', 'Selected key is revoked',
-                               'GPG ID: ' + self.config['fingerprint'])
-                return True
+                return 'Selected key is revoked. GPG ID: ' + self.config['fingerprint']
 
             # Use selected key
             self.setstatus(2, 'OK', 'Key already generated',
@@ -328,8 +319,7 @@ class Step3(Step):
             except git.exc.GitCommandError:
                 if hasattr(tag.tag, 'message') \
                         and '-----BEGIN PGP SIGNATURE-----' in tag.tag.message:
-                    self.setstatus(3, 'FAIL', 'Invalid signature for tag ' + self.config['tag'])
-                    return True
+                    return 'Invalid signature for tag ' + self.config['tag']
                 self.setstatus(3, 'TODO', 'Signing existing tag: ' + self.config['tag'])
             else:
                 self.setstatus(3, 'OK', 'Good signature for existing tag: ' + self.config['tag'])
@@ -424,9 +414,7 @@ class Step4(Step):
             if os.path.isfile(tarfilepath):
                 # Check if tag exists
                 if self.repo.tag('refs/tags/' + self.config['tag']) not in self.repo.tags:
-                    self.setstatus(1, 'FAIL', 'Archive exists but no corresponding tag!?',
-                                   tarfilepath)
-                    return True
+                    return 'Archive exists without corresponding tag: ' + tarfile
 
                 # Verify existing archive
                 try:
@@ -435,13 +423,9 @@ class Step4(Step):
                         self.repo.archive(cmptar, treeish=self.config['tag'],
                                           prefix=filename + '/', format='tar')
                         if not cmptar.equal():
-                            self.setstatus(1, 'FAIL', 'Existing archive differs from local source',
-                                           tarfilepath)
-                            return True
+                            return 'Existing archive differs from local source:' + tarfilepath
                 except lzma.LZMAError:
-                    self.setstatus(1, 'FAIL', 'Archive not in ' + tar + ' format',
-                                            tarfilepath)
-                    return True
+                    return 'Archive not in ' + tar + ' format: ' + tarfilepath
 
                 # Successfully verified
                 self.setstatus(1, 'OK', 'Existing archive(s) verified successfully',
@@ -463,9 +447,7 @@ class Step4(Step):
             if os.path.isfile(sigfilepath):
                 # Check if signature for tar exists
                 if not os.path.isfile(tarfilepath):
-                    self.setstatus(2, 'FAIL', 'Signature found without corresponding archive',
-                                   sigfilepath)
-                    return True
+                    return 'Signature found without corresponding archive: ' + sigfilepath
 
                 # Verify signature
                 with open(sigfilepath, "rb") as sig:
@@ -476,9 +458,8 @@ class Step4(Step):
                             or verified.fingerprint != self.config['fingerprint']:
                         if verified.trust_text is None:
                             verified.trust_text = 'Invalid signature'
-                        self.setstatus(2, 'FAIL', 'Signature verification failed',
-                                       sigfilepath, 'Trust level: ' + verified.trust_text)
-                        return True
+                        return 'Signature verification failed: ' + sigfilepath \
+                               + ' Trust level: ' + verified.trust_text
 
                 # Successfully verified
                 self.setstatus(2, 'OK', 'Existing signature(s) verified successfully')
@@ -503,9 +484,7 @@ class Step4(Step):
                 if os.path.isfile(shafilepath):
                     # Check if tar for hash exists
                     if not os.path.isfile(tarfilepath):
-                        self.setstatus(3, 'FAIL', 'Message digest found without ' \
-                                       + 'corresponding archive', shafilepath)
-                        return True
+                        return 'Message digest found without corresponding archive: ' + shafilepath
 
                     # Read hash and filename
                     with open(shafilepath, "r") as f:
@@ -515,8 +494,7 @@ class Step4(Step):
                     if len(hashinfo) != 2 \
                             or self.hash[sha][tarfile] != hashinfo[0] \
                             or os.path.basename(hashinfo[1]) != tarfile:
-                        self.setstatus(3, 'FAIL', 'Message digest verification failed', shafilepath)
-                        return True
+                        return 'Message digest verification failed: ' + shafilepath
 
                     # Successfully verified
                     self.setstatus(3, 'OK', 'Existing message digest(s) verified successfully')
@@ -712,9 +690,8 @@ class GPGit(object):
 
     colormap = {
         'OK': colors.GREEN,
-        'FAIL': colors.RED,
         'INFO': colors.YELLOW,
-        'WARN': colors.YELLOW,
+        'WARN': colors.RED,
         'TODO': colors.MAGENTA,
         'NOTE': colors.BLUE,
         }
@@ -809,7 +786,6 @@ class GPGit(object):
 
     def analyze(self):
         for i, step in enumerate(self.Steps, start=1):
-            # TODO remove return True in analyze functions to only abort on critical errors
             print('Analyzing step', i, 'of', len(self.Steps), end='...', flush=True)
             err_msg = step.analyze()
             if err_msg:
