@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+"""A python script that automates the process of signing Git sources via GPG."""
 from __future__ import print_function
 import os
 import sys
@@ -17,11 +18,16 @@ import gnupg
 
 
 class TimeoutException(Exception):
+    """Timeout exception for time_limit function"""
     pass
 
 @contextmanager
 def time_limit(seconds):
+    """Timeout helper function. Can be used as follows: with time_limit(seconds).
+    Nested calls with multiple time_limits will not work!
+    """
     def signal_handler(signum, frame):
+        #pylint: disable=unused-argument
         raise TimeoutException
     signal.signal(signal.SIGALRM, signal_handler)
     signal.alarm(seconds)
@@ -30,7 +36,7 @@ def time_limit(seconds):
     finally:
         signal.alarm(0)
 
-class colors(object):
+class Colors(object):
     RED = "\033[1;31m"
     BLUE = "\033[1;34m"
     CYAN = "\033[1;36m"
@@ -42,7 +48,22 @@ class colors(object):
     REVERSE = "\033[;7m"
     RESET = "\033[0;0m"
 
+class Streamcmp(object):
+    """Helper class to compare a stream without writing"""
+    def __init__(self, strm):
+        self.__strm = strm
+        self.__equal = True
+    def write(self, data):
+        """Compare written data with input stream reading"""
+        if data != self.__strm.read(len(data)):
+            self.__equal = False
+    def equal(self):
+        """Check if both streams match completely."""
+        if self.__strm.read(1) == b'' and self.__equal:
+            return True
+
 class Substep(object):
+    """Contains name and execution functions of a Step"""
     def __init__(self, name, funct):
         # Params
         self.name = name
@@ -54,6 +75,7 @@ class Substep(object):
         self.infos = []
 
 class Step(object):
+    """Holds variable number of substeps. Step1-5 inherit from this class."""
     def __init__(self, name, *args):
         # Params
         self.name = name
@@ -61,11 +83,13 @@ class Step(object):
         for substep in args:
             self.substeps += [substep]
 
-    def print_exec(self, msg):
-        # TODO only with verbose?
-        print(colors.BLUE + ':: ' + colors.RESET + msg)
+    @staticmethod
+    def verbose(*args):
+        """Verbose print used for substep execution"""
+        print(Colors.BLUE + '::' + Colors.RESET, *args)
 
     def setstatus(self, subnumber, status, msg, *args):
+        """Set variables of the substeps in a batch"""
         if subnumber > 0:
             self.substeps[subnumber - 1].status = status
             self.substeps[subnumber - 1].msg = msg
@@ -74,6 +98,7 @@ class Step(object):
                 self.substeps[subnumber - 1].infos += [info]
 
 class Step1(Step):
+    """Generate a new GPG key"""
     # RFC4880 9.1. Public-Key Algorithms
     gpgAlgorithmIDs = {
         '1': 'RSA',
@@ -100,6 +125,7 @@ class Step1(Step):
                       Substep('Key generation', self.substep2))
 
     def analyze(self):
+        """Analyze: Generate a new GPG key"""
         # Get private keys
         private_keys = self.gpg.list_keys(True)
         for key in private_keys:
@@ -184,14 +210,13 @@ class Step1(Step):
             # Warn about strong passphrase
             self.setstatus(1, 'TODO', 'Please use a strong, unique, secret passphrase')
 
-    # Strong, unique, secret passphrase
     def substep1(self):
-        self.print_exec('More infos:',
-                        'https://github.com/NicoHood/gpgit#11-strong-unique-secret-passphrase')
+        """Strong, unique, secret passphrase"""
+        self.verbose('More infos:',
+                     'https://github.com/NicoHood/gpgit#11-strong-unique-secret-passphrase')
 
-    # Key generation
     def substep2(self):
-        return
+        """Key generation"""
         # Generate RSA key command
         # https://www.gnupg.org/documentation/manuals/gnupg/Unattended-GPG-key-generation.html
         input_data = """
@@ -210,15 +235,16 @@ class Step1(Step):
         """.format(self.config['username'], self.config['email'])
 
         # Execute gpg key generation command
-        self.print_exec('We need to generate a lot of random bytes. It is a good idea to perform')
-        self.print_exec('some other action (type on the keyboard, move the mouse, utilize the')
-        self.print_exec('disks) during the prime generation; this gives the random number')
-        self.print_exec('generator a better chance to gain enough entropy.')
+        self.verbose('We need to generate a lot of random bytes. It is a good idea to perform')
+        self.verbose('some other action (type on the keyboard, move the mouse, utilize the')
+        self.verbose('disks) during the prime generation; this gives the random number')
+        self.verbose('generator a better chance to gain enough entropy.')
         self.config['fingerprint'] = str(self.gpg.gen_key(input_data))
-        self.print_exec('Key generation finished. You new fingerprint is: '
-                        + self.config['fingerprint'])
+        self.verbose('Key generation finished. You new fingerprint is: '
+                     + self.config['fingerprint'])
 
 class Step2(Step):
+    """Publish your GPG key"""
     def __init__(self, config, gpg):
         # Params
         self.config = config
@@ -231,6 +257,7 @@ class Step2(Step):
                       Substep('Associate GPG key with Github', self.substep3))
 
     def analyze(self):
+        """Analyze: Publish your GPG key"""
         # Add publish note
         if self.config['fingerprint'] is None:
             self.setstatus(2, 'TODO', 'Please publish the full GPG fingerprint on the project page')
@@ -261,21 +288,22 @@ class Step2(Step):
         # Upload key to keyserver
         self.setstatus(1, 'TODO', 'Publishing key on ' + self.config['keyserver'])
 
-    # Send GPG key to a key server
     def substep1(self):
-        self.print_exec('Publishing key ' + self.config['fingerprint'])
+        """Send GPG key to a key server"""
+        self.verbose('Publishing key ' + self.config['fingerprint'])
         self.gpg.send_keys(self.config['keyserver'], self.config['fingerprint'])
 
-    # Publish your full fingerprint
     def substep2(self):
+        """Publish your full fingerprint"""
         print('Your fingerprint is:', self.config['fingerprint'])
 
-    # Associate GPG key with Github
     def substep3(self):
+        """Associate GPG key with Github"""
         #TODO
         pass
 
 class Step3(Step):
+    """Use Git with GPG"""
     def __init__(self, config, repo):
         # Params
         self.config = config
@@ -288,6 +316,7 @@ class Step3(Step):
                       Substep('Create signed Git tag', self.substep3))
 
     def analyze(self):
+        """Analyze: Use Git with GPG"""
         # Check if git was already configured with the gpg key
         if self.config['signingkey'] != self.config['fingerprint'] \
                 or self.config['fingerprint'] is None:
@@ -300,7 +329,7 @@ class Step3(Step):
             self.setstatus(1, 'OK', 'Git already configured with your GPG key')
 
         # Check commit signing
-        if self.config['gpgsign'] is True:
+        if self.config['gpgsign'].lower() == 'true':
             self.setstatus(2, 'OK', 'Commit signing already enabled')
         else:
             self.setstatus(2, 'TODO', 'Enabling ' + self.config['config_level'] + ' commit signing')
@@ -328,21 +357,23 @@ class Step3(Step):
             self.setstatus(3, 'TODO', 'Creating signed tag ' + self.config['tag']
                            + ' and pushing it to the remote git')
 
-    # Configure git GPG key
     def substep1(self):
+        """Configure git GPG key"""
         # Configure git signingkey settings
-        with self.repo.config_writer(config_level=self.config['config_level']) as cw:
-            cw.set("user", "signingkey", self.config['fingerprint'])
+        with self.repo.config_writer(config_level=self.config['config_level']) as cfgwriter:
+            cfgwriter.set("user", "signingkey", self.config['fingerprint'])
 
-    # Enable commit signing
     def substep2(self):
+        """Enable commit signing"""
         # Configure git signingkey settings
-        with self.repo.config_writer(config_level=self.config['config_level']) as cw:
-            cw.set("commit", "gpgsign", True)
+        # TODO not working for repository (local) setting as config group does not yet exist
+        # TODO also fix above?
+        with self.repo.config_writer(config_level=self.config['config_level']) as cfgwriter:
+            cfgwriter.set("commit", "gpgsign", True)
 
-    # Create signed git tag
     def substep3(self):
-        self.print_exec('Creating, signing and pushing tag ' + self.config['tag'])
+        """Create signed Git tag"""
+        self.verbose('Creating, signing and pushing tag ' + self.config['tag'])
 
         # Check if tag needs to be recreated
         force = False
@@ -376,6 +407,7 @@ class Step3(Step):
         self.repo.remotes.origin.push(newtag, force=force)
 
 class Step4(Step):
+    """Create a signed release archive"""
     compressionAlgorithms = {
         'gz': gzip,
         'gzip': gzip,
@@ -403,6 +435,7 @@ class Step4(Step):
                       Substep('Create the message digest', self.substep3))
 
     def analyze(self):
+        """Analyze: Create a signed release archive"""
         # Check all compression option tar files
         filename = self.config['project'] + '-' + self.config['tag']
         for tar in self.config['tar']:
@@ -420,7 +453,7 @@ class Step4(Step):
                 # Verify existing archive
                 try:
                     with self.compressionAlgorithms[tar].open(tarfilepath, "rb") as tarstream:
-                        cmptar = strmcmp(tarstream)
+                        cmptar = Streamcmp(tarstream)
                         self.repo.archive(cmptar, treeish=self.config['tag'],
                                           prefix=filename + '/', format='tar')
                         if not cmptar.equal():
@@ -476,8 +509,8 @@ class Step4(Step):
                 # Calculate hash of tarfile
                 if os.path.isfile(tarfilepath):
                     hash_sha = hashlib.new(sha)
-                    with open(tarfilepath, "rb") as f:
-                        for chunk in iter(lambda: f.read(4096), b""):
+                    with open(tarfilepath, "rb") as filestream:
+                        for chunk in iter(lambda: filestream.read(4096), b""):
                             hash_sha.update(chunk)
                     self.hash[sha][tarfile] = hash_sha.hexdigest()
 
@@ -488,8 +521,8 @@ class Step4(Step):
                         return 'Message digest found without corresponding archive: ' + shafilepath
 
                     # Read hash and filename
-                    with open(shafilepath, "r") as f:
-                        hashinfo = f.readline().split()
+                    with open(shafilepath, "r") as filestream:
+                        hashinfo = filestream.readline().split()
 
                     # Verify hash
                     if len(hashinfo) != 2 \
@@ -503,9 +536,8 @@ class Step4(Step):
                     self.setstatus(3, 'TODO', 'Creating message digest(s) for archive(s): '
                                    + ', '.join(str(x) for x in self.config['sha']))
 
-
-    # Create compressed archive
     def substep1(self):
+        """Create compressed archive"""
         # Check all compression option tar files
         filename = self.config['project'] + '-' + self.config['tag']
         for tar in self.config['tar']:
@@ -515,13 +547,13 @@ class Step4(Step):
 
             # Create compressed tar files if it does not exist
             if not os.path.isfile(tarfilepath):
-                self.print_exec('Creating ' + tarfilepath)
+                self.verbose('Creating ' + tarfilepath)
                 with self.compressionAlgorithms[tar].open(tarfilepath, 'wb') as tarstream:
                     self.repo.archive(tarstream, treeish=self.config['tag'], prefix=filename + '/',
                                       format='tar')
 
-    # Sign the sources
     def substep2(self):
+        """Sign the archive"""
         # Check all compression option tar files
         filename = self.config['project'] + '-' + self.config['tag']
         for tar in self.config['tar']:
@@ -539,7 +571,7 @@ class Step4(Step):
             if not os.path.isfile(sigfilepath):
                 # Sign tar file
                 with open(tarfilepath, 'rb') as tarstream:
-                    self.print_exec('Creating ' + sigfilepath)
+                    self.verbose('Creating ' + sigfilepath)
                     signed_data = self.gpg.sign_file(
                         tarstream,
                         keyid=self.config['fingerprint'],
@@ -553,8 +585,8 @@ class Step4(Step):
                     # TODO https://tools.ietf.org/html/rfc4880#section-9.4
                     #print(signed_data.hash_algo) -> 8 -> SHA256
 
-    # Create the message digest
     def substep3(self):
+        """Create the message digest"""
         # Check all compression option tar files
         filename = self.config['project'] + '-' + self.config['tag']
         for tar in self.config['tar']:
@@ -577,7 +609,7 @@ class Step4(Step):
                         self.hash[sha][tarfile] = hash_sha.hexdigest()
 
                     # Write cached hash and filename
-                    self.print_exec('Creating ' + shafilepath)
+                    self.verbose('Creating ' + shafilepath)
                     with open(shafilepath, "w") as filestream:
                         filestream.write(self.hash[sha][tarfile] + '  ' + tarfile)
 
@@ -610,8 +642,7 @@ class Step5(Step):
                 try:
                     self.config['token'] = input('Enter Github token to access release API: ')
                 except KeyboardInterrupt:
-                    print()
-                    gpgit.error('Aborted by user')
+                    return 'Aborted by user'
 
             # Create Github API instance
             self.github = Github(self.config['token'])
@@ -668,35 +699,21 @@ class Step5(Step):
         # Upload assets
         for asset in self.newassets:
             assetpath = os.path.join(self.config['output'], asset)
-            self.print_exec('Uploading ' + assetpath)
+            self.verbose('Uploading ' + assetpath)
             # TODO not functional
             # see https://github.com/PyGithub/PyGithub/pull/525#issuecomment-301132357
-            # TODO change label and mime type
-            self.release.upload_asset(assetpath, "Testlabel", "application/x-xz")
-
-class strmcmp(object):
-    """Helper class to compare a stream without writing"""
-    def __init__(self, strmcmp):
-        self.strmcmp = strmcmp
-        self.__equal = True
-    def write(self, data):
-        if data != self.strmcmp.read(len(data)):
-            self.__equal = False
-    def equal(self):
-        # Check end of file too
-        if self.strmcmp.read(1) == b'' and self.__equal:
-            return True
+            self.release.upload_asset(assetpath)
 
 class GPGit(object):
     """Class that manages GPGit steps and substeps analysis, print and execution."""
     version = '2.0.0'
 
     colormap = {
-        'OK': colors.GREEN,
-        'INFO': colors.YELLOW,
-        'WARN': colors.RED,
-        'TODO': colors.MAGENTA,
-        'NOTE': colors.BLUE,
+        'OK': Colors.GREEN,
+        'INFO': Colors.YELLOW,
+        'WARN': Colors.RED,
+        'TODO': Colors.MAGENTA,
+        'NOTE': Colors.BLUE,
         }
 
     def __init__(self, config):
@@ -734,11 +751,7 @@ class GPGit(object):
 
             # Check if gitconfig provides a setting
             if self.config[cfg[0]] is None and reader.has_option(cfg[1], cfg[2]):
-                val = reader.get_value(cfg[1], cfg[2])
-                # TODO reading wrong values for commit.gpgsign, type() was working
-                if isinstance(val, int):
-                    val = str(val)
-                self.config[cfg[0]] = val
+                self.config[cfg[0]] = str(reader.get_value(cfg[1], cfg[2]))
 
         # Get default git signing key
         if self.config['fingerprint'] is None and self.config['signingkey']:
@@ -803,15 +816,15 @@ class GPGit(object):
         error = False
         for i, step in enumerate(self.steps, start=1):
             # Sample: "1. Generate a new GPG key"
-            print(colors.BOLD + str(i) + '.', step.name + colors.RESET)
+            print(Colors.BOLD + str(i) + '.', step.name + Colors.RESET)
             for j, substep in enumerate(step.substeps, start=1):
                 # Sample: "1.2 [ OK ] Key already generated"
-                print(colors.BOLD + '  ' + str(i) + '.' + str(j), self.colormap[substep.status]
-                      + '[' + substep.status.center(4) + ']' + colors.RESET, substep.msg)
+                print(Colors.BOLD + '  ' + str(i) + '.' + str(j), self.colormap[substep.status]
+                      + '[' + substep.status.center(4) + ']' + Colors.RESET, substep.msg)
 
                 # Sample: " -> [INFO] GPG key: [rsa4096] 97312D5EB9D7AE7D0BD4307351DAE9B7C1AE9161"
                 for info in substep.infos:
-                    print(colors.BOLD + '   -> ' + colors.YELLOW + '[INFO]' + colors.RESET, info)
+                    print(Colors.BOLD + '   -> ' + Colors.YELLOW + '[INFO]' + Colors.RESET, info)
 
                 # Check for error or todos
                 if substep.status == 'FAIL':
@@ -830,32 +843,32 @@ class GPGit(object):
         for i, step in enumerate(self.steps, start=1):
             # Run all substeps if enabled
             # Sample: "==> 2. Publish your key"
-            print(colors.GREEN + "==>", colors.BOLD + str(i) + '.', step.name + colors.RESET)
+            print(Colors.GREEN + "==>", Colors.BOLD + str(i) + '.', step.name + Colors.RESET)
             for j, substep in enumerate(step.substeps, start=1):
                 # Run selected step function if activated
                 if substep.status == 'TODO':
                     # Sample: "  -> Will associate your GPG key with Github"
-                    print(colors.BLUE + "  ->", colors.BOLD + str(i) +'.' + str(j),
-                          substep.name + colors.RESET)
+                    print(Colors.BLUE + "  ->", Colors.BOLD + str(i) +'.' + str(j),
+                          substep.name + Colors.RESET)
                     err_msg = substep.funct()
                     if err_msg:
                         return err_msg
 
-    def error(self, *args):
+    @staticmethod
+    def error(*args):
         """Print error and exit program. An optional integer param specifies the exit code."""
         status = 1
         for msg in args:
-            if type(msg) == int:
+            if isinstance(msg, int):
                 status = msg
             else:
-                print(colors.RED + '==> Error:' + colors.RESET, msg)
+                print(Colors.RED + '==> Error:' + Colors.RESET, msg)
         sys.exit(status)
-
 
 def main():
     """Main entry point that parses configs and creates GPGit instance."""
     parser = argparse.ArgumentParser(description='A python script that automates the process of ' \
-                                     + 'signing git sources via GPG.')
+                                     + 'signing Git sources via GPG.')
     parser.add_argument('tag', action='store', help='Tagname')
     parser.add_argument('-v', '--version', action='version', version='GPGit ' + GPGit.version)
     parser.add_argument('-m', '--message', action='store', help='tag message')
@@ -913,7 +926,7 @@ def main():
     elif ret < 0:
         gpgit.error('Exiting due to previous errors')
     else:
-        print(colors.GREEN + "==>", colors.RESET, 'Everything looks okay. Nothing to do.')
+        print(Colors.GREEN + "==>", Colors.RESET, 'Everything looks okay. Nothing to do.')
 
 if __name__ == '__main__':
     sys.exit(main())
