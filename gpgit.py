@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-"""A python script that automates the process of signing Git sources via GPG."""
+"""A Python script that automates the process of signing Git sources via GPG."""
 from __future__ import print_function
 import os
 import sys
@@ -37,16 +37,16 @@ def time_limit(seconds):
         signal.alarm(0)
 
 class Colors(object):
-    RED = "\033[1;31m"
-    BLUE = "\033[1;34m"
-    CYAN = "\033[1;36m"
-    MAGENTA = "\033[1;35m"
-    YELLOW = "\033[1;33m"
-    GREEN = "\033[1;32m"
+    RED = '\033[1;31m'
+    BLUE = '\033[1;34m'
+    CYAN = '\033[1;36m'
+    MAGENTA = '\033[1;35m'
+    YELLOW = '\033[1;33m'
+    GREEN = '\033[1;32m'
     UNDERLINE = '\033[4m'
-    BOLD = "\033[;1m"
-    REVERSE = "\033[;7m"
-    RESET = "\033[0;0m"
+    BOLD = '\033[;1m'
+    REVERSE = '\033[;7m'
+    RESET = '\033[0;0m'
 
 class Streamcmp(object):
     """Helper class to compare a stream without writing"""
@@ -71,7 +71,7 @@ class Substep(object):
 
         # Default values
         self.status = 'FAIL'
-        self.msg = 'Aborting due to previous errors'
+        self.msg = 'Internal error'
         self.infos = []
 
 class Step(object):
@@ -712,6 +712,7 @@ class GPGit(object):
         'OK': Colors.GREEN,
         'INFO': Colors.YELLOW,
         'WARN': Colors.RED,
+        'FAIL': Colors.RED,
         'TODO': Colors.MAGENTA,
         'NOTE': Colors.BLUE,
         }
@@ -843,12 +844,12 @@ class GPGit(object):
         for i, step in enumerate(self.steps, start=1):
             # Run all substeps if enabled
             # Sample: "==> 2. Publish your key"
-            print(Colors.GREEN + "==>", Colors.BOLD + str(i) + '.', step.name + Colors.RESET)
+            print(Colors.GREEN + '==>', Colors.BOLD + str(i) + '.', step.name + Colors.RESET)
             for j, substep in enumerate(step.substeps, start=1):
                 # Run selected step function if activated
                 if substep.status == 'TODO':
                     # Sample: "  -> Will associate your GPG key with Github"
-                    print(Colors.BLUE + "  ->", Colors.BOLD + str(i) +'.' + str(j),
+                    print(Colors.BLUE + '  ->', Colors.BOLD + str(i) +'.' + str(j),
                           substep.name + Colors.RESET)
                     err_msg = substep.funct()
                     if err_msg:
@@ -867,7 +868,7 @@ class GPGit(object):
 
 def main():
     """Main entry point that parses configs and creates GPGit instance."""
-    parser = argparse.ArgumentParser(description='A python script that automates the process of ' \
+    parser = argparse.ArgumentParser(description='A Python script that automates the process of ' \
                                      + 'signing Git sources via GPG.')
     parser.add_argument('tag', action='store', help='Tagname')
     parser.add_argument('-v', '--version', action='version', version='GPGit ' + GPGit.version)
@@ -926,7 +927,7 @@ def main():
     elif ret < 0:
         gpgit.error('Exiting due to previous errors')
     else:
-        print(Colors.GREEN + "==>", Colors.RESET, 'Everything looks okay. Nothing to do.')
+        print(Colors.GREEN + '==>', Colors.RESET, 'Everything looks okay. Nothing to do.')
 
 if __name__ == '__main__':
     sys.exit(main())
