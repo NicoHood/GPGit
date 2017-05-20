@@ -9,31 +9,32 @@ As we all know, today more than ever before, it is crucial to be able to trust o
 * Create and/or use a **[4096-bit RSA keypair][1]** for the file signing
 * Use a **[strong, unique, secret passphrase][2]** for the key
 * Upload the public key to a **[key server][3]** and **[publish the full fingerprint][4]**
-* **Sign** every new Git **[commit][5]** and **[tag][6]**
-* Create **[signed][7], [compressed][8]** (xz --best) release **archives**
-* Upload a **[strong message digest][9]** (sha512) of the archive
-* Configure **[HTTPS][10]** for your download server
+* **[Sign][5]** every new Git **[commit][6]** and **[tag][7]**
+* Create **[signed][8], [compressed][9]** (xz --best) release **archives**
+* Upload a **[strong message digest][10]** (sha512) of the archive
+* Configure **[HTTPS][11]** for your download server
 
 ### GPGit
-[GPGit][11] is meant to bring GPG to the masses. It is not only a Python script that automates the process of [creating new signed Git releases with GPG][12] but also comes with a [step-by-step readme guide][13] for learning how to use GPG. GPGit integrates perfectly with the [Github Release API][14] for uploading.
+[GPGit][12] is meant to bring GPG to the masses. It is not only a Python script that automates the process of [creating new signed Git releases with GPG][13] but also comes with a [step-by-step readme guide][14] for learning how to use GPG. GPGit integrates perfectly with the [Github Release API][15] for uploading.
 
-The security status of Linux projects will be tracked in the [Linux Security Database][15]. Thanks for your help in making Linux projects more secure by using GPG signatures.
+The security status of Linux projects will be tracked in the [Linux Security Database][16]. Thanks for your help in making Linux projects more secure by using GPG signatures.
 
 [1]: https://github.com/NicoHood/gpgit#12-key-generation
 [2]: https://github.com/NicoHood/gpgit#11-strong-unique-secret-passphrase
 [3]: https://github.com/NicoHood/gpgit#21-send-key-to-a-key-server
 [4]: https://github.com/NicoHood/gpgit#22-publish-full-fingerprint
-[5]: https://github.com/NicoHood/gpgit#32-commit-signing
-[6]: https://github.com/NicoHood/gpgit#33-create-signed-git-tag
-[7]: https://github.com/NicoHood/gpgit#43-sign-the-sources
-[8]: https://github.com/NicoHood/gpgit#41-create-compressed-archive
-[9]: https://github.com/NicoHood/gpgit#42-create-the-message-digest
-[10]: https://github.com/NicoHood/gpgit#52-configure-https-for-your-download-server
-[11]: https://github.com/NicoHood/gpgit
-[12]: https://github.com/NicoHood/gpgit#script-usage
-[13]: https://github.com/NicoHood/gpgit#gpg-quick-start-guide
-[14]: https://developer.github.com/v3/repos/releases/
-[15]: https://github.com/NicoHood/LSD
+[5]: https://github.com/NicoHood/gpgit#31-configure-git-gpg-key
+[6]: https://github.com/NicoHood/gpgit#32-commit-signing
+[7]: https://github.com/NicoHood/gpgit#33-create-signed-git-tag
+[8]: https://github.com/NicoHood/gpgit#42-sign-the-archive
+[9]: https://github.com/NicoHood/gpgit#41-create-compressed-archive
+[10]: https://github.com/NicoHood/gpgit#43-create-the-message-digest
+[11]: https://github.com/NicoHood/gpgit#51-configure-https-download-server
+[12]: https://github.com/NicoHood/gpgit
+[13]: https://github.com/NicoHood/gpgit#script-usage
+[14]: https://github.com/NicoHood/gpgit#gpg-quick-start-guide
+[15]: https://github.com/NicoHood/gpgit#52-upload-to-github
+[16]: https://github.com/NicoHood/LSD
 
 ## Index
 * [Introduction](#introduction)
@@ -46,10 +47,7 @@ The security status of Linux projects will be tracked in the [Linux Security Dat
 
 ## Installation
 ### ArchLinux
-You can install GPGit from [AUR](https://aur.archlinux.org/packages/gpgit/).
-Make sure to [build in a clean chroot](https://wiki.archlinux.org/index.php/DeveloperWiki:Building_in_a_Clean_Chroot).
-Please give the package a vote so I can move it to the official ArchLinux
-[community] repository for even simpler installation.
+You can install GPGit from [AUR](https://aur.archlinux.org/packages/gpgit/). Make sure to [build in a clean chroot](https://wiki.archlinux.org/index.php/DeveloperWiki:Building_in_a_Clean_Chroot). Please give the package a vote so I can move it to the official ArchLinux [community] repository for even simpler installation.
 
 ### Ubuntu/Debian/Other
 GPGit dependencies can be easily installed via [pip](https://pypi.python.org/pypi/pip).
@@ -57,7 +55,7 @@ GPGit dependencies can be easily installed via [pip](https://pypi.python.org/pyp
 ```bash
 # Install dependencies
 sudo apt-get install python3 python3-pip gnupg2 git
-VERSION=2.0.0
+VERSION=2.0.1
 
 # Download and verify source
 wget https://github.com/NicoHood/gpgit/releases/download/${VERSION}/gpgit-${VERSION}.tar.xz
@@ -157,17 +155,17 @@ GPGit guides you through 5 simple steps to get your software project ready with 
     1. [Send GPG key to a key server](#21-send-key-to-a-key-server)
     2. [Publish full fingerprint](#22-publish-full-fingerprint)
     3. [Associate GPG key with Github](#23-associate-gpg-key-with-github)    
-3. [Use Git with GPG](#3-usage-of-gpg-by-git)
+3. [Use Git with GPG](#3-use-git-with-gpg)
     1. [Configure Git GPG key](#31-configure-git-gpg-key)
     2. [Enble commit signing](#32-enable-commit-signing)
     3. [Create signed Git tag](#33-create-signed-git-tag)
-4. [Create a signed release archive](#4-creation-of-a-signed-compressed-release-archive)
+4. [Create a signed release archive](#4-create-a-signed-release-archive)
     1. [Create compressed archive](#41-create-compressed-archive)
-    2. [Sign the archive](#42-create-the-message-digest)
-    3. [Create the message digest](#43-sign-the-sources)
+    2. [Sign the archive](#42-sign-the-archive)
+    3. [Create the message digest](#43-create-the-message-digest)
 5. [Upload the release](#5-upload-the-release)
-    1. [Configure HTTPS download server](#51-github)
-    2. [Upload to Github](#52-configure-https-for-your-download-server)
+    1. [Configure HTTPS download server](#51-configure-https-download-server)
+    2. [Upload to Github](#52-upload-to-github)
 
 ### 1. Generate a new GPG key
 #### 1.1 Strong, unique, secret passphrase
@@ -318,7 +316,7 @@ sha512 gpgit-1.0.0.tar.xz > gpgit-1.0.0.tar.xz.sha512
 #### 5.2 Upload to Github
 Create a new "Github Release" to add additional data to the tag. Then drag the .tar.xz .sig and .sha512 files onto the release.
 
-The script also supports uploading to Github directly. Create a new Github token first and then follow the instructions of the script.
+The script also supports [uploading to Github](https://developer.github.com/v3/repos/releases/) directly. Create a new Github token first and then follow the instructions of the script.
 
 How to generate a Github token:
 * Go to ["Settings - Personal access tokens"](https://github.com/settings/tokens)
