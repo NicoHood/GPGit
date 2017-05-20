@@ -136,10 +136,10 @@ class Step1(Step):
 
         # Check if a fingerprint was selected/found
         if self.config['fingerprint'] is None:
-            # Check if gpg keys are available, but not yet configured
+            # Check if GPG keys are available, but not yet configured
             if private_keys:
                 print('\r\033[K', end='')
-                print("GPG seems to be already configured on your system but git is not.")
+                print("GPG seems to be already configured on your system but Git is not.")
                 print('Please select one of the existing keys below or generate a new one:')
                 print()
 
@@ -166,7 +166,7 @@ class Step1(Step):
                 if userinput != 0:
                     self.config['fingerprint'] = private_keys[userinput - 1]['fingerprint']
 
-        # Validate selected gpg key
+        # Validate selected GPG key
         if self.config['fingerprint'] is not None:
             # Check if the full fingerprint is used
             if len(self.config['fingerprint']) != 40:
@@ -234,7 +234,7 @@ class Step1(Step):
         %commit
         """.format(self.config['username'], self.config['email'])
 
-        # Execute gpg key generation command
+        # Execute GPG key generation command
         self.verbose('We need to generate a lot of random bytes. It is a good idea to perform')
         self.verbose('some other action (type on the keyboard, move the mouse, utilize the')
         self.verbose('disks) during the prime generation; this gives the random number')
@@ -317,10 +317,10 @@ class Step3(Step):
 
     def analyze(self):
         """Analyze: Use Git with GPG"""
-        # Check if git was already configured with the gpg key
+        # Check if Git was already configured with the GPG key
         if self.config['signingkey'] != self.config['fingerprint'] \
                 or self.config['fingerprint'] is None:
-            # Check if git was already configured with a different key
+            # Check if Git was already configured with a different key
             if self.config['signingkey'] is None:
                 self.config['config_level'] = 'global'
 
@@ -355,17 +355,17 @@ class Step3(Step):
                 self.setstatus(3, 'OK', 'Good signature for existing tag: ' + self.config['tag'])
         else:
             self.setstatus(3, 'TODO', 'Creating signed tag ' + self.config['tag']
-                           + ' and pushing it to the remote git')
+                           + ' and pushing it to the remote Git')
 
     def substep1(self):
-        """Configure git GPG key"""
-        # Configure git signingkey settings
+        """Configure Git GPG key"""
+        # Configure Git signingkey settings
         with self.repo.config_writer(config_level=self.config['config_level']) as cfgwriter:
             cfgwriter.set("user", "signingkey", self.config['fingerprint'])
 
     def substep2(self):
         """Enable commit signing"""
-        # Configure git signingkey settings
+        # Configure Git signingkey settings
         # TODO not working for repository (local) setting as config group does not yet exist
         # TODO also fix above?
         with self.repo.config_writer(config_level=self.config['config_level']) as cfgwriter:
@@ -578,7 +578,7 @@ class Step4(Step):
                         binary=bool(self.config['no_armor']),
                         detach=True,
                         output=sigfilepath,
-                        #digest_algo='SHA512' #TODO v 2.x gpg module
+                        #digest_algo='SHA512' #TODO v 2.x GPG module
                         )
                     if signed_data.fingerprint != self.config['fingerprint']:
                         return 'Signing data failed'
@@ -728,11 +728,11 @@ class GPGit(object):
         # Git
         self.repo = None
 
-        # Create git repository instance
+        # Create Git repository instance
         try:
             self.repo = Repo(self.config['git_dir'], search_parent_directories=True)
         except git.exc.InvalidGitRepositoryError:
-            self.error('Not inside a git directory: ' + self.config['git_dir'])
+            self.error('Not inside a Git directory: ' + self.config['git_dir'])
         reader = self.repo.config_reader()
 
         gitconfig = [
@@ -744,7 +744,7 @@ class GPGit(object):
             ['token', 'user', 'githubtoken']
         ]
 
-        # Read in git config values
+        # Read in Git config values
         for cfg in gitconfig:
             # Create not existing keys
             if cfg[0] not in self.config:
@@ -754,7 +754,7 @@ class GPGit(object):
             if self.config[cfg[0]] is None and reader.has_option(cfg[1], cfg[2]):
                 self.config[cfg[0]] = str(reader.get_value(cfg[1], cfg[2]))
 
-        # Get default git signing key
+        # Get default Git signing key
         if self.config['fingerprint'] is None and self.config['signingkey']:
             self.config['fingerprint'] = self.config['signingkey']
 
@@ -876,16 +876,16 @@ def main():
     parser.add_argument('-o', '--output', action='store',
                         help='output path of the archive, signature and message digest')
     parser.add_argument('-g', '--git-dir', action='store', default=os.getcwd(),
-                        help='path of the git project')
+                        help='path of the Git project')
     parser.add_argument('-f', '--fingerprint', action='store',
                         help='(full) GPG fingerprint to use for signing/verifying')
     parser.add_argument('-p', '--project', action='store',
                         help='name of the project, used for archive generation')
-    parser.add_argument('-e', '--email', action='store', help='email used for gpg key generation')
+    parser.add_argument('-e', '--email', action='store', help='email used for GPG key generation')
     parser.add_argument('-u', '--username', action='store',
-                        help='username used for gpg key generation')
+                        help='username used for GPG key generation')
     parser.add_argument('-k', '--keyserver', action='store', default='hkps://pgp.mit.edu',
-                        help='keyserver to use for up/downloading gpg keys')
+                        help='keyserver to use for up/downloading GPG keys')
     parser.add_argument('-n', '--no-github', action='store_false', dest='github',
                         help='disable Github API functionallity')
     parser.add_argument('-a', '--prerelease', action='store_true', help='Flag as Github prerelease')
