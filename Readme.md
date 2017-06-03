@@ -150,7 +150,7 @@ GPGit guides you through 5 simple steps to get your software project ready with 
     1. [Strong, unique, secret passphrase](#11-strong-unique-secret-passphrase)
     2. [Key generation](#12-key-generation)
 2. [Publish your key](#2-publish-your-key)
-    1. [Send GPG key to a key server](#21-send-key-to-a-key-server)
+    1. [Send GPG key to a key server](#21-send-gpg-key-to-a-key-server)
     2. [Publish full fingerprint](#22-publish-full-fingerprint)
     3. [Associate GPG key with Github](#23-associate-gpg-key-with-github)    
 3. [Use Git with GPG](#3-use-git-with-gpg)
@@ -222,10 +222,10 @@ gpg --keyserver hkps://pgp.mit.edu --send-keys <fingerprint>6
 gpg --keyserver hkps://pgp.mit.edu --recv-keys <fingerprint>
 ```
 
-### 2.3 Publish full fingerprint
+### 2.2 Publish full fingerprint
 To make it easy for everyone else to find your key it is crucial that you publish the [**full fingerprint**](https://lkml.org/lkml/2016/8/15/445) on a trusted platform, such as your website or Github. To give the key more trust other users can sign your key too. [[Read more]](https://wiki.debian.org/Keysigning)
 
-### 2.2 Associate GPG key with Github
+### 2.3 Associate GPG key with Github
 To make Github display your commits as "verified" you also need to add your public [GPG key to your Github profile](https://github.com/settings/keys). [[Read more]](https://help.github.com/articles/generating-a-gpg-key/)
 
 ```bash
