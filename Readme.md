@@ -40,7 +40,6 @@ The security status of Linux projects will be tracked in the [Linux Security Dat
 * [Introduction](#introduction)
 * [GPGit Documentation](#gpgit-documentation)
 * [GPG Quick Start Guide](#gpg-quick-start-guide)
-* [Appendix](#appendix)
 
 # GPGit Documentation
 
