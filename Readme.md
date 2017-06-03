@@ -2,7 +2,7 @@
 
 ![gpgit.png](img/gpgit.png)
 
-## Introduction
+# Introduction
 As we all know, today more than ever before, it is crucial to be able to trust our computing environments. One of the main difficulties that package maintainers of Linux distributions face, is the difficulty to verify the authenticity and the integrity of the source code. With GPG signatures it is possible for packagers to verify source code releases quickly and easily.
 
 #### Overview of the required tasks:
@@ -38,12 +38,11 @@ The security status of Linux projects will be tracked in the [Linux Security Dat
 
 ## Index
 * [Introduction](#introduction)
-* [Installation](#installation)
-* [Script Usage](#script-usage)
+* [GPGit Documentation](#gpgit-documentation)
 * [GPG Quick Start Guide](#gpg-quick-start-guide)
 * [Appendix](#appendix)
-* [Contact](#contact)
-* [Version History](#version-history)
+
+# GPGit Documentation
 
 ## Installation
 ### ArchLinux
@@ -144,7 +143,7 @@ Use ascii armored output of GPG (.asc instead of .sig) with "true|false". Defaul
 Specify the Github token for Github API release uploading.
 
 
-## GPG Quick Start Guide
+# GPG Quick Start Guide
 GPGit guides you through 5 simple steps to get your software project ready with GPG signatures. Further details can be found below.
 
 1. [Generate a new GPG key](#1-generate-a-new-gpg-key)
@@ -166,8 +165,8 @@ GPGit guides you through 5 simple steps to get your software project ready with 
     1. [Configure HTTPS download server](#51-configure-https-download-server)
     2. [Upload to Github](#52-upload-to-github)
 
-### 1. Generate a new GPG key
-#### 1.1 Strong, unique, secret passphrase
+## 1. Generate a new GPG key
+### 1.1 Strong, unique, secret passphrase
 Make sure that your new passphrase for the GPG key meets high security standards. If the passphrase/key is compromised all of your signatures are compromised too.
 
 Here are a few examples how to keep a passphrase strong but easy to remember:
@@ -176,7 +175,7 @@ Here are a few examples how to keep a passphrase strong but easy to remember:
 * [Keepass](http://keepass.info/)
 * [PasswordCard](https://www.passwordcard.org/en)
 
-#### 1.2 Key generation
+### 1.2 Key generation
 If you don't have a GPG key yet, create a new one first. You can use RSA (4096 bits) or ECC (Curve 25519) for a strong key. The latter one does currently not work with Github. You want to stay with RSA for now.
 
 **Make sure that your secret key is stored somewhere safe and use a unique strong password.**
@@ -210,9 +209,9 @@ The generated key has the fingerprint `3D6B9B41CCDC16D0E4A66AC461D68FF6279DF9A6`
 
 If you ever move your installation make sure to backup `~/.gnupg/` as it contains the **private key** and the **revocation certificate**. Handle it with care. [[Read more]](https://wiki.archlinux.org/index.php/GnuPG#Revoking_a_key)
 
-### 2. Publish your key
+## 2. Publish your key
 
-#### 2.1 Send GPG key to a key server
+### 2.1 Send GPG key to a key server
 To make the public key widely available, upload it to a key server. Now the user can get your key by requesting the fingerprint from the keyserver: [[Read more]](https://wiki.archlinux.org/index.php/GnuPG#Use_a_keyserver)
 
 ```bash
@@ -223,10 +222,10 @@ gpg --keyserver hkps://pgp.mit.edu --send-keys <fingerprint>6
 gpg --keyserver hkps://pgp.mit.edu --recv-keys <fingerprint>
 ```
 
-#### 2.3 Publish full fingerprint
+### 2.3 Publish full fingerprint
 To make it easy for everyone else to find your key it is crucial that you publish the [**full fingerprint**](https://lkml.org/lkml/2016/8/15/445) on a trusted platform, such as your website or Github. To give the key more trust other users can sign your key too. [[Read more]](https://wiki.debian.org/Keysigning)
 
-#### 2.2 Associate GPG key with Github
+### 2.2 Associate GPG key with Github
 To make Github display your commits as "verified" you also need to add your public [GPG key to your Github profile](https://github.com/settings/keys). [[Read more]](https://help.github.com/articles/generating-a-gpg-key/)
 
 ```bash
@@ -237,8 +236,8 @@ gpg --list-secret-keys --keyid-format LONG
 gpg --armor --export <fingerprint>
 ```
 
-### 3. Use Git with GPG
-#### 3.1 Configure Git GPG key
+## 3. Use Git with GPG
+### 3.1 Configure Git GPG key
 In order to make Git use your GPG key you need to set the default signing key for Git. [[Read more]](https://help.github.com/articles/telling-git-about-your-gpg-key/)
 
 ```bash
@@ -248,14 +247,14 @@ gpg --list-secret-keys --keyid-format LONG
 git config --global user.signingkey <fingerprint>
 ```
 
-#### 3.2 Enable commit signing
+### 3.2 Enable commit signing
 To verify the Git history, Git commits needs to be signed. You can manually sign commits or enable it by default for every commit. It is recommended to globally enable Git commit signing. [[Read more]](https://help.github.com/articles/signing-commits-using-gpg/)
 
 ```bash
 git config --global commit.gpgsign true
 ```
 
-#### 3.3 Create signed Git tag
+### 3.3 Create signed Git tag
 Git tags need to be created from the command line and always need a switch to enable tag signing. [[Read more]](https://help.github.com/articles/signing-tags-using-gpg/)
 
 ```bash
@@ -266,8 +265,8 @@ git tag -s mytag
 git tag -v mytag
 ```
 
-### 4. Create a signed release archive
-#### 4.1 Create compressed archive
+## 4. Create a signed release archive
+### 4.1 Create compressed archive
 You can use `git archive` to create archives of your tagged Git release. It is highly recommended to use a strong compression which is especially beneficial for those countries with slow and unstable internet connections. [[Read more]](https://git-scm.com/docs/git-archive)
 
 ```bash
@@ -284,7 +283,7 @@ git archive --format=tar --prefix gpgit-1.0.0 1.0.0 | lzip --best > gpgit-1.0.0.
 git archive --format=tar --prefix gpgit-1.0.0 1.0.0 | cmp <(xz -dc gpgit-1.0.0.tar.xz)
 ```
 
-#### 4.2 Sign the archive
+### 4.2 Sign the archive
 Type the filename of the tarball that you want to sign and then run:
 ```bash
 gpg --armor --detach-sign gpgit-1.0.0.tar.xz
@@ -299,20 +298,20 @@ This gives you a file called `gpgit-1.0.0.tar.xz.asc` which is the GPG signature
 gpg --verify gpgit-1.0.0.tar.xz.asc
 ```
 
-#### 4.3 Create the message digest
+### 4.3 Create the message digest
 Message digests are used to ensure the integrity of a file. It can also serve as checksum to verify the download. Message digests **do not** replace GPG signatures. They rather provide and alternative simple way to verify the source. Make sure to provide message digest over a secure channel like https.
 
 ```bash
 sha512 gpgit-1.0.0.tar.xz > gpgit-1.0.0.tar.xz.sha512
 ```
 
-### 5. Upload the release
-#### 5.1 Configure HTTPS download server
+## 5. Upload the release
+### 5.1 Configure HTTPS download server
 * [Why HTTPS Matters](https://developers.google.com/web/fundamentals/security/encrypt-in-transit/why-https)
 * [Let's Encrypt](https://letsencrypt.org/)
 * [SSL Server Test](https://www.ssllabs.com/ssltest/)
 
-#### 5.2 Upload to Github
+### 5.2 Upload to Github
 Create a new "Github Release" to add additional data to the tag. Then drag the .tar.xz .sig and .sha512 files onto the release.
 
 The script also supports [uploading to Github](https://developer.github.com/v3/repos/releases/) directly. Create a new Github token first and then follow the instructions of the script.
@@ -322,9 +321,9 @@ How to generate a Github token:
 * Generate a new token with permissions "public_repo" and "admin:gpg_key"
 * Store it safely
 
-## Appendix
+# Appendix
 
-### Email Encryption
+## Email Encryption
 You can also use your GPG key for email encryption with [enigmail and thunderbird](https://wiki.archlinux.org/index.php/thunderbird#EnigMail_-_Encryption). [[Read more]](https://www.enigmail.net/index.php/en/)
 
 ## Contact
