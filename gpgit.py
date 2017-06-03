@@ -9,6 +9,7 @@ import hashlib
 import gzip
 import lzma
 import bz2
+from getpass import getpass
 import signal
 from contextlib import contextmanager
 from github import Github, GithubException
@@ -139,7 +140,7 @@ class Step1(Step):
             # Check if GPG keys are available, but not yet configured
             if private_keys:
                 print('\r\033[K', end='')
-                print("GPG seems to be already configured on your system but Git is not.")
+                print('GPG seems to be already configured on your system but Git is not.')
                 print('Please select one of the existing keys below or generate a new one:')
                 print()
 
@@ -276,6 +277,7 @@ class Step2(Step):
             # Check key on keyserver
             try:
                 with time_limit(10):
+                    # TODO cannot catch error for unknown GPG key as its run in a separat thread
                     key = self.gpg.recv_keys(self.config['keyserver'], self.config['fingerprint'])
             except TimeoutException:
                 return 'Keyserver timed out. Please try again alter.'
@@ -317,14 +319,10 @@ class Step3(Step):
 
     def analyze(self):
         """Analyze: Use Git with GPG"""
-        # Check if Git was already configured with the GPG key
-        if self.config['signingkey'] != self.config['fingerprint'] \
-                or self.config['fingerprint'] is None:
-            # Check if Git was already configured with a different key
-            if self.config['signingkey'] is None:
-                self.config['config_level'] = 'global'
-
-            self.setstatus(1, 'TODO', 'Configuring ' + self.config['config_level'] + 'Git GPG key')
+        # Check if Git was already configured with a different key
+        if self.config['fingerprint'] is None:
+            self.config['config_level'] = 'global'
+            self.setstatus(1, 'TODO', 'Configuring ' + self.config['config_level'] + ' Git GPG key')
         else:
             self.setstatus(1, 'OK', 'Git already configured with your GPG key')
 
@@ -470,10 +468,10 @@ class Step4(Step):
                                'Path: ' + self.config['output'], 'Basename: ' + filename)
 
             # Get signature filename from setting
-            if self.config['no_armor']:
-                sigfile = tarfile + '.sig'
-            else:
+            if self.config['armor']:
                 sigfile = tarfile + '.asc'
+            else:
+                sigfile = tarfile + '.sig'
             self.assets += [sigfile]
             sigfilepath = os.path.join(self.config['output'], sigfile)
 
@@ -562,10 +560,10 @@ class Step4(Step):
             tarfilepath = os.path.join(self.config['output'], tarfile)
 
             # Get signature filename from setting
-            if self.config['no_armor']:
-                sigfilepath = tarfilepath + '.sig'
-            else:
+            if self.config['armor']:
                 sigfilepath = tarfilepath + '.asc'
+            else:
+                sigfilepath = tarfilepath + '.sig'
 
             # Check if signature is existant
             if not os.path.isfile(sigfilepath):
@@ -575,7 +573,7 @@ class Step4(Step):
                     signed_data = self.gpg.sign_file(
                         tarstream,
                         keyid=self.config['fingerprint'],
-                        binary=bool(self.config['no_armor']),
+                        binary=not bool(self.config['armor']),
                         detach=True,
                         output=sigfilepath,
                         #digest_algo='SHA512' #TODO v 2.x GPG module
@@ -640,7 +638,12 @@ class Step5(Step):
             # Ask for Github token
             if self.config['token'] is None:
                 try:
-                    self.config['token'] = input('Enter Github token to access release API: ')
+                    print('\r\033[K', end='')
+                    print('Accessing Github API to access Github releases and assets.')
+                    print('You can deactive Github API uploading with -n or set your',
+                          'Github token permanent with:')
+                    print('git config --global user.githubtoken <githubtoken>')
+                    self.config['token'] = getpass('Please enter Github token: ')
                 except KeyboardInterrupt:
                     return 'Aborted by user'
 
@@ -654,7 +657,8 @@ class Step5(Step):
             except GithubException:
                 # TODO improve exception:
                 #https://github.com/PyGithub/PyGithub/issues/152#issuecomment-301249927
-                return 'Error accessing Github API for project ' + self.config['project']
+                return 'Error accessing Github API for project ' + self.config['project'] \
+                       + ' with username ' + self.config['username'] + '. Wrong token supplied?'
 
             # Check Release and its assets
             try:
@@ -667,7 +671,13 @@ class Step5(Step):
                 return
             else:
                 # Determine which assets need to be uploaded
-                asset_list = [x.name for x in self.release.get_assets()]
+                try:
+                    asset_list = [x.name for x in self.release.get_assets()]
+                except AttributeError:
+                    self.config['github'] = False
+                    self.setstatus(2, 'WARN', 'Requires PyGithub >= 1.35')
+                    return
+
                 for asset in self.assets:
                     if asset not in asset_list:
                         self.newassets += [asset]
@@ -706,7 +716,7 @@ class Step5(Step):
 
 class GPGit(object):
     """Class that manages GPGit steps and substeps analysis, print and execution."""
-    version = '2.0.0'
+    version = '2.0.2'
 
     colormap = {
         'OK': Colors.GREEN,
@@ -717,31 +727,62 @@ class GPGit(object):
         'NOTE': Colors.BLUE,
         }
 
-    def __init__(self, config):
-        # Config via parameters
-        self.config = config
+    def __init__(self, tag, config):
+        # Create module instances and helpers
+        self.gpg = gnupg.GPG()
+        self.repo = None
         self.assets = []
 
-        # GPG
-        self.gpg = gnupg.GPG()
+        # Config via parameters
+        self.config = {
+            'tag': tag,
+            'message': None,
+            'output': None,
+            'git_dir': os.getcwd(),
+            'github': False,
+            'prerelease': False,
+        }
 
-        # Git
-        self.repo = None
+        # Overwrite every default value if passed in via parameter
+        for param in self.config:
+            if param in config:
+                self.config[param] = config[param]
 
-        # Create Git repository instance
+        # Load configuration
+        self.load_git_config()
+        self.load_default_config()
+
+        # Create array fo steps to analyse and run
+        step1 = Step1(self.config, self.gpg)
+        step2 = Step2(self.config, self.gpg)
+        step3 = Step3(self.config, self.repo)
+        step4 = Step4(self.config, self.gpg, self.repo, self.assets)
+        step5 = Step5(self.config, self.assets)
+        self.steps = [step1, step2, step3, step4, step5]
+
+    def load_git_config(self):
+        """Loads configuration settings from git config. Does not overwrite existing settings."""
         try:
             self.repo = Repo(self.config['git_dir'], search_parent_directories=True)
         except git.exc.InvalidGitRepositoryError:
             self.error('Not inside a Git directory: ' + self.config['git_dir'])
         reader = self.repo.config_reader()
 
+        # Array represents: config['username'], git config user.name
         gitconfig = [
             ['username', 'user', 'name'],
             ['email', 'user', 'email'],
-            ['signingkey', 'user', 'signingkey'],
+            ['fingerprint', 'user', 'signingkey'],
             ['gpgsign', 'commit', 'gpgsign'],
-            ['output', 'user', 'gpgitoutput'],
-            ['token', 'user', 'githubtoken']
+            ['output', 'gpgit', 'output'],
+            ['tar', 'gpgit', 'tar'],
+            ['sha', 'gpgit', 'sha'],
+            ['keyserver', 'gpgit', 'keyserver'], # TODO set to the fp once the key was checked once to speed things up
+            ['github', 'gpgit', 'github'],
+            ['username', 'gpgit', 'user'],
+            ['project', 'gpgit', 'project'],
+            ['armor', 'gpgit', 'armor'],
+            ['token', 'gpgit', 'token'],
         ]
 
         # Read in Git config values
@@ -754,23 +795,30 @@ class GPGit(object):
             if self.config[cfg[0]] is None and reader.has_option(cfg[1], cfg[2]):
                 self.config[cfg[0]] = str(reader.get_value(cfg[1], cfg[2]))
 
-        # Get default Git signing key
-        if self.config['fingerprint'] is None and self.config['signingkey']:
-            self.config['fingerprint'] = self.config['signingkey']
+        # Convert tar and sha settings into arrays
+        if self.config['tar'] and not isinstance(self.config['tar'], list):
+            self.config['tar'] = self.config['tar'].split(',')
+        if self.config['sha'] and not isinstance(self.config['sha'], list):
+            self.config['sha'] = self.config['sha'].split(',')
 
-        # Check if Github URL is used
-        if self.config['github'] is True:
-            if 'github' not in self.repo.remotes.origin.url.lower():
-                self.config['github'] = False
+    def load_default_config(self):
+        """Autodetects missing parameters or sets default values."""
+        defaults = {
+            'sha': ['sha512'],
+            'tar': ['xz'],
+            'keyserver': 'hkps://pgp.mit.edu',
+            'armor': True,
+            'config_level': 'repository',
+            'message': 'Release ' + self.config['tag'] + '\n\nCreated with GPGit ' \
+                       + self.version + '\nhttps://github.com/NicoHood/gpgit',
+            'project': os.path.basename(self.repo.remotes.origin.url).replace('.git', ''),
+            'output': os.path.join(self.repo.working_tree_dir, 'gpgit'),
+        }
 
-        # Default message
-        if self.config['message'] is None:
-            self.config['message'] = 'Release ' + self.config['tag'] + '\n\nCreated with GPGit ' \
-                                     + self.version + '\nhttps://github.com/NicoHood/gpgit'
-
-        # Default output path
-        if self.config['output'] is None:
-            self.config['output'] = os.path.join(self.repo.working_tree_dir, 'archive')
+        # Load default values
+        for val in defaults:
+            if val not in self.config or self.config[val] is None:
+                self.config[val] = defaults[val]
 
         # Check if path exists
         if not os.path.isdir(self.config['output']):
@@ -786,21 +834,11 @@ class GPGit(object):
             else:
                 self.error('Aborted by user')
 
-        # Set default project name
-        if self.config['project'] is None:
-            url = self.repo.remotes.origin.url
-            self.config['project'] = os.path.basename(url).replace('.git', '')
-
-        # Default config level (repository == local)
-        self.config['config_level'] = 'repository'
-
-        # Create array fo steps to analyse and run
-        step1 = Step1(self.config, self.gpg)
-        step2 = Step2(self.config, self.gpg)
-        step3 = Step3(self.config, self.repo)
-        step4 = Step4(self.config, self.gpg, self.repo, self.assets)
-        step5 = Step5(self.config, self.assets)
-        self.steps = [step1, step2, step3, step4, step5]
+        # Check if Github URL is used
+        # TODO fix for projects that dont have a Github url
+        if self.config['github'] is True:
+            if 'github' not in self.repo.remotes.origin.url.lower():
+                self.config['github'] = False
 
     def analyze(self):
         """Analze all steps and substeps for later preview printing"""
@@ -838,6 +876,7 @@ class GPGit(object):
             return -1
         if todo:
             return 1
+        return 0
 
     def run(self):
         """Execute all steps + substeps."""
@@ -870,35 +909,21 @@ def main():
     """Main entry point that parses configs and creates GPGit instance."""
     parser = argparse.ArgumentParser(description='A Python script that automates the process of ' \
                                      + 'signing Git sources via GPG.')
-    parser.add_argument('tag', action='store', help='Tagname')
+    parser.add_argument('tag', action='store',
+                        help='Tagname of the release. E.g. "1.0.0" or "20170521".')
     parser.add_argument('-v', '--version', action='version', version='GPGit ' + GPGit.version)
     parser.add_argument('-m', '--message', action='store', help='tag message')
     parser.add_argument('-o', '--output', action='store',
                         help='output path of the archive, signature and message digest')
     parser.add_argument('-g', '--git-dir', action='store', default=os.getcwd(),
                         help='path of the Git project')
-    parser.add_argument('-f', '--fingerprint', action='store',
-                        help='(full) GPG fingerprint to use for signing/verifying')
-    parser.add_argument('-p', '--project', action='store',
-                        help='name of the project, used for archive generation')
-    parser.add_argument('-e', '--email', action='store', help='email used for GPG key generation')
-    parser.add_argument('-u', '--username', action='store',
-                        help='username used for GPG key generation')
-    parser.add_argument('-k', '--keyserver', action='store', default='hkps://pgp.mit.edu',
-                        help='keyserver to use for up/downloading GPG keys')
     parser.add_argument('-n', '--no-github', action='store_false', dest='github',
                         help='disable Github API functionallity')
     parser.add_argument('-a', '--prerelease', action='store_true', help='Flag as Github prerelease')
-    parser.add_argument('-t', '--tar', choices=['gz', 'gzip', 'xz', 'bz2', 'bzip2'], default=['xz'],
-                        nargs='+', help='compression option')
-    parser.add_argument('-s', '--sha', choices=['sha256', 'sha384', 'sha512'], default=['sha512'],
-                        nargs='+', help='message digest option')
-    parser.add_argument('-b', '--no-armor', action='store_true',
-                        help='do not create ascii armored signature output')
 
     args = parser.parse_args()
 
-    gpgit = GPGit(vars(args))
+    gpgit = GPGit(args.tag, vars(args))
     err_msg = gpgit.analyze()
     if err_msg:
         print()
@@ -921,6 +946,7 @@ def main():
             if err_msg:
                 gpgit.error(err_msg)
             else:
+                # TODO more colors with green arrow
                 print('Finished without errors')
         else:
             gpgit.error('Aborted by user')

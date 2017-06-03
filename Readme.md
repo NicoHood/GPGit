@@ -15,7 +15,7 @@ As we all know, today more than ever before, it is crucial to be able to trust o
 * Configure **[HTTPS][11]** for your download server
 
 ### GPGit
-[GPGit][12] is meant to bring GPG to the masses. It is not only a Python script that automates the process of [creating new signed Git releases with GPG][13] but also comes with a [step-by-step readme guide][14] for learning how to use GPG. GPGit integrates perfectly with the [Github Release API][15] for uploading.
+[GPGit][12] is meant to bring GPG to the masses. It is not only a Python script that automates the process of [creating new signed Git releases with GPG][13], but also a [quick-start-guide][14] for learning how to use GPG. GPGit integrates perfectly with the [Github Release API][15] for uploading.
 
 The security status of Linux projects will be tracked in the [Linux Security Database][16]. Thanks for your help in making Linux projects more secure by using GPG signatures.
 
@@ -40,7 +40,7 @@ The security status of Linux projects will be tracked in the [Linux Security Dat
 * [Introduction](#introduction)
 * [Installation](#installation)
 * [Script Usage](#script-usage)
-* [GPG quick start guide](#gpg-quick-start-guide)
+* [GPG Quick Start Guide](#gpg-quick-start-guide)
 * [Appendix](#appendix)
 * [Contact](#contact)
 * [Version History](#version-history)
@@ -55,7 +55,7 @@ GPGit dependencies can be easily installed via [pip](https://pypi.python.org/pyp
 ```bash
 # Install dependencies
 sudo apt-get install python3 python3-pip gnupg2 git
-VERSION=2.0.1
+VERSION=2.0.2
 
 # Download and verify source
 wget https://github.com/NicoHood/gpgit/releases/download/${VERSION}/gpgit-${VERSION}.tar.xz
@@ -74,76 +74,75 @@ gpgit --help
 ```
 
 ## Script Usage
-The script guides you through all 5 steps of the
-[GPG quick start guide](#gpg-quick-start-guide). **By default no extra arguments
-beside the tag are required.** Follow the instructions and you are good to go.
+The script guides you through all 5 steps of the [GPG quick start guide](#gpg-quick-start-guide). **By default no extra arguments beside the tag are required.** Follow the instructions and you are good to go.
 
 ![screenshot](img/screenshot.png)
 
 ### Parameters
 
-For more information checkout the help page:
-```
-$ gpgit --help
-usage: gpgit [-h] [-v] [-m MESSAGE] [-o OUTPUT] [-g GIT_DIR]
-                [-f FINGERPRINT] [-p PROJECT] [-e EMAIL] [-u USERNAME]
-                [-k KEYSERVER] [-n] [-a]
-                [-t {gz,gzip,xz,bz2,bzip2} [{gz,gzip,xz,bz2,bzip2} ...]]
-                [-s {sha256,sha384,sha512} [{sha256,sha384,sha512} ...]] [-b]
-                tag
+#### -h, --help
+Show help message and exit.
 
-A Python script that automates the process of signing Git sources via GPG.
+#### -v, --version
+Show program's version and exit.
 
-positional arguments:
-  tag                   Tagname
+#### tag
+Tagname of the release. E.g. `1.0.0` or `20170521` with `$(date +%Y%m%d)`.
 
-optional arguments:
-  -h, --help            show this help message and exit
-  -v, --version         show program's version number and exit
-  -m MESSAGE, --message MESSAGE
-                        tag message
-  -o OUTPUT, --output OUTPUT
-                        output path of the archive, signature and message
-                        digest
-  -g GIT_DIR, --git-dir GIT_DIR
-                        path of the Git project
-  -f FINGERPRINT, --fingerprint FINGERPRINT
-                        (full) GPG fingerprint to use for signing/verifying
-  -p PROJECT, --project PROJECT
-                        name of the project, used for archive generation
-  -e EMAIL, --email EMAIL
-                        email used for GPG key generation
-  -u USERNAME, --username USERNAME
-                        username used for GPG key generation
-  -k KEYSERVER, --keyserver KEYSERVER
-                        keyserver to use for up/downloading GPG keys
-  -n, --no-github       disable Github API functionallity
-  -a, --prerelease      Flag as Github prerelease
-  -t {gz,gzip,xz,bz2,bzip2} [{gz,gzip,xz,bz2,bzip2} ...], \
-  --tar {gz,gzip,xz,bz2,bzip2} [{gz,gzip,xz,bz2,bzip2} ...]
-                        compression option
-  -s {sha256,sha384,sha512} [{sha256,sha384,sha512} ...], \
-  --sha {sha256,sha384,sha512} [{sha256,sha384,sha512} ...]
-                        message digest option
-  -b, --no-armor        do not create ascii armored signature output
-```
+#### -m <msg>, --message <msg>
+Use the given <msg> as the commit message.
+
+#### -o <path>, --output <path>
+Output path of the archive, signature and message digest. You can also set this option via configuration.
+
+#### -g <path>, --git-dir <path>
+Path to the Git project.
+
+#### -n, --no-github
+Disable Github API functionality. Github releases need to be created manually and release assets need to be uploaded manually. GPGit will not prompt for a Github token anymore.
+
+#### -p, --prerelease
+Flag as Github prerelease.
 
 ### Configuration
-Additional configuration can be made via [git config](https://git-scm.com/docs/git-config).
+Additional configuration can be made via [git config](https://git-scm.com/docs/git-config). Example usage:
 
 ```bash
-# GPGit settings
-git config --global user.githubtoken <githubtoken>
-git config --global user.gpgitoutput ~/gpgit
-
-# GPG settings
-git config --global user.signingkey <fingerprint>
-git config --global commit.gpgsign true
-
-# General settings
-git config --global user.name <username>
-git config --global user.email <email>
+git config --global gpgit.token <token>
+git config --global gpgit.output ~/gpgit
+git config --local gpgit.tar xz
 ```
+
+#### user.signingkey
+Full GPG fingerprint to use for signing/verifying.
+
+#### gpgit.output
+Output path of the archive, signature and message digest. You can also set this option via parameter.
+
+#### gpgit.tar
+Archive compression option. Chose between "gz,gzip,xz,bz2,bzip2". Default: "xz"
+
+#### gpgit.sha
+Message digest algorithm. chose between "sha256,sha384,sha512". Default: "sha512"
+
+#### gpgit.keyserver
+Keyserver to use for GPG key check. Automatically set to "skip" after the first check was successfull. Default: "hkps://pgp.mit.edu"
+
+#### gpgit.github
+Enable or disable Github functionality with "true|false". Default: "true" (enabled)
+
+#### gpgit.user
+Username used for github uploading.
+
+#### gpgit.project
+Project name used for github uploading and archive naming.
+
+#### gpgit.armor
+Use ascii armored output of GPG (.asc instead of .sig) with "true|false". Default: "true" (armored output).
+
+#### gpgit.token
+Specify the Github token for Github API release uploading.
+
 
 ## GPG Quick Start Guide
 GPGit guides you through 5 simple steps to get your software project ready with GPG signatures. Further details can be found below.
@@ -334,7 +333,17 @@ You can get securely in touch with me [here](http://contact.nicohood.de). Don't 
 ## Version History
 ```
 2.0.0 (xx.xx.2017)
-* TODO
+* Switch to Python3 from bash
+* New user interface with preview
+* More verification
+* Better GPG usage
+* More parameters
+* Configurable settings via git config
+* Better error traces
+* Resigning a tag is now possible
+* General improvements
+* New logo
+* Improved documentation
 
 1.2.0 (24.04.2017)
 * Trap on errors
