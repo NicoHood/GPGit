@@ -753,12 +753,12 @@ class GPGit(object):
         self.load_default_config()
 
         # Create array fo steps to analyse and run
-        step1 = Step1(self.config, self.gpg)
-        step2 = Step2(self.config, self.gpg)
-        step3 = Step3(self.config, self.repo)
-        step4 = Step4(self.config, self.gpg, self.repo, self.assets)
-        step5 = Step5(self.config, self.assets)
-        self.steps = [step1, step2, step3, step4, step5]
+        self.step1 = Step1(self.config, self.gpg)
+        self.step2 = Step2(self.config, self.gpg)
+        self.step3 = Step3(self.config, self.repo)
+        self.step4 = Step4(self.config, self.gpg, self.repo, self.assets)
+        self.step5 = Step5(self.config, self.assets)
+        self.steps = [self.step1, self.step2, self.step3, self.step4, self.step5]
 
     def load_git_config(self):
         """Loads configuration settings from git config. Does not overwrite existing settings."""
@@ -919,7 +919,7 @@ def main():
                         help='path of the Git project')
     parser.add_argument('-n', '--no-github', action='store_false', dest='github',
                         help='disable Github API functionallity')
-    parser.add_argument('-a', '--prerelease', action='store_true', help='Flag as Github prerelease')
+    parser.add_argument('-p', '--prerelease', action='store_true', help='Flag as Github prerelease')
 
     args = parser.parse_args()
 
