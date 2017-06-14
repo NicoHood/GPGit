@@ -203,6 +203,10 @@ class Step1(Step):
             self.setstatus(1, 'NOTE', 'Please use a strong, unique, secret passphrase')
 
         else:
+            # Check if Git username and email is set
+            if not self.config['username']or not self.config['email']:
+                return 'Please set your email and username with: "git config --global user.email <email>" and  "git config --global user.name <name>"'
+
             # Generate a new key
             self.setstatus(2, 'TODO', 'Generating an RSA 4096 GPG key for '
                            + self.config['username'] + ' ' + self.config['email']
@@ -327,7 +331,7 @@ class Step3(Step):
             self.setstatus(1, 'OK', 'Git already configured with your GPG key')
 
         # Check commit signing
-        if self.config['gpgsign'].lower() == 'true':
+        if self.config['gpgsign'] and self.config['gpgsign'].lower() == 'true':
             self.setstatus(2, 'OK', 'Commit signing already enabled')
         else:
             self.setstatus(2, 'TODO', 'Enabling ' + self.config['config_level'] + ' commit signing')
@@ -716,7 +720,7 @@ class Step5(Step):
 
 class GPGit(object):
     """Class that manages GPGit steps and substeps analysis, print and execution."""
-    version = '2.0.2'
+    __version__ = '2.0.5'
 
     colormap = {
         'OK': Colors.GREEN,
@@ -911,7 +915,7 @@ def main():
                                      + 'signing Git sources via GPG.')
     parser.add_argument('tag', action='store',
                         help='Tagname of the release. E.g. "1.0.0" or "20170521".')
-    parser.add_argument('-v', '--version', action='version', version='GPGit ' + GPGit.version)
+    parser.add_argument('-v', '--version', action='version', version='GPGit ' + GPGit.__version__)
     parser.add_argument('-m', '--message', action='store', help='tag message')
     parser.add_argument('-o', '--output', action='store',
                         help='output path of the archive, signature and message digest')

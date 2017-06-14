@@ -53,7 +53,7 @@ GPGit dependencies can be easily installed via [pip](https://pypi.python.org/pyp
 ```bash
 # Install dependencies
 sudo apt-get install python3 python3-pip gnupg2 git
-VERSION=2.0.4
+VERSION=2.0.5
 
 # Download and verify source
 wget https://github.com/NicoHood/gpgit/releases/download/${VERSION}/gpgit-${VERSION}.tar.xz
