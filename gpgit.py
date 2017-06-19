@@ -196,7 +196,8 @@ class Step1(Step):
 
             # Use selected key
             self.setstatus(2, 'OK', 'Key already generated',
-                           'GPG key: {}'.format(gpgkey['uids'][0]), 'GPG ID: [' + gpgkey['algoname'] + ' '
+                           'GPG key: {}'.format(gpgkey['uids'][0]),
+                           'GPG ID: [' + gpgkey['algoname'] + ' '
                            + gpgkey['length'] + '] ' + gpgkey['fingerprint'] + ' ')
 
             # Warn about strong passphrase
@@ -205,12 +206,13 @@ class Step1(Step):
         else:
             # Check if Git username and email is set
             if not self.config['username']or not self.config['email']:
-                return 'Please set your email and username with: "git config --global user.email <email>" and  "git config --global user.name <name>"'
+                return 'Please set your email and username with: ' \
+                       + '"git config --global user.email <email>" and ' \
+                       + '"git config --global user.name <name>"'
 
             # Generate a new key
-            self.setstatus(2, 'TODO',
-                           'Generating an RSA 4096 GPG key for {} {} valid for 1 year.'.format( \
-                           self.config['username'], self.config['email']))
+            self.setstatus(2, 'TODO', 'Generating an RSA 4096 GPG key for {} {} valid for 1 year.' \
+                           .format(self.config['username'], self.config['email']))
 
             # Warn about strong passphrase
             self.setstatus(1, 'TODO', 'Please use a strong, unique, secret passphrase')
@@ -245,8 +247,8 @@ class Step1(Step):
         self.verbose('disks) during the prime generation; this gives the random number')
         self.verbose('generator a better chance to gain enough entropy.')
         self.config['fingerprint'] = str(self.gpg.gen_key(input_data))
-        self.verbose('Key generation finished. You new fingerprint is: {}'.format(
-                                                                    self.config['fingerprint']))
+        self.verbose('Key generation finished. You new fingerprint is: {}' \
+                     .format(self.config['fingerprint']))
 
 class Step2(Step):
     """Publish your GPG key"""
@@ -288,7 +290,8 @@ class Step2(Step):
 
             # Found key on keyserver
             if self.config['fingerprint'] in key.fingerprints:
-                self.setstatus(1, 'OK', 'Key already published on {}'.format(self.config['keyserver']))
+                self.setstatus(1, 'OK', 'Key already published on {}' \
+                               .format(self.config['keyserver']))
                 return
 
         # Upload key to keyserver
@@ -326,7 +329,8 @@ class Step3(Step):
         # Check if Git was already configured with a different key
         if self.config['fingerprint'] is None:
             self.config['config_level'] = 'global'
-            self.setstatus(1, 'TODO', 'Configuring {} Git GPG key'.format(self.config['config_level']))
+            self.setstatus(1, 'TODO', 'Configuring {} Git GPG key' \
+                           .format(self.config['config_level']))
         else:
             self.setstatus(1, 'OK', 'Git already configured with your GPG key')
 
@@ -334,7 +338,8 @@ class Step3(Step):
         if self.config['gpgsign'] and self.config['gpgsign'].lower() == 'true':
             self.setstatus(2, 'OK', 'Commit signing already enabled')
         else:
-            self.setstatus(2, 'TODO', 'Enabling {} commit signing'.format(self.config['config_level']))
+            self.setstatus(2, 'TODO', 'Enabling {} commit signing' \
+                           .format(self.config['config_level']))
 
         # Refresh tags
         try:
@@ -354,11 +359,11 @@ class Step3(Step):
                     return 'Invalid signature for tag ' + self.config['tag']
                 self.setstatus(3, 'TODO', 'Signing existing tag: {}'.format(self.config['tag']))
             else:
-                self.setstatus(3, 'OK', 'Good signature for existing tag: {}'.format(self.config['tag']))
+                self.setstatus(3, 'OK', 'Good signature for existing tag: {}' \
+                               .format(self.config['tag']))
         else:
-            self.setstatus(3, 'TODO',
-                           'Creating signed tag {} and pushing it to the remote Git'.format( \
-                           self.config['tag']))
+            self.setstatus(3, 'TODO', 'Creating signed tag {} and pushing it to the remote Git' \
+                           .format(self.config['tag']))
 
     def substep1(self):
         """Configure Git GPG key"""
@@ -466,11 +471,13 @@ class Step4(Step):
 
                 # Successfully verified
                 self.setstatus(1, 'OK', 'Existing archive(s) verified successfully',
-                               'Path: {}'.format(self.config['output']), 'Basename: {}'.format(filename))
+                               'Path: {}'.format(self.config['output']),
+                               'Basename: {}'.format(filename))
             else:
-                self.setstatus(1, 'TODO', 'Creating new release archive(s): {}'.format( \
-                               ', '.join(str(x) for x in self.config['tar'])),
-                               'Path: {}'.format(self.config['output']), 'Basename: {}'.format(filename))
+                self.setstatus(1, 'TODO', 'Creating new release archive(s): {}' \
+                               .format(', '.join(str(x) for x in self.config['tar'])),
+                               'Path: {}'.format(self.config['output']),
+                               'Basename: {}'.format(filename))
 
             # Get signature filename from setting
             if self.config['armor']:
@@ -536,9 +543,8 @@ class Step4(Step):
                     # Successfully verified
                     self.setstatus(3, 'OK', 'Existing message digest(s) verified successfully')
                 else:
-                    self.setstatus(3, 'TODO',
-                                   'Creating message digest(s) for archive(s): {}'.format( \
-                                   ', '.join(str(x) for x in self.config['sha'])))
+                    self.setstatus(3, 'TODO', 'Creating message digest(s) for archive(s): {}' \
+                                   .format(', '.join(str(x) for x in self.config['sha'])))
 
     def substep1(self):
         """Create compressed archive"""
