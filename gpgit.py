@@ -196,7 +196,7 @@ class Step1(Step):
 
             # Use selected key
             self.setstatus(2, 'OK', 'Key already generated',
-                           'GPG key: ' + gpgkey['uids'][0], 'GPG ID: [' + gpgkey['algoname'] + ' '
+                           'GPG key: {}'.format(gpgkey['uids'][0]), 'GPG ID: [' + gpgkey['algoname'] + ' '
                            + gpgkey['length'] + '] ' + gpgkey['fingerprint'] + ' ')
 
             # Warn about strong passphrase
@@ -208,9 +208,9 @@ class Step1(Step):
                 return 'Please set your email and username with: "git config --global user.email <email>" and  "git config --global user.name <name>"'
 
             # Generate a new key
-            self.setstatus(2, 'TODO', 'Generating an RSA 4096 GPG key for '
-                           + self.config['username'] + ' ' + self.config['email']
-                           + ' valid for 1 year.')
+            self.setstatus(2, 'TODO',
+                           'Generating an RSA 4096 GPG key for {} {} valid for 1 year.'.format( \
+                           self.config['username'], self.config['email']))
 
             # Warn about strong passphrase
             self.setstatus(1, 'TODO', 'Please use a strong, unique, secret passphrase')
@@ -245,8 +245,8 @@ class Step1(Step):
         self.verbose('disks) during the prime generation; this gives the random number')
         self.verbose('generator a better chance to gain enough entropy.')
         self.config['fingerprint'] = str(self.gpg.gen_key(input_data))
-        self.verbose('Key generation finished. You new fingerprint is: '
-                     + self.config['fingerprint'])
+        self.verbose('Key generation finished. You new fingerprint is: {}'.format(
+                                                                    self.config['fingerprint']))
 
 class Step2(Step):
     """Publish your GPG key"""
@@ -288,20 +288,20 @@ class Step2(Step):
 
             # Found key on keyserver
             if self.config['fingerprint'] in key.fingerprints:
-                self.setstatus(1, 'OK', 'Key already published on ' + self.config['keyserver'])
+                self.setstatus(1, 'OK', 'Key already published on {}'.format(self.config['keyserver']))
                 return
 
         # Upload key to keyserver
-        self.setstatus(1, 'TODO', 'Publishing key on ' + self.config['keyserver'])
+        self.setstatus(1, 'TODO', 'Publishing key on {}'.format(self.config['keyserver']))
 
     def substep1(self):
         """Send GPG key to a key server"""
-        self.verbose('Publishing key ' + self.config['fingerprint'])
+        self.verbose('Publishing key {}'.format(self.config['fingerprint']))
         self.gpg.send_keys(self.config['keyserver'], self.config['fingerprint'])
 
     def substep2(self):
         """Publish your full fingerprint"""
-        print('Your fingerprint is:', self.config['fingerprint'])
+        print('Your fingerprint is: {}'.format(self.config['fingerprint']))
 
     def substep3(self):
         """Associate GPG key with Github"""
@@ -326,7 +326,7 @@ class Step3(Step):
         # Check if Git was already configured with a different key
         if self.config['fingerprint'] is None:
             self.config['config_level'] = 'global'
-            self.setstatus(1, 'TODO', 'Configuring ' + self.config['config_level'] + ' Git GPG key')
+            self.setstatus(1, 'TODO', 'Configuring {} Git GPG key'.format(self.config['config_level']))
         else:
             self.setstatus(1, 'OK', 'Git already configured with your GPG key')
 
@@ -334,7 +334,7 @@ class Step3(Step):
         if self.config['gpgsign'] and self.config['gpgsign'].lower() == 'true':
             self.setstatus(2, 'OK', 'Commit signing already enabled')
         else:
-            self.setstatus(2, 'TODO', 'Enabling ' + self.config['config_level'] + ' commit signing')
+            self.setstatus(2, 'TODO', 'Enabling {} commit signing'.format(self.config['config_level']))
 
         # Refresh tags
         try:
@@ -352,12 +352,13 @@ class Step3(Step):
                 if hasattr(tag.tag, 'message') \
                         and '-----BEGIN PGP SIGNATURE-----' in tag.tag.message:
                     return 'Invalid signature for tag ' + self.config['tag']
-                self.setstatus(3, 'TODO', 'Signing existing tag: ' + self.config['tag'])
+                self.setstatus(3, 'TODO', 'Signing existing tag: {}'.format(self.config['tag']))
             else:
-                self.setstatus(3, 'OK', 'Good signature for existing tag: ' + self.config['tag'])
+                self.setstatus(3, 'OK', 'Good signature for existing tag: {}'.format(self.config['tag']))
         else:
-            self.setstatus(3, 'TODO', 'Creating signed tag ' + self.config['tag']
-                           + ' and pushing it to the remote Git')
+            self.setstatus(3, 'TODO',
+                           'Creating signed tag {} and pushing it to the remote Git'.format( \
+                           self.config['tag']))
 
     def substep1(self):
         """Configure Git GPG key"""
@@ -375,7 +376,7 @@ class Step3(Step):
 
     def substep3(self):
         """Create signed Git tag"""
-        self.verbose('Creating, signing and pushing tag ' + self.config['tag'])
+        self.verbose('Creating, signing and pushing tag {}'.format(self.config['tag']))
 
         # Check if tag needs to be recreated
         force = False
@@ -465,11 +466,11 @@ class Step4(Step):
 
                 # Successfully verified
                 self.setstatus(1, 'OK', 'Existing archive(s) verified successfully',
-                               'Path: ' + self.config['output'], 'Basename: ' + filename)
+                               'Path: {}'.format(self.config['output']), 'Basename: {}'.format(filename))
             else:
-                self.setstatus(1, 'TODO', 'Creating new release archive(s): '
-                               + ', '.join(str(x) for x in self.config['tar']),
-                               'Path: ' + self.config['output'], 'Basename: ' + filename)
+                self.setstatus(1, 'TODO', 'Creating new release archive(s): {}'.format( \
+                               ', '.join(str(x) for x in self.config['tar'])),
+                               'Path: {}'.format(self.config['output']), 'Basename: {}'.format(filename))
 
             # Get signature filename from setting
             if self.config['armor']:
@@ -535,8 +536,9 @@ class Step4(Step):
                     # Successfully verified
                     self.setstatus(3, 'OK', 'Existing message digest(s) verified successfully')
                 else:
-                    self.setstatus(3, 'TODO', 'Creating message digest(s) for archive(s): '
-                                   + ', '.join(str(x) for x in self.config['sha']))
+                    self.setstatus(3, 'TODO',
+                                   'Creating message digest(s) for archive(s): {}'.format( \
+                                   ', '.join(str(x) for x in self.config['sha'])))
 
     def substep1(self):
         """Create compressed archive"""
@@ -549,7 +551,7 @@ class Step4(Step):
 
             # Create compressed tar files if it does not exist
             if not os.path.isfile(tarfilepath):
-                self.verbose('Creating ' + tarfilepath)
+                self.verbose('Creating {}'.format(tarfilepath))
                 with self.compressionAlgorithms[tar].open(tarfilepath, 'wb') as tarstream:
                     self.repo.archive(tarstream, treeish=self.config['tag'], prefix=filename + '/',
                                       format='tar')
@@ -573,7 +575,7 @@ class Step4(Step):
             if not os.path.isfile(sigfilepath):
                 # Sign tar file
                 with open(tarfilepath, 'rb') as tarstream:
-                    self.verbose('Creating ' + sigfilepath)
+                    self.verbose('Creating {}'.format(sigfilepath))
                     signed_data = self.gpg.sign_file(
                         tarstream,
                         keyid=self.config['fingerprint'],
@@ -611,7 +613,7 @@ class Step4(Step):
                         self.hash[sha][tarfile] = hash_sha.hexdigest()
 
                     # Write cached hash and filename
-                    self.verbose('Creating ' + shafilepath)
+                    self.verbose('Creating {}'.format(shafilepath))
                     with open(shafilepath, "w") as filestream:
                         filestream.write(self.hash[sha][tarfile] + '  ' + tarfile)
 
@@ -713,7 +715,7 @@ class Step5(Step):
         # Upload assets
         for asset in self.newassets:
             assetpath = os.path.join(self.config['output'], asset)
-            self.verbose('Uploading ' + assetpath)
+            self.verbose('Uploading {}'.format(assetpath))
             # TODO not functional
             # see https://github.com/PyGithub/PyGithub/pull/525#issuecomment-301132357
             self.release.upload_asset(assetpath)
@@ -814,7 +816,7 @@ class GPGit(object):
             'armor': True,
             'config_level': 'repository',
             'message': 'Release ' + self.config['tag'] + '\n\nCreated with GPGit ' \
-                       + self.version + '\nhttps://github.com/NicoHood/gpgit',
+                       + self.__version__ + '\nhttps://github.com/NicoHood/gpgit',
             'project': os.path.basename(self.repo.remotes.origin.url).replace('.git', ''),
             'output': os.path.join(self.repo.working_tree_dir, 'gpgit'),
         }
@@ -827,7 +829,7 @@ class GPGit(object):
         # Check if path exists
         if not os.path.isdir(self.config['output']):
             # Create not existing path
-            print('Not a valid path: ' + self.config['output'])
+            print('Not a valid path: {}'.format(self.config['output']))
             try:
                 ret = input('Create non-existing output path? [Y/n]')
             except KeyboardInterrupt:
@@ -847,7 +849,7 @@ class GPGit(object):
     def analyze(self):
         """Analze all steps and substeps for later preview printing"""
         for i, step in enumerate(self.steps, start=1):
-            print('Analyzing step', i, 'of', len(self.steps), end='...', flush=True)
+            print('Analyzing step {} of {}...'.format(i, len(self.steps)), end='', flush=True)
             err_msg = step.analyze()
             if err_msg:
                 return err_msg
