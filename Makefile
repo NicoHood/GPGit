@@ -7,7 +7,7 @@ all:
 	  @echo "Run 'make uninstall' for uninstallation."
 
 install:
-		install -Dm755 gpgit.sh $(DESTDIR)$(PREFIX)/bin/gpgit
+		install -Dm755 gpgit.py $(DESTDIR)$(PREFIX)/bin/gpgit
 		install -Dm644 Readme.md $(DESTDIR)$(PREFIX)/share/doc/gpgit/Readme.md
 
 uninstall:
