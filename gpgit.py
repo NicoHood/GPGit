@@ -728,7 +728,7 @@ class Step5(Step):
 
 class GPGit(object):
     """Class that manages GPGit steps and substeps analysis, print and execution."""
-    __version__ = '2.0.5'
+    __version__ = '2.0.7'
 
     colormap = {
         'OK': Colors.GREEN,

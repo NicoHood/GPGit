@@ -53,7 +53,7 @@ GPGit dependencies can be easily installed via [pip](https://pypi.python.org/pyp
 ```bash
 # Install dependencies
 sudo apt-get install python3 python3-pip gnupg2 git
-VERSION=2.0.5
+VERSION=2.0.7
 
 # Download and verify source
 wget https://github.com/NicoHood/gpgit/releases/download/${VERSION}/gpgit-${VERSION}.tar.xz
@@ -330,7 +330,7 @@ You can get securely in touch with me [here](http://contact.nicohood.de). Don't 
 
 ## Version History
 ```
-2.0.0 (xx.xx.2017)
+2.0.7 (27.06.2017)
 * Switch to Python3 from bash
 * New user interface with preview
 * More verification
