@@ -3,7 +3,7 @@
 ![gpgit.png](img/gpgit.png)
 
 # Introduction
-As we all know, today more than ever before, it is crucial to be able to trust our computing environments. One of the main difficulties that package maintainers of Linux distributions face, is the difficulty to verify the authenticity and the integrity of the source code. With GPG signatures it is possible for packagers to verify source code releases quickly and easily.
+As we all know, today more than ever before, it is crucial to be able to trust our computing environments. One of the main difficulties that package maintainers of GNU/Linux distributions face, is the difficulty to verify the authenticity and the integrity of the source code. With GPG signatures it is possible for packagers to verify source code releases quickly and easily.
 
 #### Overview of the required tasks:
 * Create and/or use a **[4096-bit RSA keypair][1]** for the file signing
@@ -17,7 +17,7 @@ As we all know, today more than ever before, it is crucial to be able to trust o
 ### GPGit
 [GPGit][12] is meant to bring GPG to the masses. It is not only a Python script that automates the process of [creating new signed Git releases with GPG][13], but also a [quick-start-guide][14] for learning how to use GPG. GPGit integrates perfectly with the [Github Release API][15] for uploading.
 
-The security status of Linux projects will be tracked in the [Linux Security Database][16]. Thanks for your help in making Linux projects more secure by using GPG signatures.
+The security status of GNU/Linux projects will be tracked in the [Linux Security Database][16]. If you have any further questions, do not hesitate to [contact me][17] personally. Thanks for your help in making GNU/Linux projects more secure by using GPG signatures.
 
 [1]: https://github.com/NicoHood/gpgit#12-key-generation
 [2]: https://github.com/NicoHood/gpgit#11-strong-unique-secret-passphrase
@@ -35,6 +35,7 @@ The security status of Linux projects will be tracked in the [Linux Security Dat
 [14]: https://github.com/NicoHood/gpgit#gpg-quick-start-guide
 [15]: https://github.com/NicoHood/gpgit#52-upload-to-github
 [16]: https://github.com/NicoHood/LSD
+[17]: http://contact.nicohood.de
 
 ## Index
 * [Introduction](#introduction)
@@ -108,7 +109,7 @@ Additional configuration can be made via [git config](https://git-scm.com/docs/g
 ```bash
 git config --global gpgit.token <token>
 git config --global gpgit.output ~/gpgit
-git config --local gpgit.tar xz
+git config --local gpgit.compression gzip
 ```
 
 #### user.signingkey
@@ -117,8 +118,8 @@ Full GPG fingerprint to use for signing/verifying.
 #### gpgit.output
 Output path of the archive, signature and message digest. You can also set this option via parameter.
 
-#### gpgit.tar
-Archive compression option. Chose between "gz,gzip,xz,bz2,bzip2". Default: "xz"
+#### gpgit.compression
+Archive compression option. Chose between "gzip,xz,bzip2,lzip". Default: "xz"
 
 #### gpgit.sha
 Message digest algorithm. chose between "sha256,sha384,sha512". Default: "sha512"
@@ -169,6 +170,7 @@ GPGit guides you through 5 simple steps to get your software project ready with 
 Make sure that your new passphrase for the GPG key meets high security standards. If the passphrase/key is compromised all of your signatures are compromised too.
 
 Here are a few examples how to keep a passphrase strong but easy to remember:
+* [Creating a strong password](https://support.google.com/accounts/answer/32040?hl=en)
 * [How to Create a Secure Password](https://open.buffer.com/creating-a-secure-password/)
 * [Mooltipass](https://www.themooltipass.com/)
 * [Keepass](http://keepass.info/)
@@ -215,9 +217,10 @@ To make the public key widely available, upload it to a key server. Now the user
 
 ```bash
 # Publish key
-gpg --keyserver hkps://pgp.mit.edu --send-keys <fingerprint>6
+gpg --keyserver hkps://pgp.mit.edu --send-keys <fingerprint>
 
 # Import key
+# Alternative keyserver: hkps://hkps.pool.sks-keyservers.net
 gpg --keyserver hkps://pgp.mit.edu --recv-keys <fingerprint>
 ```
 
@@ -260,6 +263,9 @@ Git tags need to be created from the command line and always need a switch to en
 # Creates a signed tag
 git tag -s mytag
 
+# Re-tag an older, unsigned tag
+git tag -sf mytag mytag
+
 # Verifies the signed tag
 git tag -v mytag
 ```
@@ -285,7 +291,7 @@ git archive --format=tar --prefix gpgit-1.0.0 1.0.0 | cmp <(xz -dc gpgit-1.0.0.t
 ### 4.2 Sign the archive
 Type the filename of the tarball that you want to sign and then run:
 ```bash
-gpg --armor --detach-sign gpgit-1.0.0.tar.xz
+gpg --digest-algo SHA512 --armor --detach-sign gpgit-1.0.0.tar.xz
 ```
 **Do not blindly sign the Github source downloads** unless you have compared its content with the local files via `diff.` [[Read more]](https://wiki.archlinux.org/index.php/GnuPG#Make_a_detached_signature)
 

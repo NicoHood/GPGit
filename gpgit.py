@@ -327,7 +327,7 @@ class Step3(Step):
     def analyze(self):
         """Analyze: Use Git with GPG"""
         # Check if Git was already configured with a different key
-        if self.config['fingerprint'] is None:
+        if self.config['fingerprint'] is None or self.config['signingkey'] != self.config['fingerprint']:
             self.config['config_level'] = 'global'
             self.setstatus(1, 'TODO', 'Configuring {} Git GPG key' \
                            .format(self.config['config_level']))
@@ -588,6 +588,7 @@ class Step4(Step):
                         binary=not bool(self.config['armor']),
                         detach=True,
                         output=sigfilepath,
+                        # extra_args --digest-algo algoname https://github.com/vsajip/python-gnupg/pull/4#issuecomment-312203310
                         #digest_algo='SHA512' #TODO v 2.x GPG module
                         )
                     if signed_data.fingerprint != self.config['fingerprint']:
@@ -672,6 +673,12 @@ class Step5(Step):
                 return 'Error accessing Github API for project ' + self.config['project'] \
                        + ' with username ' + self.config['username'] + '. Wrong token supplied?'
 
+            # TODO upstream need to merge PR: https://github.com/PyGithub/PyGithub/pull/525
+            if 'upload_asset' not in dir(self.release):
+                self.config['github'] = False
+                self.setstatus(2, 'WARN', 'Requires PyGithub fix #525')
+                return
+
             # Check Release and its assets
             try:
                 self.release = self.githubrepo.get_release(self.config['tag'])
@@ -683,13 +690,7 @@ class Step5(Step):
                 return
             else:
                 # Determine which assets need to be uploaded
-                try:
-                    asset_list = [x.name for x in self.release.get_assets()]
-                except AttributeError:
-                    self.config['github'] = False
-                    self.setstatus(2, 'WARN', 'Requires PyGithub >= 1.35')
-                    return
-
+                asset_list = [x.name for x in self.release.get_assets()]
                 for asset in self.assets:
                     if asset not in asset_list:
                         self.newassets += [asset]
@@ -785,9 +786,10 @@ class GPGit(object):
             ['username', 'user', 'name'],
             ['email', 'user', 'email'],
             ['fingerprint', 'user', 'signingkey'],
+            ['signingkey', 'user', 'signingkey'],
             ['gpgsign', 'commit', 'gpgsign'],
             ['output', 'gpgit', 'output'],
-            ['tar', 'gpgit', 'tar'],
+            ['tar', 'gpgit', 'compression'],
             ['sha', 'gpgit', 'sha'],
             ['keyserver', 'gpgit', 'keyserver'], # TODO set to the fp once the key was checked once to speed things up
             ['github', 'gpgit', 'github'],
