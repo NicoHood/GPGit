@@ -67,7 +67,7 @@ ${BOLD}Configuration options:${ALL_OFF}
   gpgit.signingkey <keyid>, user.signingkey <keyid>
   gpgit.output <path>
   gpgit.token <token>
-  gpgit.compression <xz | gzip | bzip2 | lzip>
+  gpgit.compression <xz | gzip | bzip2 | lzip | zip>
   gpgit.hash <sha512 | sha384 | sha256 | sha1 | md5>
   gpgit.keyserver <keyserver>
   gpgit.githubrepo <username/projectname>
@@ -79,7 +79,7 @@ ${BOLD}Configuration options:${ALL_OFF}
 ${BOLD}Examples:${ALL_OFF}
   git config --global gpgit.output ~/gpgit
   git config --local user.signingkey 97312D5EB9D7AE7D0BD4307351DAE9B7C1AE9161
-  git config --local compression gzip
+  git config --local compression "xz zip"
 EOF
 
 function interactive()
@@ -439,11 +439,19 @@ fi
 msg2 "4.1 Create compressed archive"
 for util in "${COMPRESSION[@]}"
 do
-    FILE="${OUTPUT}/${FILENAME}.tar.${util}"
+    if [[ "${util}" == zip ]]; then
+        FILE="${OUTPUT}/${FILENAME}.${util}"
+    else
+        FILE="${OUTPUT}/${FILENAME}.tar.${util}"
+    fi
     if [[ ! -f "${FILE}" ]]; then
         plain "Creating new release archive: '${FILE}'"
         interactive
-        git archive --format=tar --prefix "${FILENAME}/" "refs/tags/${TAG}" | "${util}" --best > "${FILE}"
+        if [[ "${util}" == zip ]]; then
+            git archive --format=zip --prefix "${FILENAME}/" "refs/tags/${TAG}" > "${FILE}"
+        else
+            git archive --format=tar --prefix "${FILENAME}/" "refs/tags/${TAG}" | "${util}" --best > "${FILE}"
+        fi
     else
         warning "Found existing archive '${FILE}'."
     fi
@@ -454,7 +462,11 @@ done
 msg2 "4.2 Sign the archive"
 for util in "${COMPRESSION[@]}"
 do
-    FILE="${OUTPUT}/${FILENAME}.tar.${util}"
+    if [[ "${util}" == zip ]]; then
+        FILE="${OUTPUT}/${FILENAME}.${util}"
+    else
+        FILE="${OUTPUT}/${FILENAME}.tar.${util}"
+    fi
     if [[ ! -f "${FILE}.asc" ]]; then
         plain "Creating GPG signature: '${FILE}.asc'"
         interactive
@@ -469,7 +481,11 @@ done
 msg2 "4.3 Create the message digest"
 for util in "${COMPRESSION[@]}"
 do
-    FILE="${OUTPUT}/${FILENAME}.tar.${util}"
+    if [[ "${util}" == zip ]]; then
+        FILE="${OUTPUT}/${FILENAME}.${util}"
+    else
+        FILE="${OUTPUT}/${FILENAME}.tar.${util}"
+    fi
     if [[ ! -f "${FILE}.${HASH}" ]]; then
         plain "Creating message digest: '${FILE}.${HASH}'"
         interactive
