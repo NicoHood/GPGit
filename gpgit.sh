@@ -61,7 +61,7 @@ ${BOLD}Optional arguments:${ALL_OFF}
 
 ${BOLD}Examples:${ALL_OFF}
   gpgit 1.0.0
-  gpgit -p -m "First alpha release." 0.1.0
+  gpgit -p -m "First alpha release." 0.1.0 --hash "sha256 sha512"
   gpgit -C git/myproject/ -o /tmp/gpgit -n -m "Internal test release." 0.0.1
 
 ${BOLD}Configuration options:${ALL_OFF}
