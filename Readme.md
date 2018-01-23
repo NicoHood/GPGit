@@ -69,7 +69,7 @@ gpgit --help
 ```
 
 ## Script Usage
-The script guides you through all 5 steps of the [GPG quick start guide](#gpg-quick-start-guide). **Only the tag name is a required parameter, the tag message can be specified optionally.**
+The script guides you through all 5 steps of the [GPG quick start guide](#gpg-quick-start-guide). Run GPGit with the tag name as parameter. All other options will get auto detected. When running the script for the first time GPGit runs in interactive (`-i`) mode and guide you through all steps of secure source code signing.
 
 ### Sample Usage
 ![screenshot](img/screenshot.png)
@@ -97,29 +97,27 @@ Optional arguments:
   -p, --pre-release        Flag as Github pre-release.
   -n, --no-github          Disable Github API functionallity.
   -i, --interactive        Run in interactive mode, step-by-step.
+      --<option>           Temporary set a 'gpgit.<option>' from config below.
 
 Examples:
   gpgit 1.0.0
-  gpgit -p -m "First alpha release." 0.1.0
+  gpgit -p -m "First alpha release." 0.1.0 --hash "sha256 sha512"
   gpgit -C git/myproject/ -o /tmp/gpgit -n -m "Internal test release." 0.0.1
 
 Configuration options:
   gpgit.signingkey <keyid>, user.signingkey <keyid>
   gpgit.output <path>
   gpgit.token <token>
-  gpgit.compression <xz | gzip | bzip2 | lzip>
+  gpgit.compression <xz | gzip | bzip2 | lzip | zip>
   gpgit.hash <sha512 | sha384 | sha256 | sha1 | md5>
   gpgit.keyserver <keyserver>
   gpgit.githubrepo <username/projectname>
   gpgit.project <projectname>
 
-  Note: All 'gpgit.option' configuration options are also available as temporary
-  command line parameter '--option' or captical environment variable 'OPTION'.
-
 Examples:
   git config --global gpgit.output ~/gpgit
   git config --local user.signingkey 97312D5EB9D7AE7D0BD4307351DAE9B7C1AE9161
-  git config --local compression gzip
+  git config --local compression "xz zip"
 ```
 
 # GPG Quick Start Guide
@@ -317,6 +315,9 @@ You can get securely in touch with me [here](http://contact.nicohood.de). My GPG
 * Create signatures with strongest hash algorithm
 * Use ECC keys for GPG key generation if available
 * Added color output options
+* Fix pushing tag if a branch with the same name also exists
+* Added zip support
+* Added support for multiple compression/hash algorithms
 
 2.0.7 (27.06.2017)
 * Switch to Python3 from bash
