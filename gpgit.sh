@@ -207,7 +207,7 @@ while true ; do
             shift
             ;;
         --hash)
-            HASH="${HASH}"
+            HASH+=("${2}")
             shift
             ;;
         --keyserver)
@@ -268,8 +268,8 @@ KEYSERVER="${KEYSERVER:-"$(git config gpgit.keyserver || true)"}"
 KEYSERVER="${KEYSERVER:-"hkps://pgp.mit.edu"}"
 COMPRESSION=(${COMPRESSION[@]:-"$(git config gpgit.compression || true)"})
 COMPRESSION=(${COMPRESSION[@]:-xz})
-HASH="${HASH:-"$(git config gpgit.hash || true)"}"
-HASH="${HASH:-sha512}"
+HASH=(${HASH[@]:-"$(git config gpgit.hash || true)"})
+HASH=(${HASH[@]:-sha512})
 GPG_BIN="${GPG_BIN:-"$(git config gpg.program || true)"}"
 GPG_BIN="${GPG_BIN:-gpg2}"
 OUTPUT="${OUTPUT:-"$(git config gpgit.output || true)"}"
@@ -294,7 +294,7 @@ declare -A GITHUB_ASSET
 # Check if dependencies are available
 # Dependencies: bash, gnupg2, git, tar, xz, coreutils, gawk, grep, sed
 # Optional dependencies: gzip, bzip2, lzip, file, jq, curl
-check_dependency "${GPG_BIN}" "${COMPRESSION[@]}" "${HASH}sum" \
+check_dependency "${GPG_BIN}" "${COMPRESSION[@]}" "${HASH[@]/%/sum}" \
      || die "Please check your \$PATH variable or install the missing dependencies."
 
 # Print initial welcome message with version information
@@ -486,14 +486,17 @@ do
     else
         FILE="${OUTPUT}/${FILENAME}.tar.${util}"
     fi
-    if [[ ! -f "${FILE}.${HASH}" ]]; then
-        plain "Creating message digest: '${FILE}.${HASH}'"
-        interactive
-        "${HASH}sum" "${FILE}" > "${FILE}.${HASH}"
-    else
-        warning "Found existing message digest '${FILE}.${HASH}'."
-    fi
-    GITHUB_ASSET["${FILENAME}.tar.${util}.${HASH}"]="${FILE}.${HASH}"
+    for algorithm in "${HASH[@]}"
+    do
+        if [[ ! -f "${FILE}.${algorithm}" ]]; then
+            plain "Creating message digest: '${FILE}.${algorithm}'"
+            interactive
+            "${algorithm}sum" "${FILE}" > "${FILE}.${algorithm}"
+        else
+            warning "Found existing message digest '${FILE}.${algorithm}'."
+        fi
+        GITHUB_ASSET["${FILENAME}.tar.${util}.${algorithm}"]="${FILE}.${algorithm}"
+    done
 done
 
 ####################################################################################################
