@@ -430,7 +430,8 @@ msg "4. Create a signed release archive"
 
 # Create output directory
 if [[ ! -d "${OUTPUT}" ]]; then
-    interactive "Creating not existing output directory: '${OUTPUT}'."
+    plain "Creating not existing output directory: '${OUTPUT}'."
+    interactive
     mkdir "${OUTPUT}"
 fi
 
