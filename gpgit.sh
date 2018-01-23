@@ -57,6 +57,7 @@ ${BOLD}Optional arguments:${ALL_OFF}
   -p, --pre-release        Flag as Github pre-release.
   -n, --no-github          Disable Github API functionallity.
   -i, --interactive        Run in interactive mode, step-by-step.
+      --<option>           Temporary set a 'gpgit.<option>' from config below.
 
 ${BOLD}Examples:${ALL_OFF}
   gpgit 1.0.0
@@ -72,9 +73,6 @@ ${BOLD}Configuration options:${ALL_OFF}
   gpgit.keyserver <keyserver>
   gpgit.githubrepo <username/projectname>
   gpgit.project <projectname>
-
-  Note: All 'gpgit.option' configuration options are also available as temporary
-  command line parameter '--option' or captical environment variable 'OPTION'.
 
 ${BOLD}Examples:${ALL_OFF}
   git config --global gpgit.output ~/gpgit
@@ -157,6 +155,12 @@ function check_dependency()
 set -o errexit -o errtrace -u
 trap 'die "Error on or near line ${LINENO}. Please report this issue: https://github.com/NicoHood/gpgit/issues"' ERR
 trap kill_exit SIGTERM SIGINT SIGHUP
+
+# Initialize variables
+unset INTERACTIVE MESSAGE KEYSERVER COMPRESSION HASH OUTPUT PROJECT SIGNINGKEY
+unset TOKEN GPG_USER GPG_EMAIL GITHUBREPO GITHUB PRERELEASE BRANCH GPG_BIN NEW_SIGNINGKEY
+declare -A GITHUB_ASSET
+declare -a HASH COMPRESSION
 
 # Parse input params an ovrwrite possible default or config loaded options
 GETOPT_ARGS=$(getopt -o "hm:C:k:u:s:S:o:O:pndi" \
@@ -270,8 +274,6 @@ COMPRESSION=(${COMPRESSION[@]:-"$(git config gpgit.compression || true)"})
 COMPRESSION=(${COMPRESSION[@]:-xz})
 HASH=(${HASH[@]:-"$(git config gpgit.hash || true)"})
 HASH=(${HASH[@]:-sha512})
-GPG_BIN="${GPG_BIN:-"$(git config gpg.program || true)"}"
-GPG_BIN="${GPG_BIN:-gpg2}"
 OUTPUT="${OUTPUT:-"$(git config gpgit.output || true)"}"
 OUTPUT="${OUTPUT:-"./gpgit"}"
 PROJECT="${PROJECT:-"$(git config gpgit.project || true)"}"
@@ -279,16 +281,17 @@ PROJECT="${PROJECT:-"$(git config --local remote.origin.url | sed -n 's#.*/\([^.
 SIGNINGKEY="${SIGNINGKEY:-"$(git config gpgit.signingkey || true)"}"
 SIGNINGKEY="${SIGNINGKEY:-"$(git config user.signingkey || true)"}"
 TOKEN="${TOKEN:-"$(git config gpgit.token || true)"}"
-GPG_USER="${GPG_USER:-"$(git config user.name || true)"}"
+GPG_USER="$(git config user.name || true)"
 GPG_USER="${GPG_USER:-"${USER}"}"
-GPG_EMAIL="${GPG_EMAIL:-"$(git config user.email || true)"}"
+GPG_EMAIL="$(git config user.email || true)"
 GITHUBREPO="${GITHUBREPO:-"$(git config gpgit.githubrepo || true)"}"
 GITHUBREPO="${GITHUBREPO:-"$(git config --local remote.origin.url | sed -e 's/.*github.com[:/]//' | sed -e 's/.git$//')"}"
 GITHUB="${GITHUB:-"$(git config --local remote.origin.url | grep -i 'github.com')"}"
 PRERELEASE="${PRERELEASE:-"false"}"
 BRANCH="$(git rev-parse --abbrev-ref HEAD)"
+GPG_BIN="$(git config gpg.program || true)"
+GPG_BIN="${GPG_BIN:-gpg2}"
 NEW_SIGNINGKEY="false"
-declare -A GITHUB_ASSET
 
 # Check if dependencies are available
 # Dependencies: bash, gnupg2, git, tar, xz, coreutils, gawk, grep, sed
