@@ -276,7 +276,6 @@ OUTPUT="${OUTPUT:-"$(git config gpgit.output || true)"}"
 OUTPUT="${OUTPUT:-"./gpgit"}"
 PROJECT="${PROJECT:-"$(git config gpgit.project || true)"}"
 PROJECT="${PROJECT:-"$(git config --local remote.origin.url | sed -n 's#.*/\([^.]*\)\.git#\1#p')"}"
-FILENAME="${FILENAME:-"${PROJECT}-${TAG}"}"
 SIGNINGKEY="${SIGNINGKEY:-"$(git config gpgit.signingkey || true)"}"
 SIGNINGKEY="${SIGNINGKEY:-"$(git config user.signingkey || true)"}"
 TOKEN="${TOKEN:-"$(git config gpgit.token || true)"}"
@@ -440,22 +439,22 @@ msg2 "4.1 Create compressed archive"
 for util in "${COMPRESSION[@]}"
 do
     if [[ "${util}" == zip ]]; then
-        FILE="${OUTPUT}/${FILENAME}.${util}"
+        FILE="${OUTPUT}/${PROJECT}-${TAG}.${util}"
     else
-        FILE="${OUTPUT}/${FILENAME}.tar.${util}"
+        FILE="${OUTPUT}/${PROJECT}-${TAG}.tar.${util}"
     fi
     if [[ ! -f "${FILE}" ]]; then
         plain "Creating new release archive: '${FILE}'"
         interactive
         if [[ "${util}" == zip ]]; then
-            git archive --format=zip --prefix "${FILENAME}/" "refs/tags/${TAG}" > "${FILE}"
+            git archive --format=zip --prefix "${PROJECT}-${TAG}/" "refs/tags/${TAG}" > "${FILE}"
         else
-            git archive --format=tar --prefix "${FILENAME}/" "refs/tags/${TAG}" | "${util}" --best > "${FILE}"
+            git archive --format=tar --prefix "${PROJECT}-${TAG}/" "refs/tags/${TAG}" | "${util}" --best > "${FILE}"
         fi
     else
         warning "Found existing archive '${FILE}'."
     fi
-    GITHUB_ASSET["${FILENAME}.tar.${util}"]="${FILE}"
+    GITHUB_ASSET["${PROJECT}-${TAG}.tar.${util}"]="${FILE}"
 done
 
 # Sign archive
@@ -463,9 +462,9 @@ msg2 "4.2 Sign the archive"
 for util in "${COMPRESSION[@]}"
 do
     if [[ "${util}" == zip ]]; then
-        FILE="${OUTPUT}/${FILENAME}.${util}"
+        FILE="${OUTPUT}/${PROJECT}-${TAG}.${util}"
     else
-        FILE="${OUTPUT}/${FILENAME}.tar.${util}"
+        FILE="${OUTPUT}/${PROJECT}-${TAG}.tar.${util}"
     fi
     if [[ ! -f "${FILE}.asc" ]]; then
         plain "Creating GPG signature: '${FILE}.asc'"
@@ -474,7 +473,7 @@ do
     else
         warning "Found existing signature '${FILE}.asc'."
     fi
-    GITHUB_ASSET["${FILENAME}.tar.${util}.asc"]="${FILE}.asc"
+    GITHUB_ASSET["${PROJECT}-${TAG}.tar.${util}.asc"]="${FILE}.asc"
 done
 
 # Creating hash
@@ -482,9 +481,9 @@ msg2 "4.3 Create the message digest"
 for util in "${COMPRESSION[@]}"
 do
     if [[ "${util}" == zip ]]; then
-        FILE="${OUTPUT}/${FILENAME}.${util}"
+        FILE="${OUTPUT}/${PROJECT}-${TAG}.${util}"
     else
-        FILE="${OUTPUT}/${FILENAME}.tar.${util}"
+        FILE="${OUTPUT}/${PROJECT}-${TAG}.tar.${util}"
     fi
     for algorithm in "${HASH[@]}"
     do
@@ -495,7 +494,7 @@ do
         else
             warning "Found existing message digest '${FILE}.${algorithm}'."
         fi
-        GITHUB_ASSET["${FILENAME}.tar.${util}.${algorithm}"]="${FILE}.${algorithm}"
+        GITHUB_ASSET["${PROJECT}-${TAG}.tar.${util}.${algorithm}"]="${FILE}.${algorithm}"
     done
 done
 
