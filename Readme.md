@@ -6,16 +6,16 @@
 As we all know, today more than ever before, it is crucial to be able to trust our computing environments. One of the main difficulties that package maintainers of GNU/Linux distributions face, is the difficulty to verify the authenticity and the integrity of the source code. With GPG signatures it is possible for packagers to verify source code releases quickly and easily.
 
 #### Overview of the required tasks:
-* Create and/or use a **[4096-bit RSA keypair][1]** for the file signing
+* Create and/or use a **[4096-bit RSA/Ed25519 ECC keypair][1]** for the file signing
 * Use a **[strong, unique, secret passphrase][2]** for the key
 * Upload the public key to a **[key server][3]** and **[publish the full fingerprint][4]**
 * **[Sign][5]** every new Git **[commit][6]** and **[tag][7]**
-* Create **[signed][8], [compressed][9]** (xz --best) release **archives**
-* Upload a **[strong message digest][10]** (sha512) of the archive
+* Create **[signed][8], [compressed release archives][9]**
+* Upload a **[strong message digest][10]** of the archive
 * Configure **[HTTPS][11]** for your download server
 
 ### GPGit
-[GPGit][12] is meant to bring GPG to the masses. It is not only a Python script that automates the process of [creating new signed Git releases with GPG][13], but also a [quick-start-guide][14] for learning how to use GPG. GPGit integrates perfectly with the [Github Release API][15] for uploading.
+[GPGit][12] is meant to bring GPG to the masses. It is not only a shell script that automates the process of [creating new signed Git releases with GPG][13], but also includes a [quick-start-guide][14] for learning how to use GPG. GPGit integrates perfectly with the [Github Release API][15] for uploading.
 
 The security status of GNU/Linux projects will be tracked in the [Linux Security Database][16]. If you have any further questions, do not hesitate to [contact me][17] personally. Thanks for your help in making GNU/Linux projects more secure by using GPG signatures.
 
@@ -37,7 +37,7 @@ The security status of GNU/Linux projects will be tracked in the [Linux Security
 [16]: https://github.com/NicoHood/LSD
 [17]: http://contact.nicohood.de
 
-## Index
+# Index
 * [Introduction](#introduction)
 * [GPGit Documentation](#gpgit-documentation)
 * [GPG Quick Start Guide](#gpg-quick-start-guide)
@@ -45,103 +45,82 @@ The security status of GNU/Linux projects will be tracked in the [Linux Security
 # GPGit Documentation
 
 ## Installation
-### ArchLinux
-You can install GPGit from [AUR](https://aur.archlinux.org/packages/gpgit/). Make sure to [build in a clean chroot](https://wiki.archlinux.org/index.php/DeveloperWiki:Building_in_a_Clean_Chroot). Please give the package a vote so I can move it to the official ArchLinux [community] repository for even simpler installation.
 
-### Ubuntu/Debian/Other
-GPGit dependencies can be easily installed via [pip](https://pypi.python.org/pypi/pip).
+### Distribution Packages
+* [Arch Linux (AUR)](https://aur.archlinux.org/packages/gpgit/)
 
+### Manual Installation
 ```bash
-# Install dependencies
-sudo apt-get install python3 python3-pip gnupg2 git
-VERSION=2.0.7
+# Install dependencies and optional dependencies
+sudo apt-get install bash gnupg2 git tar xz-utils coreutils gawk grep sed
+sudo apt-get install gzip bzip lzip file jq curl
 
 # Download and verify source
-wget https://github.com/NicoHood/gpgit/releases/download/${VERSION}/gpgit-${VERSION}.tar.xz
-wget https://github.com/NicoHood/gpgit/releases/download/${VERSION}/gpgit-${VERSION}.tar.xz.asc
+VERSION=1.3.0
+wget "https://github.com/NicoHood/gpgit/releases/download/${VERSION}/gpgit-${VERSION}.tar.xz"
+wget "https://github.com/NicoHood/gpgit/releases/download/${VERSION}/gpgit-${VERSION}.tar.xz.asc"
 gpg2 --keyserver hkps://pgp.mit.edu --recv-keys 97312D5EB9D7AE7D0BD4307351DAE9B7C1AE9161
-gpg2 --verify gpgit-${VERSION}.tar.xz.asc gpgit-${VERSION}.tar.xz
+gpg2 --verify "gpgit-${VERSION}.tar.xz.asc" "gpgit-${VERSION}.tar.xz"
 
-# Extract and install dependencies
-tar -xf gpgit-${VERSION}.tar.xz
-cd gpgit-${VERSION}
-pip3 install --user -r requirements.txt
-
-# Install  and run GPGit
-sudo cp gpgit.py /usr/local/bin/gpgit
+# Extract, install and run GPGit
+tar -xf "gpgit-${VERSION}.tar.xz"
+sudo make -C "gpgit-${VERSION}" PREFIX=/usr/local install
 gpgit --help
 ```
 
 ## Script Usage
-The script guides you through all 5 steps of the [GPG quick start guide](#gpg-quick-start-guide). **By default no extra arguments beside the tag are required.** Follow the instructions and you are good to go.
+The script guides you through all 5 steps of the [GPG quick start guide](#gpg-quick-start-guide). **Only the tag name is a required parameter, the tag message can be specified optionally.**
 
+### Sample Usage
 ![screenshot](img/screenshot.png)
 
-### Parameters
-
-#### -h, --help
-Show help message and exit.
-
-#### -v, --version
-Show program's version and exit.
-
-#### tag
-Tagname of the release. E.g. `1.0.0` or `20170521` with `$(date +%Y%m%d)`.
-
-#### -m <msg>, --message <msg>
-Use the given <msg> as the commit message.
-
-#### -o <path>, --output <path>
-Output path of the archive, signature and message digest. You can also set this option via configuration.
-
-#### -g <path>, --git-dir <path>
-Path to the Git project.
-
-#### -n, --no-github
-Disable Github API functionality. Github releases need to be created manually and release assets need to be uploaded manually. GPGit will not prompt for a Github token anymore.
-
-#### -p, --prerelease
-Flag as Github prerelease.
-
-### Configuration
-Additional configuration can be made via [git config](https://git-scm.com/docs/git-config). Example usage:
-
-```bash
-git config --global gpgit.token <token>
-git config --global gpgit.output ~/gpgit
-git config --local gpgit.compression gzip
+### Parameters and Configuration
 ```
+$ gpgit --help
+Usage: gpgit [options] <tag>
 
-#### user.signingkey
-Full GPG fingerprint to use for signing/verifying.
+GPGit 1.3.0 https://github.com/NicoHood/gpgit
+A shell script that automates the process of signing Git sources via GPG.
 
-#### gpgit.output
-Output path of the archive, signature and message digest. You can also set this option via parameter.
+Mandatory arguments:
+  <tag>                    The name of the tag to create.
 
-#### gpgit.compression
-Archive compression option. Chose between "gzip,xz,bzip2,lzip". Default: "xz"
+Optional arguments:
+  -h, --help               Show this help message and exit.
+  -m, --message <msg>      Use the given <msg> as the commit message.
+                           If multiple -m options are given, their values are
+                           concatenated as separate paragraphs.
+  -C, --directory <path>   Run as if GPGit was started in <path> instead of the
+                           current working directory.
+  -S, --signingkey <keyid> Use the given GPG key.
+  -o, --output <path>      Safe all release assets to the specified <path>.
+  -p, --pre-release        Flag as Github pre-release.
+  -n, --no-github          Disable Github API functionallity.
+  -i, --interactive        Run in interactive mode, step-by-step.
 
-#### gpgit.sha
-Message digest algorithm. chose between "sha256,sha384,sha512". Default: "sha512"
+Examples:
+  gpgit 1.0.0
+  gpgit -p -m "First alpha release." 0.1.0
+  gpgit -C git/myproject/ -o /tmp/gpgit -n -m "Internal test release." 0.0.1
 
-#### gpgit.keyserver
-Keyserver to use for GPG key check. Automatically set to "skip" after the first check was successfull. Default: "hkps://pgp.mit.edu"
+Configuration options:
+  gpgit.signingkey <keyid>, user.signingkey <keyid>
+  gpgit.output <path>
+  gpgit.token <token>
+  gpgit.compression <xz | gzip | bzip2 | lzip>
+  gpgit.hash <sha512 | sha384 | sha256 | sha1 | md5>
+  gpgit.keyserver <keyserver>
+  gpgit.githubrepo <username/projectname>
+  gpgit.project <projectname>
 
-#### gpgit.github
-Enable or disable Github functionality with "true|false". Default: "true" (enabled)
+  Note: All 'gpgit.option' configuration options are also available as temporary
+  command line parameter '--option' or captical environment variable 'OPTION'.
 
-#### gpgit.user
-Username used for github uploading.
-
-#### gpgit.project
-Project name used for github uploading and archive naming.
-
-#### gpgit.armor
-Use ascii armored output of GPG (.asc instead of .sig) with "true|false". Default: "true" (armored output).
-
-#### gpgit.token
-Specify the Github token for Github API release uploading.
-
+Examples:
+  git config --global gpgit.output ~/gpgit
+  git config --local user.signingkey 97312D5EB9D7AE7D0BD4307351DAE9B7C1AE9161
+  git config --local compression gzip
+```
 
 # GPG Quick Start Guide
 GPGit guides you through 5 simple steps to get your software project ready with GPG signatures. Further details can be found below.
@@ -177,36 +156,30 @@ Here are a few examples how to keep a passphrase strong but easy to remember:
 * [PasswordCard](https://www.passwordcard.org/en)
 
 ### 1.2 Key generation
-If you don't have a GPG key yet, create a new one first. You can use RSA (4096 bits) or ECC (Curve 25519) for a strong key. The latter one does currently not work with Github. You want to stay with RSA for now.
+If you don't have a GPG key yet, create a new one first. You can use RSA (4096 bits) or ECC (Curve 25519) for a strong key. GPG offers you the option to use the most future-proof key algorithm available. Use the most recent version gnupg2, not gnupg1!
+
+Ed25519 ECC GPG keys are currently [not supported by Github](https://help.github.com/articles/generating-a-new-gpg-key/#supported-gpg-key-algorithms). To generate an ECC key use `future-default` instead of `rsa4096` as parameter.
 
 **Make sure that your secret key is stored somewhere safe and use a unique strong password.**
 
-Crucial key generation settings:
-* (1) RSA and RSA
-* 4096 bit key size
-* 4096 bit subkey size
-* Valid for 1 year (1y)
-* Username and email
-
 ##### Example key generation:
-```
-$ gpg --full-gen-key --expert
-[...]
-gpg: /tmp/trustdb.gpg: trustdb created
-gpg: key 61D68FF6279DF9A6 marked as ultimately trusted
-gpg: directory '/tmp/openpgp-revocs.d' created
-gpg: revocation certificate stored as
-'/tmp/openpgp-revocs.d/3D6B9B41CCDC16D0E4A66AC461D68FF6279DF9A6.rev'
+```bash
+$ gpg2 --quick-generate-key "John Doe <john@doe.com>" future-default default 1y
+We need to generate a lot of random bytes. It is a good idea to perform
+some other action (type on the keyboard, move the mouse, utilize the
+disks) during the prime generation; this gives the random number
+generator a better chance to gain enough entropy.
+gpg: key 2F8E73B1D445CCD3 marked as ultimately trusted
+gpg: revocation certificate stored as '/home/john/.gnupg/openpgp-revocs.d/6718A9A63030E182A86FEE152F8E73B1D445CCD3.rev'
 public and secret key created and signed.
 
-pub   rsa4096 2017-01-04 [SC] [expires: 2018-01-04]
-      3D6B9B41CCDC16D0E4A66AC461D68FF6279DF9A6
-      3D6B9B41CCDC16D0E4A66AC461D68FF6279DF9A6
+pub   ed25519 2017-09-24 [SC] [expires: 2018-09-24]
+      6718A9A63030E182A86FEE152F8E73B1D445CCD3
 uid                      John Doe <john@doe.com>
-sub   rsa4096 2017-01-04 [E] [expires: 2018-01-04]
+sub   cv25519 2017-09-24 [E]
 ```
 
-The generated key has the fingerprint `3D6B9B41CCDC16D0E4A66AC461D68FF6279DF9A6` in this example. Share it with others so they can verify your source. [[Read more]](https://wiki.archlinux.org/index.php/GnuPG#Create_key_pair)
+The generated key has the fingerprint `6718A9A63030E182A86FEE152F8E73B1D445CCD3` in this example. Share it with others so they can verify your source. [[Read more]](https://wiki.archlinux.org/index.php/GnuPG#Create_key_pair)
 
 If you ever move your installation make sure to backup `~/.gnupg/` as it contains the **private key** and the **revocation certificate**. Handle it with care. [[Read more]](https://wiki.archlinux.org/index.php/GnuPG#Revoking_a_key)
 
@@ -217,11 +190,11 @@ To make the public key widely available, upload it to a key server. Now the user
 
 ```bash
 # Publish key
-gpg --keyserver hkps://pgp.mit.edu --send-keys <fingerprint>
+gpg2 --keyserver hkps://pgp.mit.edu --send-keys <fingerprint>
 
 # Import key
 # Alternative keyserver: hkps://hkps.pool.sks-keyservers.net
-gpg --keyserver hkps://pgp.mit.edu --recv-keys <fingerprint>
+gpg2 --keyserver hkps://pgp.mit.edu --recv-keys <fingerprint>
 ```
 
 ### 2.2 Publish full fingerprint
@@ -232,10 +205,10 @@ To make Github display your commits as "verified" you also need to add your publ
 
 ```bash
 # List keys + full fingerprint
-gpg --list-secret-keys --keyid-format LONG
+gpg2 --list-secret-keys --keyid-format LONG
 
 # Generate public key
-gpg --armor --export <fingerprint>
+gpg2 --armor --export <fingerprint>
 ```
 
 ## 3. Use Git with GPG
@@ -244,7 +217,7 @@ In order to make Git use your GPG key you need to set the default signing key fo
 
 ```bash
 # List keys + full fingerprint
-gpg --list-secret-keys --keyid-format LONG
+gpg2 --list-secret-keys --keyid-format LONG
 
 git config --global user.signingkey <fingerprint>
 ```
@@ -276,22 +249,22 @@ You can use `git archive` to create archives of your tagged Git release. It is h
 
 ```bash
 # .tar.gz
-git archive --format=tar.gz -o gpgit-1.0.0.tar.gz --prefix gpgit-1.0.0 1.0.0
+git archive --format=tar.gz -o gpgit-1.0.0.tar.gz --prefix gpgit-1.0.0/ 1.0.0
 
 # .tar.xz
-git archive --format=tar --prefix gpgit-1.0.0 1.0.0 | xz > gpgit-1.0.0.tar.xz
+git archive --format=tar --prefix gpgit-1.0.0/ 1.0.0 | xz > gpgit-1.0.0.tar.xz
 
 # .tar.lz
-git archive --format=tar --prefix gpgit-1.0.0 1.0.0 | lzip --best > gpgit-1.0.0.tar.xz
+git archive --format=tar --prefix gpgit-1.0.0/ 1.0.0 | lzip --best > gpgit-1.0.0.tar.xz
 
 # Verify an existing archive
-git archive --format=tar --prefix gpgit-1.0.0 1.0.0 | cmp <(xz -dc gpgit-1.0.0.tar.xz)
+git archive --format=tar --prefix gpgit-1.0.0/ 1.0.0 | cmp <(xz -dc gpgit-1.0.0.tar.xz)
 ```
 
 ### 4.2 Sign the archive
 Type the filename of the tarball that you want to sign and then run:
 ```bash
-gpg --digest-algo SHA512 --armor --detach-sign gpgit-1.0.0.tar.xz
+gpg2 --digest-algo SHA512 --armor --detach-sign gpgit-1.0.0.tar.xz
 ```
 **Do not blindly sign the Github source downloads** unless you have compared its content with the local files via `diff.` [[Read more]](https://wiki.archlinux.org/index.php/GnuPG#Make_a_detached_signature)
 
@@ -300,7 +273,7 @@ To not need to retype your password every time for signing you can also use [gpg
 This gives you a file called `gpgit-1.0.0.tar.xz.asc` which is the GPG signature. Release it along with your source tarball and let everyone know to first verify the signature after downloading. [[Read more]](https://wiki.archlinux.org/index.php/GnuPG#Verify_a_signature)
 
 ```bash
-gpg --verify gpgit-1.0.0.tar.xz.asc
+gpg2 --verify gpgit-1.0.0.tar.xz.asc
 ```
 
 ### 4.3 Create the message digest
@@ -319,9 +292,7 @@ sha512 gpgit-1.0.0.tar.xz > gpgit-1.0.0.tar.xz.sha512
 ### 5.2 Upload to Github
 Create a new "Github Release" to add additional data to the tag. Then drag the .tar.xz .sig and .sha512 files onto the release.
 
-The script also supports [uploading to Github](https://developer.github.com/v3/repos/releases/) directly. Create a new Github token first and then follow the instructions of the script.
-
-How to generate a Github token:
+The script also supports [uploading to Github](https://developer.github.com/v3/repos/releases/) directly. Create a new Github token first and then follow the instructions of the script. How to generate a Github token:
 * Go to ["Settings - Personal access tokens"](https://github.com/settings/tokens)
 * Generate a new token with permissions "public_repo" and "admin:gpg_key"
 * Store it safely
@@ -332,10 +303,21 @@ How to generate a Github token:
 You can also use your GPG key for email encryption with [enigmail and thunderbird](https://wiki.archlinux.org/index.php/thunderbird#EnigMail_-_Encryption). [[Read more]](https://www.enigmail.net/index.php/en/)
 
 ## Contact
-You can get securely in touch with me [here](http://contact.nicohood.de). Don't hesitate to [file a bug at Github](https://github.com/NicoHood/gpgit/issues). More cool projects from me can be found [here](http://www.nicohood.de).
+You can get securely in touch with me [here](http://contact.nicohood.de). My GPG key ID is `9731 2D5E B9D7 AE7D 0BD4 3073 51DA E9B7 C1AE 9161`. Don't hesitate to [file a bug at Github](https://github.com/NicoHood/gpgit/issues). More cool projects from me can be found [here](http://www.nicohood.de).
 
 ## Version History
 ```
+1.3.0 (24.01.2018)
+* Reworked bash script completely
+* Simplified parameters
+* Added environment variable and git config support
+* Reduced output verbosity
+* Generate archive from local git source rather than downloading it from github
+* Do less unnecessary error checking, but simplify the code instead
+* Create signatures with strongest hash algorithm
+* Use ECC keys for GPG key generation if available
+* Added color output options
+
 2.0.7 (27.06.2017)
 * Switch to Python3 from bash
 * New user interface with preview
