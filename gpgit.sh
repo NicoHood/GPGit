@@ -203,7 +203,7 @@ while true ; do
             shift
             ;;
         --compression)
-            COMPRESSION="${2}"
+            COMPRESSION+=("${2}")
             shift
             ;;
         --hash)
@@ -266,8 +266,8 @@ INTERACTIVE=${INTERACTIVE:-"$(git config gpgit.interactive || true)"}
 MESSAGE="${MESSAGE:-"Release ${TAG}"$'\n\nCreated with GPGit\nhttps://github.com/NicoHood/gpgit'}"
 KEYSERVER="${KEYSERVER:-"$(git config gpgit.keyserver || true)"}"
 KEYSERVER="${KEYSERVER:-"hkps://pgp.mit.edu"}"
-COMPRESSION="${COMPRESSION:-"$(git config gpgit.compression || true)"}"
-COMPRESSION="${COMPRESSION:-xz}"
+COMPRESSION=(${COMPRESSION[@]:-"$(git config gpgit.compression || true)"})
+COMPRESSION=(${COMPRESSION[@]:-xz})
 HASH="${HASH:-"$(git config gpgit.hash || true)"}"
 HASH="${HASH:-sha512}"
 GPG_BIN="${GPG_BIN:-"$(git config gpg.program || true)"}"
@@ -283,18 +283,18 @@ TOKEN="${TOKEN:-"$(git config gpgit.token || true)"}"
 GPG_USER="${GPG_USER:-"$(git config user.name || true)"}"
 GPG_USER="${GPG_USER:-"${USER}"}"
 GPG_EMAIL="${GPG_EMAIL:-"$(git config user.email || true)"}"
-FILE="${OUTPUT}/${FILENAME}.tar.${COMPRESSION}"
 GITHUBREPO="${GITHUBREPO:-"$(git config gpgit.githubrepo || true)"}"
 GITHUBREPO="${GITHUBREPO:-"$(git config --local remote.origin.url | sed -e 's/.*github.com[:/]//' | sed -e 's/.git$//')"}"
 GITHUB="${GITHUB:-"$(git config --local remote.origin.url | grep -i 'github.com')"}"
 PRERELEASE="${PRERELEASE:-"false"}"
 BRANCH="$(git rev-parse --abbrev-ref HEAD)"
 NEW_SIGNINGKEY="false"
+declare -A GITHUB_ASSET
 
 # Check if dependencies are available
 # Dependencies: bash, gnupg2, git, tar, xz, coreutils, gawk, grep, sed
 # Optional dependencies: gzip, bzip2, lzip, file, jq, curl
-check_dependency "${GPG_BIN}" "${COMPRESSION}" "${HASH}sum" \
+check_dependency "${GPG_BIN}" "${COMPRESSION[@]}" "${HASH}sum" \
      || die "Please check your \$PATH variable or install the missing dependencies."
 
 # Print initial welcome message with version information
@@ -436,34 +436,48 @@ fi
 
 # Create new archive
 msg2 "4.1 Create compressed archive"
-if [[ ! -f "${FILE}" ]]; then
-    plain "Creating new release archive: '${FILE}'"
-    interactive
-    git archive --format=tar --prefix "${FILENAME}/" "refs/tags/${TAG}" | "${COMPRESSION}" --best > "${FILE}"
-else
-    warning "Found existing archive '${FILE}'."
-fi
+for util in "${COMPRESSION[@]}"
+do
+    FILE="${OUTPUT}/${FILENAME}.tar.${util}"
+    if [[ ! -f "${FILE}" ]]; then
+        plain "Creating new release archive: '${FILE}'"
+        interactive
+        git archive --format=tar --prefix "${FILENAME}/" "refs/tags/${TAG}" | "${util}" --best > "${FILE}"
+    else
+        warning "Found existing archive '${FILE}'."
+    fi
+    GITHUB_ASSET["${FILENAME}.tar.${util}"]="${FILE}"
+done
 
 # Sign archive
 msg2 "4.2 Sign the archive"
-if [[ ! -f "${FILE}.asc" ]]; then
-    plain "Creating GPG signature: '${FILE}.asc'"
-    interactive
-    ${GPG_BIN} --digest-algo SHA512 -u "${SIGNINGKEY}" --output "${FILE}.asc" --armor --detach-sign "${FILE}"
-else
-    warning "Found existing signature '${FILE}.asc'."
-fi
+for util in "${COMPRESSION[@]}"
+do
+    FILE="${OUTPUT}/${FILENAME}.tar.${util}"
+    if [[ ! -f "${FILE}.asc" ]]; then
+        plain "Creating GPG signature: '${FILE}.asc'"
+        interactive
+        ${GPG_BIN} --digest-algo SHA512 -u "${SIGNINGKEY}" --output "${FILE}.asc" --armor --detach-sign "${FILE}"
+    else
+        warning "Found existing signature '${FILE}.asc'."
+    fi
+    GITHUB_ASSET["${FILENAME}.tar.${util}.asc"]="${FILE}.asc"
+done
 
 # Creating hash
 msg2 "4.3 Create the message digest"
-if [[ ! -f "${FILE}.${HASH}" ]]; then
-    plain "Creating message digest: '${FILE}.${HASH}'"
-    interactive
-    "${HASH}sum" "${FILE}" > "${FILE}.${HASH}"
-else
-    warning "Found existing message digest '${FILE}.${HASH}'."
-fi
-
+for util in "${COMPRESSION[@]}"
+do
+    FILE="${OUTPUT}/${FILENAME}.tar.${util}"
+    if [[ ! -f "${FILE}.${HASH}" ]]; then
+        plain "Creating message digest: '${FILE}.${HASH}'"
+        interactive
+        "${HASH}sum" "${FILE}" > "${FILE}.${HASH}"
+    else
+        warning "Found existing message digest '${FILE}.${HASH}'."
+    fi
+    GITHUB_ASSET["${FILENAME}.tar.${util}.${HASH}"]="${FILE}.${HASH}"
+done
 
 ####################################################################################################
 msg "5. Upload the release"
@@ -559,26 +573,16 @@ else
             warning "Found existing release on Github."
         fi
 
-        # Upload archive
-        if grep -q "^${FILENAME}.tar.${COMPRESSION}$" <(echo "${GITHUB_ASSETS}"); then
-            warning "Found existing archive on Github."
-        else
-            github_upload_asset "${FILENAME}.tar.${COMPRESSION}" "${FILE}"
-        fi
-
-        # Upload signature
-        if grep -q "^${FILENAME}.tar.${COMPRESSION}.asc$" <(echo "${GITHUB_ASSETS}"); then
-            warning "Found existing signature on Github."
-        else
-            github_upload_asset "${FILENAME}.tar.${COMPRESSION}.asc" "${FILE}.asc"
-        fi
-
-        # Upload message digest
-        if grep -q "^${FILENAME}.tar.${COMPRESSION}.${HASH}$" <(echo "${GITHUB_ASSETS}"); then
-            warning "Found existing message digest on Github."
-        else
-            github_upload_asset "${FILENAME}.tar.${COMPRESSION}.${HASH}" "${FILE}.${HASH}"
-        fi
+        # Upload release assets
+        for filename in "${!GITHUB_ASSET[@]}"
+        do
+            if grep -q "^${filename}$" <(echo "${GITHUB_ASSETS}"); then
+                warning "Found existing asset on Github: '${filename}'."
+            else
+                github_upload_asset "${filename}" "${GITHUB_ASSET[$filename]}"
+            fi
+        done
+        exit
     else
         warning "Please upload the release files manually to Github."
     fi
