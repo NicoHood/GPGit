@@ -510,7 +510,7 @@ function github_upload_asset()
     # Abort in API error
     message="$(echo "${RESULT}" | jq -r .message)"
     if [[ "${message}" != "null" ]]; then
-        die "Github API message: ${message}"
+        die "Github API message: '${message}' Check your token configuration: https://github.com/settings/tokens"
     fi
 }
 
@@ -542,13 +542,13 @@ else
                     "https://api.github.com/repos/${GITHUBREPO}/releases" \
                     -H "Accept: application/vnd.github.v3+json" \
                     -H "Authorization: token ${TOKEN}" ); then
-                die "Uploading release to Github failed"
+                die "Uploading release to Github failed."
             fi
 
             # Abort on API error
             message="$(echo "${GITHUB_RELEASE}" | jq -r .message)"
             if [[ "${message}" != "null" ]]; then
-                die "Github API message: ${message}"
+                die "Github API message: '${message}' Check your token configuration: https://github.com/settings/tokens"
             fi
 
             # Safe new ID
