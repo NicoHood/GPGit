@@ -437,7 +437,7 @@ msg2 "4.1 Create compressed archive"
 if [[ ! -f "${FILE}" ]]; then
     plain "Creating new release archive: '${FILE}'"
     interactive
-    git archive --format=tar --prefix "${FILENAME}/" "${TAG}" | "${COMPRESSION}" --best > "${FILE}"
+    git archive --format=tar --prefix "${FILENAME}/" "refs/tags/${TAG}" | "${COMPRESSION}" --best > "${FILE}"
 else
     warning "Found existing archive '${FILE}'."
 fi
