@@ -429,8 +429,10 @@ msg "4. Create a signed release archive"
 ####################################################################################################
 
 # Create output directory
-interactive "Creating output directory if not existing."
-mkdir -p "${OUTPUT}"
+if [[ ! -d "${OUTPUT}" ]]; then
+    interactive "Creating not existing output directory: '${OUTPUT}'."
+    mkdir "${OUTPUT}"
+fi
 
 # Create new archive
 msg2 "4.1 Create compressed archive"
