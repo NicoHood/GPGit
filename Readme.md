@@ -56,7 +56,7 @@ sudo apt-get install bash gnupg2 git tar xz-utils coreutils gawk grep sed
 sudo apt-get install gzip bzip lzip file jq curl
 
 # Download and verify source
-VERSION=1.3.0
+VERSION=1.3.1
 wget "https://github.com/NicoHood/gpgit/releases/download/${VERSION}/gpgit-${VERSION}.tar.xz"
 wget "https://github.com/NicoHood/gpgit/releases/download/${VERSION}/gpgit-${VERSION}.tar.xz.asc"
 gpg2 --keyserver hkps://pgp.mit.edu --recv-keys 97312D5EB9D7AE7D0BD4307351DAE9B7C1AE9161
@@ -77,13 +77,13 @@ The script guides you through all 5 steps of the [GPG quick start guide](#gpg-qu
 ### Parameters and Configuration
 ```
 $ gpgit --help
-Usage: gpgit [options] <tag>
+Usage: gpgit [options] <tagname> [<commit> | <object>]
 
-GPGit 1.3.0 https://github.com/NicoHood/gpgit
+GPGit 1.3.1 https://github.com/NicoHood/gpgit
 A shell script that automates the process of signing Git sources via GPG.
 
 Mandatory arguments:
-  <tag>                    The name of the tag to create.
+  <tagname>                The name of the tag to create.
 
 Optional arguments:
   -h, --help               Show this help message and exit.
@@ -92,12 +92,14 @@ Optional arguments:
                            concatenated as separate paragraphs.
   -C, --directory <path>   Run as if GPGit was started in <path> instead of the
                            current working directory.
-  -S, --signingkey <keyid> Use the given GPG key.
+  -u, --local-user <keyid> Use the given GPG key (same as --signingkey).
   -o, --output <path>      Safe all release assets to the specified <path>.
   -p, --pre-release        Flag as Github pre-release.
   -n, --no-github          Disable Github API functionallity.
+  -f, --force              Force the recreation of Git tag and release assets.
   -i, --interactive        Run in interactive mode, step-by-step.
       --<option>           Temporary set a 'gpgit.<option>' from config below.
+  <commit>, <object>       The object that the new tag will refer to.
 
 Examples:
   gpgit 1.0.0
