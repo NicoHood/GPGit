@@ -35,15 +35,15 @@ if [[ -t 2 ]]; then
 fi
 
 # Help page
-USAGE_SHORT="Usage: gpgit [-h] [-m <msg>] [-C <path>] [-u <keyid>] [-o <path>] [-p] [-n] [-f] [-i] <tag> [<commit> | <object>]"
+USAGE_SHORT="Usage: gpgit [-h] [-m <msg>] [-C <path>] [-u <keyid>] [-o <path>] [-p] [-n] [-f] [-i] <tagname> [<commit> | <object>]"
 read -r -d '' USAGE << EOF
-Usage: gpgit [options] <tag> [<commit> | <object>]
+Usage: gpgit [options] <tagname> [<commit> | <object>]
 
 GPGit ${VERSION} https://github.com/NicoHood/gpgit
 A shell script that automates the process of signing Git sources via GPG.
 
 ${BOLD}Mandatory arguments:${ALL_OFF}
-  <tag>                    The name of the tag to create.
+  <tagname>                The name of the tag to create.
 
 ${BOLD}Optional arguments:${ALL_OFF}
   -h, --help               Show this help message and exit.
@@ -59,6 +59,7 @@ ${BOLD}Optional arguments:${ALL_OFF}
   -f, --force              Force the recreation of Git tag and release assets.
   -i, --interactive        Run in interactive mode, step-by-step.
       --<option>           Temporary set a 'gpgit.<option>' from config below.
+  <commit>, <object>       The object that the new tag will refer to.
 
 ${BOLD}Examples:${ALL_OFF}
   gpgit 1.0.0
