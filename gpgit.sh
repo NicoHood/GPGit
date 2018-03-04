@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-VERSION="1.3.0"
+VERSION="1.3.1"
 
 # Avoid any encoding problems
 export LANG=C
@@ -284,7 +284,7 @@ fi
 
 # Initialize variable config/defaults
 INTERACTIVE=${INTERACTIVE:-"$(git config gpgit.interactive || true)"}
-MESSAGE="${MESSAGE:-"Release ${TAG}"$'\n\nCreated with GPGit\nhttps://github.com/NicoHood/gpgit'}"
+MESSAGE="${MESSAGE:-"Release ${TAG}"$'\n\nCreated with GPGit '"${VERSION}"$'\nhttps://github.com/NicoHood/gpgit'}"
 KEYSERVER="${KEYSERVER:-"$(git config gpgit.keyserver || true)"}"
 KEYSERVER="${KEYSERVER:-"hkps://pgp.mit.edu"}"
 COMPRESSION=(${COMPRESSION[@]:-"$(git config gpgit.compression || true)"})
