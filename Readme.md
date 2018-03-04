@@ -305,6 +305,14 @@ You can get securely in touch with me [here](http://contact.nicohood.de). My GPG
 
 ## Version History
 ```
+1.3.1 (04.03.2018)
+* Fixed shebang for non linux systems
+* Improved hash algorithm usage for non linux systems
+* Added -f, --force option
+* Added version identifier in default tag message
+* Added option to specify the commit/object to tag
+* Improved keyid parameter to fit better with git tag and gpg
+
 1.3.0 (24.01.2018)
 * Reworked bash script completely
 * Simplified parameters
