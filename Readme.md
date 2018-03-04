@@ -297,6 +297,30 @@ The script also supports [uploading to Github](https://developer.github.com/v3/r
 
 # Appendix
 
+## OS X (BSD?) compatibility
+
+The script was developed with a Linux system in mind and the BSD-like OS X offers different utilities which need to be mapped/replaced.
+
+Note that these changes assume that you are using https://brew.sh/
+
+First, install a few requirements:
+
+```
+brew install bash gnu-getopt coreutils
+brew link --force gnu-getopt
+```
+
+Second, add some symlinks to make the system more Linux-like:
+```
+ln -s /usr/local/bin/gsha512sum /usr/local/bin/sha512sum
+ln -s /usr/local/bin/gsha526sum /usr/local/bin/sha256sum
+```
+
+Lastly, depending on your environment, your `PATH` might need a change:
+```
+export PATH=/usr/local/bin:$PATH
+```
+
 ## Email Encryption
 You can also use your GPG key for email encryption with [enigmail and thunderbird](https://wiki.archlinux.org/index.php/thunderbird#EnigMail_-_Encryption). [[Read more]](https://www.enigmail.net/index.php/en/)
 
