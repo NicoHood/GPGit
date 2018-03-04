@@ -35,9 +35,9 @@ if [[ -t 2 ]]; then
 fi
 
 # Help page
-USAGE_SHORT="Usage: gpgit [-h] [-m <msg>] [-C <path>] [-S <keyid>] [-o <path>] [-p] [-n] [-f] [-i] <tag>"
+USAGE_SHORT="Usage: gpgit [-h] [-m <msg>] [-C <path>] [-u <keyid>] [-o <path>] [-p] [-n] [-f] [-i] <tag> [<commit> | <object>]"
 read -r -d '' USAGE << EOF
-Usage: gpgit [options] <tag>
+Usage: gpgit [options] <tag> [<commit> | <object>]
 
 GPGit ${VERSION} https://github.com/NicoHood/gpgit
 A shell script that automates the process of signing Git sources via GPG.
@@ -274,6 +274,7 @@ if [[ "$#" -lt 1 ]]; then
 fi
 TAG="${1}"
 shift
+COMMIT="${1:-"HEAD"}"
 
 # Check if run inside Git directory
 check_dependency git sed grep awk md5sum shasum || die "Please check your \$PATH variable or install the missing dependency."
@@ -466,7 +467,7 @@ fi
 if [[ -z "$(git tag -l "${TAG}")" ]] ; then
     plain "Creating signed Git tag '${TAG}' and pushing it to the remote Git."
     interactive
-    git tag -s "${TAG}" -m "${MESSAGE}" -u "${SIGNINGKEY}"
+    git tag -s -m "${MESSAGE}" -u "${SIGNINGKEY}" "${TAG}" "${COMMIT}"
     git push origin "refs/tags/${TAG}" &> /dev/null
 else
     warning "Tag '${TAG}' already exists."
