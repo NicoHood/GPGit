@@ -52,11 +52,11 @@ ${BOLD}Optional arguments:${ALL_OFF}
                            concatenated as separate paragraphs.
   -C, --directory <path>   Run as if GPGit was started in <path> instead of the
                            current working directory.
-  -S, --signingkey <keyid> Use the given GPG key.
+  -u, --local-user <keyid> Use the given GPG key (same as --signingkey).
   -o, --output <path>      Safe all release assets to the specified <path>.
   -p, --pre-release        Flag as Github pre-release.
   -n, --no-github          Disable Github API functionallity.
-  -f, --force              Force the recreation of tag and release assets.
+  -f, --force              Force the recreation of Git tag and release assets.
   -i, --interactive        Run in interactive mode, step-by-step.
       --<option>           Temporary set a 'gpgit.<option>' from config below.
 
@@ -455,7 +455,7 @@ if [[ -n "${FORCE}" ]]; then
     fi
 
     # Now delete the actual git tags
-    plain "Deleting existing Git tags."
+    plain "Deleting existing Git tag."
     interactive
     git tag -d "${TAG}" &> /dev/null || true
     git push --delete origin "refs/tags/${TAG}" &> /dev/null || true
