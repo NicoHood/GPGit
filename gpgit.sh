@@ -276,7 +276,7 @@ TAG="${1}"
 shift
 
 # Check if run inside Git directory
-check_dependency git sed grep awk || die "Please check your \$PATH variable or install the missing dependency."
+check_dependency git sed grep awk md5sum shasum || die "Please check your \$PATH variable or install the missing dependency."
 if [[ "$(git rev-parse --is-inside-work-tree 2>/dev/null)" != "true" ]]; then
     die "Not a Git repository: $(pwd)"
 fi
@@ -314,7 +314,7 @@ NEW_SIGNINGKEY="false"
 # Check if dependencies are available
 # Dependencies: bash, gnupg2, git, tar, xz, coreutils, gawk, grep, sed
 # Optional dependencies: gzip, bzip2, lzip, file, jq, curl
-check_dependency "${GPG_BIN}" "${COMPRESSION[@]}" "${HASH[@]/%/sum}" \
+check_dependency "${GPG_BIN}" "${COMPRESSION[@]}" \
      || die "Please check your \$PATH variable or install the missing dependencies."
 
 # Print initial welcome message with version information
@@ -540,7 +540,11 @@ do
         if [[ ! -f "${FILE}.${algorithm}" || -n "${FORCE}" ]]; then
             plain "Creating message digest: '${FILE}.${algorithm}'"
             interactive
-            "${algorithm}sum" "${FILE}" > "${FILE}.${algorithm}"
+            if [[ "${algorithm}" == "md5" ]]; then
+                md5sum "${FILE}" > "${FILE}.${algorithm}"
+            else
+                shasum -a "${algorithm#sha}" "${FILE}" > "${FILE}.${algorithm}"
+            fi
         else
             warning "Found existing message digest '${FILE}.${algorithm}'."
         fi
