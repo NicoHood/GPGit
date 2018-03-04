@@ -35,7 +35,7 @@ if [[ -t 2 ]]; then
 fi
 
 # Help page
-USAGE_SHORT="Usage: gpgit [-h] [-m <msg>] [-C <path>] [-o <path>] [-p] [-n] [-i] <tag>"
+USAGE_SHORT="Usage: gpgit [-h] [-m <msg>] [-C <path>] [-S <keyid>] [-o <path>] [-p] [-n] [-f] [-i] <tag>"
 read -r -d '' USAGE << EOF
 Usage: gpgit [options] <tag>
 
@@ -56,6 +56,7 @@ ${BOLD}Optional arguments:${ALL_OFF}
   -o, --output <path>      Safe all release assets to the specified <path>.
   -p, --pre-release        Flag as Github pre-release.
   -n, --no-github          Disable Github API functionallity.
+  -f, --force              Force the recreation of tag and release assets.
   -i, --interactive        Run in interactive mode, step-by-step.
       --<option>           Temporary set a 'gpgit.<option>' from config below.
 
@@ -151,6 +152,17 @@ function check_dependency()
     return "${RET}"
 }
 
+function get_token()
+{
+    if [[ -z "${TOKEN}" ]]; then
+        plain "Please enter your Github token or generate a new one (permission: 'public_repo'):"
+        plain "https://github.com/settings/tokens"
+        plain "Tip: Configure your Github token permanant with:"
+        plain "git config --global gpgit.token <token>"
+        read -rs TOKEN
+    fi
+}
+
 # Trap errors
 set -o errexit -o errtrace -u
 trap 'die "Error on or near line ${LINENO}. Please report this issue: https://github.com/NicoHood/gpgit/issues"' ERR
@@ -158,13 +170,14 @@ trap kill_exit SIGTERM SIGINT SIGHUP
 
 # Initialize variables
 unset INTERACTIVE MESSAGE KEYSERVER COMPRESSION HASH OUTPUT PROJECT SIGNINGKEY
-unset TOKEN GPG_USER GPG_EMAIL GITHUBREPO GITHUB PRERELEASE BRANCH GPG_BIN NEW_SIGNINGKEY
+unset TOKEN GPG_USER GPG_EMAIL GITHUBREPO GITHUB PRERELEASE BRANCH GPG_BIN
+unset FORCE NEW_SIGNINGKEY
 declare -A GITHUB_ASSET
 declare -a HASH COMPRESSION
 
 # Parse input params an ovrwrite possible default or config loaded options
-GETOPT_ARGS=$(getopt -o "hm:C:k:u:s:S:o:O:pndi" \
-            -l "help,message:,directory:,signingkey:,local-user:,gpg-sign:,output:,pre-release,no-github,interactive,token:,compression:,hash:,keyserver:,githubrepo:,project:,debug,color:"\
+GETOPT_ARGS=$(getopt -o "hm:C:k:u:s:S:o:O:pnfdi" \
+            -l "help,message:,directory:,signingkey:,local-user:,gpg-sign:,output:,pre-release,no-github,force,interactive,token:,compression:,hash:,keyserver:,githubrepo:,project:,debug,color:"\
             -n "gpgit" -- "${@}") || die "${USAGE_SHORT}"
 eval set -- "$GETOPT_ARGS"
 
@@ -197,6 +210,9 @@ while true ; do
             ;;
         -n|--no-github)
             GITHUB=""
+            ;;
+        -f|--force)
+            FORCE="true"
             ;;
         -i|--interactive)
             INTERACTIVE="true"
@@ -292,6 +308,7 @@ PRERELEASE="${PRERELEASE:-"false"}"
 BRANCH="$(git rev-parse --abbrev-ref HEAD)"
 GPG_BIN="$(git config gpg.program || true)"
 GPG_BIN="${GPG_BIN:-gpg2}"
+FORCE="${FORCE:-}"
 NEW_SIGNINGKEY="false"
 
 # Check if dependencies are available
@@ -414,11 +431,40 @@ fi
 
 # Check if tag exists
 msg2 "3.3 Create signed Git tag"
-plain "Fetching Git tags from origin."
-interactive
-git fetch origin --tags &> /dev/null
+if [[ -n "${FORCE}" ]]; then
+    # Delete existing Github release when using --force option
+    # It needs to get deleted before the tag, otherwise a release draft is kept as ghost online.
+    if check_dependency jq curl; then
+        # Parse existing Github release
+        if ! GITHUB_RELEASE="$(curl --proto-redir =https -s \
+                "https://api.github.com/repos/${GITHUBREPO}/releases/tags/${TAG}")"; then
+            die "Accessing Github failed."
+        fi
+
+        GITHUB_RELEASE_ID="$(echo "${GITHUB_RELEASE}" | jq -r .id)"
+        if [[ "${GITHUB_RELEASE_ID}" != "null" ]]; then
+            plain "Deleting existing Github release."
+            interactive
+            get_token
+            curl --proto-redir =https -s -X DELETE \
+                "https://api.github.com/repos/${GITHUBREPO}/releases/${GITHUB_RELEASE_ID}" \
+                -H "Accept: application/vnd.github.v3+json" \
+                -H "Authorization: token ${TOKEN}"
+        fi
+    fi
+
+    # Now delete the actual git tags
+    plain "Deleting existing Git tags."
+    interactive
+    git tag -d "${TAG}" &> /dev/null || true
+    git push --delete origin "refs/tags/${TAG}" &> /dev/null || true
+else
+    plain "Fetching Git tags from origin."
+    interactive
+    git fetch origin "refs/tags/${TAG}" &> /dev/null || true
+fi
 if [[ -z "$(git tag -l "${TAG}")" ]] ; then
-    plain "Creating signed tag '${TAG}' and pushing it to the remote Git."
+    plain "Creating signed Git tag '${TAG}' and pushing it to the remote Git."
     interactive
     git tag -s "${TAG}" -m "${MESSAGE}" -u "${SIGNINGKEY}"
     git push origin "refs/tags/${TAG}" &> /dev/null
@@ -447,7 +493,7 @@ do
     else
         FILE="${OUTPUT}/${PROJECT}-${TAG}.tar.${util}"
     fi
-    if [[ ! -f "${FILE}" ]]; then
+    if [[ ! -f "${FILE}" || -n "${FORCE}" ]]; then
         plain "Creating new release archive: '${FILE}'"
         interactive
         if [[ "${util}" == zip ]]; then
@@ -470,10 +516,10 @@ do
     else
         FILE="${OUTPUT}/${PROJECT}-${TAG}.tar.${util}"
     fi
-    if [[ ! -f "${FILE}.asc" ]]; then
+    if [[ ! -f "${FILE}.asc" || -n "${FORCE}" ]]; then
         plain "Creating GPG signature: '${FILE}.asc'"
         interactive
-        ${GPG_BIN} --digest-algo SHA512 -u "${SIGNINGKEY}" --output "${FILE}.asc" --armor --detach-sign "${FILE}"
+        ${GPG_BIN} --digest-algo SHA512 -u "${SIGNINGKEY}" --output "${FILE}.asc" --armor --detach-sign --batch --yes "${FILE}"
     else
         warning "Found existing signature '${FILE}.asc'."
     fi
@@ -491,7 +537,7 @@ do
     fi
     for algorithm in "${HASH[@]}"
     do
-        if [[ ! -f "${FILE}.${algorithm}" ]]; then
+        if [[ ! -f "${FILE}.${algorithm}" || -n "${FORCE}" ]]; then
             plain "Creating message digest: '${FILE}.${algorithm}'"
             interactive
             "${algorithm}sum" "${FILE}" > "${FILE}.${algorithm}"
@@ -513,17 +559,6 @@ else
     plain "Github uses well configured https."
 fi
 interactive
-
-function get_token()
-{
-    if [[ -z "${TOKEN}" ]]; then
-        plain "Please enter your Github token or generate a new one (permission: 'public_repo'):"
-        plain "https://github.com/settings/tokens"
-        plain "Tip: Configure your Github token permanant with:"
-        plain "git config --global gpgit.token <token>"
-        read -rs TOKEN
-    fi
-}
 
 function github_upload_asset()
 {
