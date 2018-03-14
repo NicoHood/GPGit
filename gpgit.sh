@@ -423,7 +423,7 @@ fi
 
 # Enable commit signing
 msg2 "3.2 Enable commit signing"
-if [[ "$(git config --global commit.gpgsign || true)" != "true" ]]; then
+if [[ "$(git config commit.gpgsign || true)" != "true" ]]; then
     # Enable global commit signing. Can be still disabled locally.
     plain "Enabling global commit signing."
     git config --global commit.gpgsign true
