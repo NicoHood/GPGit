@@ -283,6 +283,9 @@ if [[ "$(git rev-parse --is-inside-work-tree 2>/dev/null)" != "true" ]]; then
     die "Not a Git repository: $(pwd)"
 fi
 
+# Change directory to git root path, so "git archive" is working properly
+cd "$(git rev-parse --show-toplevel)"
+
 # Initialize variable config/defaults
 INTERACTIVE=${INTERACTIVE:-"$(git config gpgit.interactive || true)"}
 MESSAGE="${MESSAGE:-"Release ${TAG}"$'\n\nCreated with GPGit '"${VERSION}"$'\nhttps://github.com/NicoHood/gpgit'}"
