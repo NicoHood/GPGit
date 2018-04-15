@@ -307,8 +307,9 @@ You can get securely in touch with me [here](http://contact.nicohood.de). My GPG
 
 ## Version History
 ```
-1.3.1 (04.03.2018)
+1.3.1 (14.03.2018)
 * Fixed shebang for non linux systems
+* Fixed #17 git config reading for commit.gpgsign setting
 * Improved hash algorithm usage for non linux systems
 * Added -f, --force option
 * Added version identifier in default tag message
