@@ -234,13 +234,13 @@ Git tags need to be created from the command line and always need a switch to en
 
 ```bash
 # Creates a signed tag
-git tag -s mytag
+git tag -s 1.0.0
 
 # Re-tag an older, unsigned tag
-git tag -sf mytag mytag
+git tag -sf 1.0.0 1.0.0
 
 # Verifies the signed tag
-git tag -v mytag
+git tag -v 1.0.0
 ```
 
 ## 4. Create a signed release archive
@@ -253,12 +253,6 @@ git archive --format=tar.gz -o gpgit-1.0.0.tar.gz --prefix gpgit-1.0.0/ 1.0.0
 
 # .tar.xz
 git archive --format=tar --prefix gpgit-1.0.0/ 1.0.0 | xz > gpgit-1.0.0.tar.xz
-
-# .tar.lz
-git archive --format=tar --prefix gpgit-1.0.0/ 1.0.0 | lzip --best > gpgit-1.0.0.tar.xz
-
-# Verify an existing archive
-git archive --format=tar --prefix gpgit-1.0.0/ 1.0.0 | cmp <(xz -dc gpgit-1.0.0.tar.xz)
 ```
 
 ### 4.2 Sign the archive
