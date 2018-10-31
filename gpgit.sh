@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-VERSION="1.3.2"
+VERSION="1.3.3"
 
 # Avoid any encoding problems
 export LANG=C
@@ -486,7 +486,7 @@ msg "4. Create a signed release archive"
 if [[ ! -d "${OUTPUT}" ]]; then
     plain "Creating not existing output directory: '${OUTPUT}'."
     interactive
-    mkdir "${OUTPUT}"
+    mkdir -p "${OUTPUT}"
 fi
 
 # Create new archive

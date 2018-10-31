@@ -301,6 +301,9 @@ You can get securely in touch with me [here](http://contact.nicohood.de). My GPG
 
 ## Version History
 ```
+1.3.3 (31.10.2018)
+* Create parent directories if not existant.
+
 1.3.2 (15.04.2018)
 * Change directory to git root path, so "git archive" is working properly
 
