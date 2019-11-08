@@ -176,7 +176,13 @@ unset FORCE NEW_SIGNINGKEY
 declare -A GITHUB_ASSET
 declare -a HASH COMPRESSION
 
-# Parse input params an ovrwrite possible default or config loaded options
+# BSD getopt works completely different from gnu-getopt, so check if have an
+# alternative getopt install
+if [ -x /usr/local/opt/gnu-getopt/bin/getopt ]; then
+    export PATH=/usr/local/opt/gnu-getopt/bin/:$PATH
+fi
+
+# Parse input params an overwrite possible default or config loaded options
 GETOPT_ARGS=$(getopt -o "hm:C:k:u:s:S:o:O:pnfdi" \
             -l "help,message:,directory:,signingkey:,local-user:,gpg-sign:,output:,pre-release,no-github,force,interactive,token:,compression:,hash:,keyserver:,githubrepo:,project:,debug,color:"\
             -n "gpgit" -- "${@}") || die "${USAGE_SHORT}"
@@ -274,6 +280,12 @@ if [[ "$#" -lt 1 ]]; then
     die "${USAGE_SHORT}"
 fi
 TAG="${1}"
+
+# Sanity check. If we're using the BSD getopt this will be broken:
+if [ 'hm:C:k:u:s:S:o:O:pnfdi' = "$TAG" ]; then
+    die "gpgit requires GNU getopt to function"
+fi
+
 shift
 COMMIT="${1:-"HEAD"}"
 
