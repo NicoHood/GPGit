@@ -303,6 +303,10 @@ You can get securely in touch with me [here](http://contact.nicohood.de). My GPG
 
 ## Version History
 ```
+1.3.4 (23.03.2020)
+* Fix crash when using a none github repo
+* Add additional keyserver error message #18
+
 1.3.3 (31.10.2018)
 * Create parent directories if not existant.
 
