@@ -282,7 +282,7 @@ gpg2 --verify gpgit-1.0.0.tar.xz.asc
 Message digests are used to ensure the integrity of a file. It can also serve as checksum to verify the download. Message digests **do not** replace GPG signatures. They rather provide and alternative simple way to verify the source. Make sure to provide message digest over a secure channel like https.
 
 ```bash
-sha512 gpgit-1.0.0.tar.xz > gpgit-1.0.0.tar.xz.sha512
+sha512sum gpgit-1.0.0.tar.xz > gpgit-1.0.0.tar.xz.sha512
 ```
 
 ## 5. Upload the release
