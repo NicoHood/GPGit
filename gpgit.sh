@@ -308,7 +308,7 @@ GPG_USER="${GPG_USER:-"${USER}"}"
 GPG_EMAIL="$(git config user.email || true)"
 GITHUBREPO="${GITHUBREPO:-"$(git config gpgit.githubrepo || true)"}"
 GITHUBREPO="${GITHUBREPO:-"$(git config --local remote.origin.url | sed -e 's/.*github.com[:/]//' | sed -e 's/.git$//')"}"
-GITHUB="${GITHUB:-"$(git config --local remote.origin.url | grep -i 'github.com')"}"
+GITHUB="${GITHUB:-"$(git config --local remote.origin.url | grep -i 'github.com' || true)"}"
 PRERELEASE="${PRERELEASE:-"false"}"
 BRANCH="$(git rev-parse --abbrev-ref HEAD)"
 GPG_BIN="$(git config gpg.program || true)"
@@ -437,24 +437,27 @@ fi
 # Check if tag exists
 msg2 "3.3 Create signed Git tag"
 if [[ -n "${FORCE}" ]]; then
-    # Delete existing Github release when using --force option
-    # It needs to get deleted before the tag, otherwise a release draft is kept as ghost online.
-    if check_dependency jq curl; then
-        # Parse existing Github release
-        if ! GITHUB_RELEASE="$(curl --proto-redir =https -s \
-                "https://api.github.com/repos/${GITHUBREPO}/releases/tags/${TAG}")"; then
-            die "Accessing Github failed."
-        fi
 
-        GITHUB_RELEASE_ID="$(echo "${GITHUB_RELEASE}" | jq -r .id)"
-        if [[ "${GITHUB_RELEASE_ID}" != "null" ]]; then
-            plain "Deleting existing Github release."
-            interactive
-            get_token
-            curl --proto-redir =https -s -X DELETE \
-                "https://api.github.com/repos/${GITHUBREPO}/releases/${GITHUB_RELEASE_ID}" \
-                -H "Accept: application/vnd.github.v3+json" \
-                -H "Authorization: token ${TOKEN}"
+    if [[ -n "${GITHUB}" ]]; then
+        # Delete existing Github release when using --force option
+        # It needs to get deleted before the tag, otherwise a release draft is kept as ghost online.
+        if check_dependency jq curl; then
+            # Parse existing Github release
+            if ! GITHUB_RELEASE="$(curl --proto-redir =https -s \
+                    "https://api.github.com/repos/${GITHUBREPO}/releases/tags/${TAG}")"; then
+                die "Accessing Github failed."
+            fi
+
+            GITHUB_RELEASE_ID="$(echo "${GITHUB_RELEASE}" | jq -r .id)"
+            if [[ "${GITHUB_RELEASE_ID}" != "null" ]]; then
+                plain "Deleting existing Github release."
+                interactive
+                get_token
+                curl --proto-redir =https -s -X DELETE \
+                    "https://api.github.com/repos/${GITHUBREPO}/releases/${GITHUB_RELEASE_ID}" \
+                    -H "Accept: application/vnd.github.v3+json" \
+                    -H "Authorization: token ${TOKEN}"
+            fi
         fi
     fi
 
