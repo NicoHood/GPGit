@@ -386,7 +386,7 @@ if [[ "${NEW_SIGNINGKEY}" == "true" ]]; then
     msg2 "2.1 Send GPG key to a key server"
     plain "Registering new GPG key with Git and uploading it to keyserver '${KEYSERVER}'."
     interactive
-    ${GPG_BIN} --keyserver "${KEYSERVER}" --send-keys "${SIGNINGKEY}" &> /dev/null
+    ${GPG_BIN} --keyserver "${KEYSERVER}" --send-keys "${SIGNINGKEY}" &> /dev/null || die "Sending GPG key to keyserver '${KEYSERVER}' failed."
 else
     msg2 "2.1 Send GPG key to a key server"
     plain "Make sure your key is available on a keyserver:"
