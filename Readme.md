@@ -23,7 +23,7 @@ The security status of GNU/Linux projects will be tracked in the [Linux Security
 
 [1]: https://github.com/NicoHood/gpgit#12-key-generation
 [2]: https://github.com/NicoHood/gpgit#11-strong-unique-secret-passphrase
-[3]: https://github.com/NicoHood/gpgit#21-send-key-to-a-key-server
+[3]: https://github.com/NicoHood/gpgit#21-send-gpg-key-to-a-key-server
 [4]: https://github.com/NicoHood/gpgit#22-publish-full-fingerprint
 [5]: https://github.com/NicoHood/gpgit#31-configure-git-gpg-key
 [6]: https://github.com/NicoHood/gpgit#32-commit-signing
