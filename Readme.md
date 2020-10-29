@@ -211,6 +211,9 @@ gpg2 --list-secret-keys --keyid-format LONG
 
 # Generate public key
 gpg2 --armor --export <fingerprint>
+
+# If you have multiple uids or signatures you can minimize the output:
+gpg2 --armor --export --export-filter keep-uid="uid =~ <email>" --export-options export-minimal <fingerprint>
 ```
 
 ## 3. Use Git with GPG
