@@ -49,7 +49,7 @@ The security status of GNU/Linux projects will be tracked in the [Linux Security
 ## Installation
 
 ### Distribution Packages
-* [Arch Linux (AUR)](https://aur.archlinux.org/packages/gpgit/)
+* [Arch Linux](https://archlinux.org/packages/community/any/gpgit/) `sudo pacman -S gpgit`
 
 ### Manual Installation
 ```bash
