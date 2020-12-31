@@ -58,7 +58,7 @@ sudo apt-get install bash gnupg2 git tar xz-utils coreutils gawk grep sed
 sudo apt-get install gzip bzip lzip file jq curl
 
 # Download and verify source
-VERSION=1.3.1
+VERSION=1.3.4
 wget "https://github.com/NicoHood/gpgit/releases/download/${VERSION}/gpgit-${VERSION}.tar.xz"
 wget "https://github.com/NicoHood/gpgit/releases/download/${VERSION}/gpgit-${VERSION}.tar.xz.asc"
 gpg2 --keyserver hkps://pgp.mit.edu --recv-keys 97312D5EB9D7AE7D0BD4307351DAE9B7C1AE9161
