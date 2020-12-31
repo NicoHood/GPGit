@@ -293,7 +293,7 @@ Create a new "Github Release" to add additional data to the tag. Then drag the .
 
 The script also supports [uploading to Github](https://developer.github.com/v3/repos/releases/) directly. Create a new Github token first and then follow the instructions of the script. How to generate a Github token:
 * Go to ["Settings - Personal access tokens"](https://github.com/settings/tokens)
-* Generate a new token with permissions "public_repo" and "admin:gpg_key"
+* Generate a new token with permissions "public_repo" and "admin:gpg_key". In order to access private repositories you must allow access to the whole "repo" scope.
 * Store it safely
 
 # Appendix
