@@ -10,6 +10,10 @@ This changlog uses the [ISO 8601 date format](https://www.iso.org/iso-8601-date-
 ### Added
 * Added CHANGELOG.md file with [Keep A Changelog format](https://keepachangelog.com)
 
+### Changed
+
+* Explicitly use annotated git tag using `-a`
+
 ## [1.3.4] - 2020-03-23
 
 ### Added
