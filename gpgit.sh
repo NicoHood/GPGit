@@ -657,7 +657,6 @@ else
                 github_upload_asset "${filename}" "${GITHUB_ASSET[$filename]}"
             fi
         done
-        exit
     else
         warning "Please upload the release files manually to Github."
     fi
