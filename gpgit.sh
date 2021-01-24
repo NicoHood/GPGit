@@ -308,7 +308,7 @@ GPG_USER="${GPG_USER:-"${USER}"}"
 GPG_EMAIL="$(git config user.email || true)"
 GITHUBREPO="${GITHUBREPO:-"$(git config gpgit.githubrepo || true)"}"
 GITHUBREPO="${GITHUBREPO:-"$(git config --local remote.origin.url | sed -e 's/.*github.com[:/]//' | sed -e 's/.git$//')"}"
-GITHUB="${GITHUB:-"$(git config --local remote.origin.url | grep -i 'github.com' || true)"}"
+GITHUB="${GITHUB:-"$(git config --local remote.origin.url | grep -i -F 'github.com' || true)"}"
 PRERELEASE="${PRERELEASE:-"false"}"
 BRANCH="$(git rev-parse --abbrev-ref HEAD)"
 GPG_BIN="$(git config gpg.program || true)"
@@ -360,7 +360,7 @@ if [[ -z "${SIGNINGKEY}" ]]; then
     interactive "Will generate the new GPG key with the selected parameters now."
     ${GPG_BIN} --quick-generate-key "${GPG_USER} <${GPG_EMAIL}>" future-default default 1y \
         &> /dev/null || die "GPG key generation aborted."
-    SIGNINGKEY=$(${GPG_BIN} --with-colons --list-secret-keys | grep "${GPG_USER} <${GPG_EMAIL}>" -B 2 | awk -F: '$1 == "fpr" {print $10;}')
+    SIGNINGKEY=$(${GPG_BIN} --with-colons --list-secret-keys | grep -F -B 2 "${GPG_USER} <${GPG_EMAIL}>" | awk -F: '$1 == "fpr" {print $10;}')
     NEW_SIGNINGKEY="true"
     plain "Your new GPG fingerprint is: '${SIGNINGKEY}'"
 else
@@ -646,7 +646,7 @@ else
         # Upload release assets
         for filename in "${!GITHUB_ASSET[@]}"
         do
-            if grep -q "^${filename}$" <(echo "${GITHUB_ASSETS}"); then
+            if grep -q -F -x "${filename}" <(echo "${GITHUB_ASSETS}"); then
                 warning "Found existing asset on Github: '${filename}'."
             else
                 github_upload_asset "${filename}" "${GITHUB_ASSET[$filename]}"
