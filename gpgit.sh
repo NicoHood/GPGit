@@ -177,9 +177,9 @@ declare -A GITHUB_ASSET
 declare -a HASH COMPRESSION
 
 # Parse input params an ovrwrite possible default or config loaded options
-GETOPT_ARGS=$(getopt -o "hm:C:k:u:s:S:o:O:pnfdi" \
+GETOPT_ARGS="$(getopt -o "hm:C:k:u:s:S:o:O:pnfdi" \
             -l "help,message:,directory:,signingkey:,local-user:,gpg-sign:,output:,pre-release,no-github,force,interactive,token:,compression:,hash:,keyserver:,githubrepo:,project:,debug,color:"\
-            -n "gpgit" -- "${@}") || die "${USAGE_SHORT}"
+            -n "gpgit" -- "${@}")" || die "${USAGE_SHORT}"
 eval set -- "$GETOPT_ARGS"
 
 # Handle all params
@@ -360,7 +360,7 @@ if [[ -z "${SIGNINGKEY}" ]]; then
     interactive "Will generate the new GPG key with the selected parameters now."
     ${GPG_BIN} --quick-generate-key "${GPG_USER} <${GPG_EMAIL}>" future-default default 1y \
         &> /dev/null || die "GPG key generation aborted."
-    SIGNINGKEY=$(${GPG_BIN} --with-colons --list-secret-keys | grep -F -B 2 "${GPG_USER} <${GPG_EMAIL}>" | awk -F: '$1 == "fpr" {print $10;}')
+    SIGNINGKEY="$(${GPG_BIN} --with-colons --list-secret-keys | grep -F -B 2 "${GPG_USER} <${GPG_EMAIL}>" | awk -F: '$1 == "fpr" {print $10;}')"
     NEW_SIGNINGKEY="true"
     plain "Your new GPG fingerprint is: '${SIGNINGKEY}'"
 else
@@ -586,12 +586,12 @@ function github_upload_asset()
     get_token
     plain "Uploading release asset '${filename}'"
     interactive
-    if ! RESULT=$(curl --proto-redir =https -s \
+    if ! RESULT="$(curl --proto-redir =https -s \
             "https://uploads.github.com/repos/${GITHUBREPO}/releases/${GITHUB_RELEASE_ID}/assets?name=${filename}" \
             -H "Content-Type: ${mimetype}" \
             -H "Accept: application/vnd.github.v3+json" \
             -H "Authorization: token ${TOKEN}" \
-            --data-binary @"${file}"); then
+            --data-binary @"${file}")"; then
         die "Uploading file ${filename} to Github failed."
     fi
 
@@ -626,13 +626,13 @@ else
         if [[ "${GITHUB_RELEASE_ID}" == "null" ]]; then
             plain "Creating new Github release '${TAG}'."
             interactive
-            API_JSON=$(printf '{"tag_name": "%s","target_commitish": "%s","name": "%s","body": "%s","draft": false,"prerelease": %s}' \
-                       "${TAG}" "${BRANCH}" "${TAG}" "${MESSAGE//$'\n'/'\n'}" "${PRERELEASE}")
+            API_JSON="$(printf '{"tag_name": "%s","target_commitish": "%s","name": "%s","body": "%s","draft": false,"prerelease": %s}' \
+                       "${TAG}" "${BRANCH}" "${TAG}" "${MESSAGE//$'\n'/'\n'}" "${PRERELEASE}")"
             get_token
-            if ! GITHUB_RELEASE=$(curl --proto-redir =https -s --data "${API_JSON}" \
+            if ! GITHUB_RELEASE="$(curl --proto-redir =https -s --data "${API_JSON}" \
                     "https://api.github.com/repos/${GITHUBREPO}/releases" \
                     -H "Accept: application/vnd.github.v3+json" \
-                    -H "Authorization: token ${TOKEN}" ); then
+                    -H "Authorization: token ${TOKEN}" )"; then
                 die "Uploading release to Github failed."
             fi
 
