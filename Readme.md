@@ -14,7 +14,7 @@ As we all know, today more than ever before, it is crucial to be able to trust o
 * Upload a **[strong message digest][10]** of the archive
 * Configure **[HTTPS][11]** for your download server
 
-<a href="https://www.buymeacoffee.com/Mnwg9NrCK" target="_blank"><img src="https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png" alt="Buy Me A Coffee" style="height: auto !important;width: auto !important;" ></a>
+<a href="https://www.buymeacoffee.com/nicohood" target="_blank"><img src="https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png" alt="Buy Me A Coffee" style="height: auto !important;width: auto !important;" ></a>
 
 ### GPGit
 [GPGit][12] is meant to bring GPG to the masses. It is not only a shell script that automates the process of [creating new signed Git releases with GPG][13], but also includes a [quick-start-guide][14] for learning how to use GPG. GPGit integrates perfectly with the [Github Release API][15] for uploading.
@@ -23,7 +23,7 @@ The security status of GNU/Linux projects will be tracked in the [Linux Security
 
 [1]: https://github.com/NicoHood/gpgit#12-key-generation
 [2]: https://github.com/NicoHood/gpgit#11-strong-unique-secret-passphrase
-[3]: https://github.com/NicoHood/gpgit#21-send-key-to-a-key-server
+[3]: https://github.com/NicoHood/gpgit#21-send-gpg-key-to-a-key-server
 [4]: https://github.com/NicoHood/gpgit#22-publish-full-fingerprint
 [5]: https://github.com/NicoHood/gpgit#31-configure-git-gpg-key
 [6]: https://github.com/NicoHood/gpgit#32-commit-signing
@@ -49,7 +49,7 @@ The security status of GNU/Linux projects will be tracked in the [Linux Security
 ## Installation
 
 ### Distribution Packages
-* [Arch Linux (AUR)](https://aur.archlinux.org/packages/gpgit/)
+* [Arch Linux](https://archlinux.org/packages/community/any/gpgit/) `sudo pacman -S gpgit`
 
 ### Manual Installation
 ```bash
@@ -58,7 +58,7 @@ sudo apt-get install bash gnupg2 git tar xz-utils coreutils gawk grep sed
 sudo apt-get install gzip bzip lzip file jq curl
 
 # Download and verify source
-VERSION=1.3.1
+VERSION=1.3.4
 wget "https://github.com/NicoHood/gpgit/releases/download/${VERSION}/gpgit-${VERSION}.tar.xz"
 wget "https://github.com/NicoHood/gpgit/releases/download/${VERSION}/gpgit-${VERSION}.tar.xz.asc"
 gpg2 --keyserver hkps://pgp.mit.edu --recv-keys 97312D5EB9D7AE7D0BD4307351DAE9B7C1AE9161
@@ -211,6 +211,9 @@ gpg2 --list-secret-keys --keyid-format LONG
 
 # Generate public key
 gpg2 --armor --export <fingerprint>
+
+# If you have multiple uids or signatures you can minimize the output:
+gpg2 --armor --export --export-filter keep-uid="uid =~ <email>" --export-options export-minimal <fingerprint>
 ```
 
 ## 3. Use Git with GPG
@@ -290,7 +293,7 @@ Create a new "Github Release" to add additional data to the tag. Then drag the .
 
 The script also supports [uploading to Github](https://developer.github.com/v3/repos/releases/) directly. Create a new Github token first and then follow the instructions of the script. How to generate a Github token:
 * Go to ["Settings - Personal access tokens"](https://github.com/settings/tokens)
-* Generate a new token with permissions "public_repo" and "admin:gpg_key"
+* Generate a new token with permissions "public_repo" and "admin:gpg_key". In order to access private repositories you must allow access to the whole "repo" scope.
 * Store it safely
 
 # Appendix
