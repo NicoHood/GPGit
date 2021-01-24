@@ -444,7 +444,9 @@ if [[ -n "${FORCE}" ]]; then
         if check_dependency jq curl; then
             # Parse existing Github release
             if ! GITHUB_RELEASE="$(curl --proto-redir =https -s \
-                    "https://api.github.com/repos/${GITHUBREPO}/releases/tags/${TAG}")"; then
+                    "https://api.github.com/repos/${GITHUBREPO}/releases/tags/${TAG}" \
+                    -H "Accept: application/vnd.github.v3+json" \
+                    -H "Authorization: token ${TOKEN}" )"; then
                 die "Accessing Github failed."
             fi
 
@@ -609,7 +611,10 @@ else
     if check_dependency jq file curl; then
         # Parse existing Github release
         if ! GITHUB_RELEASE="$(curl --proto-redir =https -s \
-                "https://api.github.com/repos/${GITHUBREPO}/releases/tags/${TAG}")"; then
+                "https://api.github.com/repos/${GITHUBREPO}/releases/tags/${TAG}" \
+                -H "Accept: application/vnd.github.v3+json" \
+                -H "Authorization: token ${TOKEN}" \
+                )"; then
             die "Accessing Github failed."
         fi
 
