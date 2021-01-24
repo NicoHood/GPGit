@@ -137,7 +137,7 @@ This changlog uses the [ISO 8601 date format](https://www.iso.org/iso-8601-date-
 ### Changed
 - Merged all scripts into gpgit.sh
 
-## Untagged Release - 2016-12-16
+## [0.1.0] - 2016-12-16
 
 ### Added
 - Initial release of the software
