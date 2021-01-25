@@ -138,15 +138,15 @@ function command_not_found_handle
 
 function check_dependency()
 {
-    local RET=0
+    local ret=0
     for dependency in "${@}"
     do
         if ! command -v "${dependency}" &> /dev/null; then
             error "Required dependency '${dependency}' not found."
-            RET=1
+            ret=1
         fi
     done
-    return "${RET}"
+    return "${ret}"
 }
 
 # Trap errors
