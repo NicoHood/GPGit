@@ -157,7 +157,7 @@ trap kill_exit SIGTERM SIGINT SIGHUP
 # Initialize variables
 unset INTERACTIVE MESSAGE KEYSERVER COMPRESSION HASH OUTPUT PROJECT SIGNINGKEY
 unset TOKEN GPG_USER GPG_EMAIL GITHUB_REPO_NAME GITHUB PRERELEASE BRANCH GPG_BIN
-unset FORCE NEW_SIGNINGKEY
+unset FORCE NEW_SIGNINGKEY REMOTE
 declare -A GITHUB_ASSET=()
 declare -a HASH=() COMPRESSION=()
 
@@ -272,6 +272,7 @@ fi
 cd "$(git rev-parse --show-toplevel)"
 
 # Initialize variable config/defaults
+REMOTE="origin"
 INTERACTIVE=${INTERACTIVE:-"$(git config gpgit.interactive || true)"}
 MESSAGE="${MESSAGE:-"Release ${TAG}"$'\n\nCreated with GPGit '"${VERSION}"$'\nhttps://github.com/NicoHood/gpgit'}"
 KEYSERVER="${KEYSERVER:-"$(git config gpgit.keyserver || true)"}"
@@ -291,8 +292,8 @@ fi
 OUTPUT="${OUTPUT:-"$(git config gpgit.output || true)"}"
 OUTPUT="${OUTPUT:-"./gpgit"}"
 PROJECT="${PROJECT:-"$(git config gpgit.project || true)"}"
-PROJECT="${PROJECT:-"$(git config --local remote.origin.url | sed -n 's#.*/\([^.]*\)\.git#\1#p')"}"
-PROJECT="${PROJECT:-"$(git config --local remote.origin.url | sed -n 's#.*/##p')"}"
+PROJECT="${PROJECT:-"$(git config --local "remote.${REMOTE}.url" | sed -n 's#.*/\([^.]*\)\.git#\1#p')"}"
+PROJECT="${PROJECT:-"$(git config --local "remote.${REMOTE}.url" | sed -n 's#.*/##p')"}"
 SIGNINGKEY="${SIGNINGKEY:-"$(git config gpgit.signingkey || true)"}"
 SIGNINGKEY="${SIGNINGKEY:-"$(git config user.signingkey || true)"}"
 TOKEN="${TOKEN:-"$(git config gpgit.token || true)"}"
@@ -300,8 +301,8 @@ GPG_USER="$(git config user.name || true)"
 GPG_USER="${GPG_USER:-"${USER}"}"
 GPG_EMAIL="$(git config user.email || true)"
 GITHUB_REPO_NAME="${GITHUB_REPO_NAME:-"$(git config gpgit.githubrepo || true)"}"
-GITHUB_REPO_NAME="${GITHUB_REPO_NAME:-"$(git config --local remote.origin.url | sed -e 's/.*github.com[:/]//' | sed -e 's/.git$//')"}"
-GITHUB="${GITHUB:-"$(git config --local remote.origin.url | grep -i -F -q 'github.com' && echo "true" || echo "false")"}"
+GITHUB_REPO_NAME="${GITHUB_REPO_NAME:-"$(git config --local "remote.${REMOTE}.url" | sed -e 's/.*github.com[:/]//' | sed -e 's/.git$//')"}"
+GITHUB="${GITHUB:-"$(git config --local "remote.${REMOTE}.url" | grep -i -F -q 'github.com' && echo "true" || echo "false")"}"
 PRERELEASE="${PRERELEASE:-"false"}"
 GPG_BIN="$(git config gpg.program || true)"
 GPG_BIN="${GPG_BIN:-gpg2}"
@@ -469,18 +470,18 @@ if [[ -n "${FORCE}" ]]; then
     plain "Deleting existing Git tag."
     interactive
     git tag -d "${TAG}" &> /dev/null || true
-    git push --delete origin "refs/tags/${TAG}" &> /dev/null || true
+    git push --delete "${REMOTE}" "refs/tags/${TAG}" &> /dev/null || true
 else
     plain "Fetching Git tags from origin."
     interactive
-    git fetch origin "refs/tags/${TAG}" &> /dev/null || true
+    git fetch "${REMOTE}" "refs/tags/${TAG}" &> /dev/null || true
 fi
 if [[ -z "$(git tag -l "${TAG}")" ]] ; then
     plain "Creating signed Git tag '${TAG}' and pushing it to the remote Git."
     interactive
     git tag -s -a -m "${MESSAGE}" -u "${SIGNINGKEY}" "${TAG}" "${COMMIT}" &> /dev/null \
         || die "Signing Git tag failed or aborted."
-    git push origin "refs/tags/${TAG}" &> /dev/null
+    git push "${REMOTE}" "refs/tags/${TAG}" &> /dev/null
 else
     warning "Tag '${TAG}' already exists."
 fi
