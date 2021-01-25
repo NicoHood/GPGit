@@ -171,7 +171,7 @@ trap kill_exit SIGTERM SIGINT SIGHUP
 
 # Initialize variables
 unset INTERACTIVE MESSAGE KEYSERVER COMPRESSION HASH OUTPUT PROJECT SIGNINGKEY
-unset TOKEN GPG_USER GPG_EMAIL GITHUBREPO GITHUB PRERELEASE BRANCH GPG_BIN
+unset TOKEN GPG_USER GPG_EMAIL GITHUB_REPO_NAME GITHUB PRERELEASE BRANCH GPG_BIN
 unset FORCE NEW_SIGNINGKEY
 declare -A GITHUB_ASSET
 declare -a HASH COMPRESSION
@@ -236,7 +236,7 @@ while true ; do
             shift
             ;;
         --githubrepo)
-            GITHUBREPO="${2}"
+            GITHUB_REPO_NAME="${2}"
             shift
             ;;
         --project)
@@ -306,8 +306,8 @@ TOKEN="${TOKEN:-"$(git config gpgit.token || true)"}"
 GPG_USER="$(git config user.name || true)"
 GPG_USER="${GPG_USER:-"${USER}"}"
 GPG_EMAIL="$(git config user.email || true)"
-GITHUBREPO="${GITHUBREPO:-"$(git config gpgit.githubrepo || true)"}"
-GITHUBREPO="${GITHUBREPO:-"$(git config --local remote.origin.url | sed -e 's/.*github.com[:/]//' | sed -e 's/.git$//')"}"
+GITHUB_REPO_NAME="${GITHUB_REPO_NAME:-"$(git config gpgit.githubrepo || true)"}"
+GITHUB_REPO_NAME="${GITHUB_REPO_NAME:-"$(git config --local remote.origin.url | sed -e 's/.*github.com[:/]//' | sed -e 's/.git$//')"}"
 GITHUB="${GITHUB:-"$(git config --local remote.origin.url | grep -i -F 'github.com' || true)"}"
 PRERELEASE="${PRERELEASE:-"false"}"
 GPG_BIN="$(git config gpg.program || true)"
@@ -451,7 +451,7 @@ if [[ -n "${FORCE}" ]]; then
     if [[ -n "${GITHUB}" ]]; then
         # Parse existing Github release
         if ! GITHUB_RELEASE="$(curl --proto-redir =https -s \
-                "https://api.github.com/repos/${GITHUBREPO}/releases/tags/${TAG}" \
+                "https://api.github.com/repos/${GITHUB_REPO_NAME}/releases/tags/${TAG}" \
                 -H "Accept: application/vnd.github.v3+json" \
                 -H "Authorization: token ${TOKEN}" )"; then
             die "Accessing Github failed."
@@ -462,7 +462,7 @@ if [[ -n "${FORCE}" ]]; then
             plain "Deleting existing Github release."
             interactive
             curl --proto-redir =https -s -X DELETE \
-                "https://api.github.com/repos/${GITHUBREPO}/releases/${GITHUB_RELEASE_ID}" \
+                "https://api.github.com/repos/${GITHUB_REPO_NAME}/releases/${GITHUB_RELEASE_ID}" \
                 -H "Accept: application/vnd.github.v3+json" \
                 -H "Authorization: token ${TOKEN}"
         fi
@@ -591,7 +591,7 @@ function github_upload_asset()
     plain "Uploading release asset '${filename}'"
     interactive
     if ! RESULT="$(curl --proto-redir =https -s \
-            "https://uploads.github.com/repos/${GITHUBREPO}/releases/${GITHUB_RELEASE_ID}/assets?name=${filename}" \
+            "https://uploads.github.com/repos/${GITHUB_REPO_NAME}/releases/${GITHUB_RELEASE_ID}/assets?name=${filename}" \
             -H "Content-Type: ${mimetype}" \
             -H "Accept: application/vnd.github.v3+json" \
             -H "Authorization: token ${TOKEN}" \
@@ -614,7 +614,7 @@ if [[ -z "${GITHUB}" ]]; then
 else
     # Parse existing Github release
     if ! GITHUB_RELEASE="$(curl --proto-redir =https -s \
-            "https://api.github.com/repos/${GITHUBREPO}/releases/tags/${TAG}" \
+            "https://api.github.com/repos/${GITHUB_REPO_NAME}/releases/tags/${TAG}" \
             -H "Accept: application/vnd.github.v3+json" \
             -H "Authorization: token ${TOKEN}" \
             )"; then
@@ -636,7 +636,7 @@ else
         else
             # Get default branch from github
             if ! GITHUB_REPO_INFORMATION="$(curl --proto-redir =https -s \
-                    "https://api.github.com/repos/${GITHUBREPO}" \
+                    "https://api.github.com/repos/${GITHUB_REPO_NAME}" \
                     -H "Accept: application/vnd.github.v3+json" \
                     -H "Authorization: token ${TOKEN}" )"; then
                 die "Getting default Github branch failed."
@@ -648,7 +648,7 @@ else
         API_JSON="$(printf '{"tag_name": "%s","target_commitish": "%s","name": "%s","body": "%s","draft": false,"prerelease": %s}' \
                    "${TAG}" "${BRANCH}" "${TAG}" "${MESSAGE//$'\n'/'\n'}" "${PRERELEASE}")"
         if ! GITHUB_RELEASE="$(curl --proto-redir =https -s --data "${API_JSON}" \
-                "https://api.github.com/repos/${GITHUBREPO}/releases" \
+                "https://api.github.com/repos/${GITHUB_REPO_NAME}/releases" \
                 -H "Accept: application/vnd.github.v3+json" \
                 -H "Authorization: token ${TOKEN}" )"; then
             die "Uploading release to Github failed."
