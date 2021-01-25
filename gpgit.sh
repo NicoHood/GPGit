@@ -322,6 +322,16 @@ NEW_SIGNINGKEY="false"
 check_dependency "${GPG_BIN}" "${COMPRESSION[@]}" \
     || die "Please check your \$PATH variable or install the missing dependencies."
 
+# When using a Github remote ask for github token first,
+# as all (when using private repositories) commands require a valid token.
+if [[ -n "${GITHUB}" ]]; then
+    if check_dependency jq file curl; then
+        get_token
+    else
+        die "Please install the missing dependencies in order to use Github release asset uploading or disable via --no-github."
+    fi
+fi
+
 # Print initial welcome message with version information
 echo "${BOLD}GPGit ${VERSION} https://github.com/NicoHood/gpgit${ALL_OFF}" >&2
 echo "" >&2
@@ -438,28 +448,25 @@ fi
 msg2 "3.3 Create signed Git tag"
 if [[ -n "${FORCE}" ]]; then
 
+    # Delete existing Github release when using --force option
+    # It needs to get deleted before the tag, otherwise a release draft is kept as ghost online.
     if [[ -n "${GITHUB}" ]]; then
-        # Delete existing Github release when using --force option
-        # It needs to get deleted before the tag, otherwise a release draft is kept as ghost online.
-        if check_dependency jq curl; then
-            # Parse existing Github release
-            if ! GITHUB_RELEASE="$(curl --proto-redir =https -s \
-                    "https://api.github.com/repos/${GITHUBREPO}/releases/tags/${TAG}" \
-                    -H "Accept: application/vnd.github.v3+json" \
-                    -H "Authorization: token ${TOKEN}" )"; then
-                die "Accessing Github failed."
-            fi
+        # Parse existing Github release
+        if ! GITHUB_RELEASE="$(curl --proto-redir =https -s \
+                "https://api.github.com/repos/${GITHUBREPO}/releases/tags/${TAG}" \
+                -H "Accept: application/vnd.github.v3+json" \
+                -H "Authorization: token ${TOKEN}" )"; then
+            die "Accessing Github failed."
+        fi
 
-            GITHUB_RELEASE_ID="$(echo "${GITHUB_RELEASE}" | jq -r .id)"
-            if [[ "${GITHUB_RELEASE_ID}" != "null" ]]; then
-                plain "Deleting existing Github release."
-                interactive
-                get_token
-                curl --proto-redir =https -s -X DELETE \
-                    "https://api.github.com/repos/${GITHUBREPO}/releases/${GITHUB_RELEASE_ID}" \
-                    -H "Accept: application/vnd.github.v3+json" \
-                    -H "Authorization: token ${TOKEN}"
-            fi
+        GITHUB_RELEASE_ID="$(echo "${GITHUB_RELEASE}" | jq -r .id)"
+        if [[ "${GITHUB_RELEASE_ID}" != "null" ]]; then
+            plain "Deleting existing Github release."
+            interactive
+            curl --proto-redir =https -s -X DELETE \
+                "https://api.github.com/repos/${GITHUBREPO}/releases/${GITHUB_RELEASE_ID}" \
+                -H "Accept: application/vnd.github.v3+json" \
+                -H "Authorization: token ${TOKEN}"
         fi
     fi
 
@@ -583,7 +590,6 @@ function github_upload_asset()
     mimetype="$(file -b --mime-type "${filename}")"
 
     # Upload Github asset
-    get_token
     plain "Uploading release asset '${filename}'"
     interactive
     if ! RESULT="$(curl --proto-redir =https -s \
@@ -608,58 +614,53 @@ if [[ -z "${GITHUB}" ]]; then
     plain "Please upload the release files manually"
     interactive
 else
-    if check_dependency jq file curl; then
-        # Parse existing Github release
-        if ! GITHUB_RELEASE="$(curl --proto-redir =https -s \
-                "https://api.github.com/repos/${GITHUBREPO}/releases/tags/${TAG}" \
-                -H "Accept: application/vnd.github.v3+json" \
-                -H "Authorization: token ${TOKEN}" \
-                )"; then
-            die "Accessing Github failed."
-        fi
-
-        # Check for existing release and assets
-        GITHUB_RELEASE_ID="$(echo "${GITHUB_RELEASE}" | jq -r .id)"
-        GITHUB_ASSETS="$(echo "${GITHUB_RELEASE}" | jq -r .assets[]?.name)"
-
-        # Create new Github release
-        if [[ "${GITHUB_RELEASE_ID}" == "null" ]]; then
-            plain "Creating new Github release '${TAG}'."
-            interactive
-            API_JSON="$(printf '{"tag_name": "%s","target_commitish": "%s","name": "%s","body": "%s","draft": false,"prerelease": %s}' \
-                       "${TAG}" "${BRANCH}" "${TAG}" "${MESSAGE//$'\n'/'\n'}" "${PRERELEASE}")"
-            get_token
-            if ! GITHUB_RELEASE="$(curl --proto-redir =https -s --data "${API_JSON}" \
-                    "https://api.github.com/repos/${GITHUBREPO}/releases" \
-                    -H "Accept: application/vnd.github.v3+json" \
-                    -H "Authorization: token ${TOKEN}" )"; then
-                die "Uploading release to Github failed."
-            fi
-
-            # Abort on API error
-            message="$(echo "${GITHUB_RELEASE}" | jq -r .message)"
-            if [[ "${message}" != "null" ]]; then
-                die "Github API message: '${message}' Check your token configuration: https://github.com/settings/tokens"
-            fi
-
-            # Safe new ID
-            GITHUB_RELEASE_ID="$(echo "${GITHUB_RELEASE}" | jq -r .id)"
-        else
-            warning "Found existing release on Github."
-        fi
-
-        # Upload release assets
-        for filename in "${!GITHUB_ASSET[@]}"
-        do
-            if grep -q -F -x "${filename}" <(echo "${GITHUB_ASSETS}"); then
-                warning "Found existing asset on Github: '${filename}'."
-            else
-                github_upload_asset "${filename}" "${GITHUB_ASSET[$filename]}"
-            fi
-        done
-    else
-        warning "Please upload the release files manually to Github."
+    # Parse existing Github release
+    if ! GITHUB_RELEASE="$(curl --proto-redir =https -s \
+            "https://api.github.com/repos/${GITHUBREPO}/releases/tags/${TAG}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            -H "Authorization: token ${TOKEN}" \
+            )"; then
+        die "Accessing Github failed."
     fi
+
+    # Check for existing release and assets
+    GITHUB_RELEASE_ID="$(echo "${GITHUB_RELEASE}" | jq -r .id)"
+    GITHUB_ASSETS="$(echo "${GITHUB_RELEASE}" | jq -r .assets[]?.name)"
+
+    # Create new Github release
+    if [[ "${GITHUB_RELEASE_ID}" == "null" ]]; then
+        plain "Creating new Github release '${TAG}'."
+        interactive
+        API_JSON="$(printf '{"tag_name": "%s","target_commitish": "%s","name": "%s","body": "%s","draft": false,"prerelease": %s}' \
+                   "${TAG}" "${BRANCH}" "${TAG}" "${MESSAGE//$'\n'/'\n'}" "${PRERELEASE}")"
+        if ! GITHUB_RELEASE="$(curl --proto-redir =https -s --data "${API_JSON}" \
+                "https://api.github.com/repos/${GITHUBREPO}/releases" \
+                -H "Accept: application/vnd.github.v3+json" \
+                -H "Authorization: token ${TOKEN}" )"; then
+            die "Uploading release to Github failed."
+        fi
+
+        # Abort on API error
+        message="$(echo "${GITHUB_RELEASE}" | jq -r .message)"
+        if [[ "${message}" != "null" ]]; then
+            die "Github API message: '${message}' Check your token configuration: https://github.com/settings/tokens"
+        fi
+
+        # Safe new ID
+        GITHUB_RELEASE_ID="$(echo "${GITHUB_RELEASE}" | jq -r .id)"
+    else
+        warning "Found existing release on Github."
+    fi
+
+    # Upload release assets
+    for filename in "${!GITHUB_ASSET[@]}"
+    do
+        if grep -q -F -x "${filename}" <(echo "${GITHUB_ASSETS}"); then
+            warning "Found existing asset on Github: '${filename}'."
+        else
+            github_upload_asset "${filename}" "${GITHUB_ASSET[$filename]}"
+        fi
+    done
 fi
 
 msg "Finished without errors."
