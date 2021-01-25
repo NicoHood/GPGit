@@ -324,11 +324,10 @@ check_dependency "${GPG_BIN}" "${COMPRESSION[@]}" \
 # When using a Github remote ask for github token first,
 # as all (when using private repositories) commands require a valid token.
 if [[ -n "${GITHUB}" ]]; then
-    if check_dependency jq file curl; then
-        get_token
-    else
-        die "Please install the missing dependencies in order to use Github release asset uploading or disable via --no-github."
-    fi
+    check_dependency jq file curl \
+        || die "Please install the missing dependencies in order to use Github release asset uploading or disable via --no-github."
+
+    get_token
 fi
 
 # Print initial welcome message with version information
