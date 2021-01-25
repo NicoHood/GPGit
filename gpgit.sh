@@ -310,7 +310,6 @@ GITHUBREPO="${GITHUBREPO:-"$(git config gpgit.githubrepo || true)"}"
 GITHUBREPO="${GITHUBREPO:-"$(git config --local remote.origin.url | sed -e 's/.*github.com[:/]//' | sed -e 's/.git$//')"}"
 GITHUB="${GITHUB:-"$(git config --local remote.origin.url | grep -i -F 'github.com' || true)"}"
 PRERELEASE="${PRERELEASE:-"false"}"
-BRANCH="$(git rev-parse --abbrev-ref HEAD)"
 GPG_BIN="$(git config gpg.program || true)"
 GPG_BIN="${GPG_BIN:-gpg2}"
 FORCE="${FORCE:-}"
@@ -631,6 +630,22 @@ else
     if [[ "${GITHUB_RELEASE_ID}" == "null" ]]; then
         plain "Creating new Github release '${TAG}'."
         interactive
+
+        # Make sure we are tagging the current head on a branch
+        if [[ -z "${COMMIT}" || "${COMMIT}" == "HEAD" ]] && git symbolic-ref HEAD &> /dev/null; then
+            BRANCH="$(git rev-parse --abbrev-ref=strict HEAD)"
+        else
+            # Get default branch from github
+            if ! GITHUB_REPO_INFORMATION="$(curl --proto-redir =https -s \
+                    "https://api.github.com/repos/${GITHUBREPO}" \
+                    -H "Accept: application/vnd.github.v3+json" \
+                    -H "Authorization: token ${TOKEN}" )"; then
+                die "Getting default Github branch failed."
+            fi
+            BRANCH="$(echo "${GITHUB_REPO_INFORMATION}" | jq -r .default_branch)"
+            warning "Publishing release on default Github branch '${BRANCH}'."
+        fi
+
         API_JSON="$(printf '{"tag_name": "%s","target_commitish": "%s","name": "%s","body": "%s","draft": false,"prerelease": %s}' \
                    "${TAG}" "${BRANCH}" "${TAG}" "${MESSAGE//$'\n'/'\n'}" "${PRERELEASE}")"
         if ! GITHUB_RELEASE="$(curl --proto-redir =https -s --data "${API_JSON}" \
