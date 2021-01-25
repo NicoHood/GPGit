@@ -7,7 +7,7 @@ export LANG=C
 function setcolors()
 {
     # Prefer terminal safe colored and bold text when tput is supported
-    unset ALL_OFF BOLD BLUE GREEN RED YELLOW MAGENTA CYAN
+    unset ALL_OFF BOLD BLUE GREEN RED YELLOW
     if tput setaf 0 &>/dev/null; then
         ALL_OFF="$(tput sgr0)"
         BOLD="$(tput bold)"
@@ -15,8 +15,6 @@ function setcolors()
         GREEN="${BOLD}$(tput setaf 2)"
         RED="${BOLD}$(tput setaf 1)"
         YELLOW="${BOLD}$(tput setaf 3)"
-        MAGENTA="${BOLD}$(tput setaf 5)"
-        CYAN="${BOLD}$(tput setaf 6)"
     else
         ALL_OFF="\\e[1;0m"
         BOLD="\\e[1;1m"
@@ -24,8 +22,6 @@ function setcolors()
         GREEN="${BOLD}\\e[1;32m"
         RED="${BOLD}\\e[1;31m"
         YELLOW="${BOLD}\\e[1;33m"
-        MAGENTA="${BOLD}\\e[1;35m"
-        CYAN="${BOLD}\\e[1;36m"
     fi
 }
 
@@ -236,7 +232,7 @@ while true ; do
         --color)
             # En/disable colors
             if [[ "${2}" == "never" ]]; then
-                ALL_OFF="" BOLD="" BLUE="" GREEN="" RED="" YELLOW="" MAGENTA="" CYAN=""
+                ALL_OFF="" BOLD="" BLUE="" GREEN="" RED="" YELLOW=""
             elif [[ "${2}" == "force" || "${2}" == "always" ]]; then
                 setcolors
             fi
@@ -256,7 +252,7 @@ while true ; do
     esac
     shift
 done
-readonly ALL_OFF BOLD BLUE GREEN RED YELLOW MAGENTA CYAN
+readonly ALL_OFF BOLD BLUE GREEN RED YELLOW
 
 # Get tag parameter
 if [[ "$#" -lt 1 ]]; then
