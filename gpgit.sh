@@ -169,7 +169,7 @@ declare -a HASH=() COMPRESSION=()
 GETOPT_ARGS="$(getopt -o "hm:C:k:u:s:S:o:O:pnfdi" \
             -l "help,message:,directory:,signingkey:,local-user:,gpg-sign:,output:,pre-release,no-github,force,interactive,token:,compression:,hash:,keyserver:,githubrepo:,project:,debug,color:"\
             -n "gpgit" -- "${@}")" || die "${USAGE_SHORT}"
-eval set -- "$GETOPT_ARGS"
+eval set -- "${GETOPT_ARGS}"
 
 # Handle all params
 while true ; do
@@ -674,7 +674,7 @@ else
         if grep -q -F -x "${filename}" <(echo "${GITHUB_ASSETS}"); then
             warning "Found existing asset on Github: '${filename}'."
         else
-            github_upload_asset "${filename}" "${GITHUB_ASSET[$filename]}"
+            github_upload_asset "${filename}" "${GITHUB_ASSET[${filename}]}"
         fi
     done
 fi
