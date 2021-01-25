@@ -153,17 +153,6 @@ function check_dependency()
     return "${RET}"
 }
 
-function get_token()
-{
-    if [[ -z "${TOKEN}" ]]; then
-        plain "Please enter your Github token or generate a new one (permission: 'public_repo'):"
-        plain "https://github.com/settings/tokens"
-        plain "Tip: Configure your Github token permanant with:"
-        plain "git config --global gpgit.token <token>"
-        read -rs TOKEN
-    fi
-}
-
 # Trap errors
 set -o errexit -o errtrace -u
 trap 'die "Error on or near line ${LINENO}. Please report this issue: https://github.com/NicoHood/gpgit/issues"' ERR
@@ -327,7 +316,13 @@ if [[ -n "${GITHUB}" ]]; then
     check_dependency jq file curl \
         || die "Please install the missing dependencies in order to use Github release asset uploading or disable via --no-github."
 
-    get_token
+    if [[ -z "${TOKEN}" ]]; then
+        plain "Please enter your Github token or generate a new one (permission: 'public_repo'):"
+        plain "https://github.com/settings/tokens"
+        plain "Tip: Configure your Github token permanant with:"
+        plain "git config --global gpgit.token <token>"
+        read -rs TOKEN
+    fi
 fi
 
 # Print initial welcome message with version information
