@@ -80,7 +80,7 @@ EOF
 
 function interactive()
 {
-    if [[ "${INTERACTIVE}" == "true" || -z "${INTERACTIVE}" ]]; then
+    if [[ -z "${INTERACTIVE}" || "${INTERACTIVE}" == "true" ]]; then
         [[ "${#}" -gt 0 ]] && echo "${*}" >&2
         read -rp "Continue? [Y/n]" yesno
         if [[ "${yesno}" != [Yy]"es" && "${yesno}" != [Yy] && -n "${yesno}" ]]; then
