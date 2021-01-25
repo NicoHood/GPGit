@@ -84,7 +84,7 @@ EOF
 
 function interactive()
 {
-    if [[ "${INTERACTIVE}" == "true" ]]; then
+    if [[ "${INTERACTIVE}" == "true" || -z "${INTERACTIVE}" ]]; then
         [[ "${#}" -gt 0 ]] && echo "${*}" >&2
         read -rp "Continue? [Y/n]" yesno
         if [[ "${yesno}" != [Yy]"es" && "${yesno}" != [Yy] && -n "${yesno}" ]]; then
@@ -315,9 +315,7 @@ echo "${BOLD}GPGit ${VERSION} https://github.com/NicoHood/gpgit${ALL_OFF}" >&2
 echo "" >&2
 
 if [[ -z "${INTERACTIVE}" ]]; then
-    INTERACTIVE=true
     interactive "Running GPGit for the first time. This will guide you through all steps of secure source code signing once. If you wish to run interactively again pass the -i option to GPGit. For more options see --help."
-    git config --global gpgit.interactive "false"
 fi
 
 # When using a Github remote ask for github token first,
@@ -671,6 +669,10 @@ else
             github_upload_asset "${filename}" "${GITHUB_ASSET[$filename]}"
         fi
     done
+fi
+
+if [[ -z "${INTERACTIVE}" ]]; then
+    git config --global gpgit.interactive "false"
 fi
 
 msg "Finished without errors."
