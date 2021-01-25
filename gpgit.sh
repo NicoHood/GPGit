@@ -310,6 +310,16 @@ NEW_SIGNINGKEY="false"
 check_dependency "${GPG_BIN}" "${COMPRESSION[@]}" \
     || die "Please check your \$PATH variable or install the missing dependencies."
 
+# Print initial welcome message with version information
+echo "${BOLD}GPGit ${VERSION} https://github.com/NicoHood/gpgit${ALL_OFF}" >&2
+echo "" >&2
+
+if [[ -z "${INTERACTIVE}" ]]; then
+    INTERACTIVE=true
+    interactive "Running GPGit for the first time. This will guide you through all steps of secure source code signing once. If you wish to run interactively again pass the -i option to GPGit. For more options see --help."
+    git config --global gpgit.interactive "false"
+fi
+
 # When using a Github remote ask for github token first,
 # as all (when using private repositories) commands require a valid token.
 if [[ -n "${GITHUB}" ]]; then
@@ -323,16 +333,6 @@ if [[ -n "${GITHUB}" ]]; then
         plain "git config --global gpgit.token <token>"
         read -rs TOKEN
     fi
-fi
-
-# Print initial welcome message with version information
-echo "${BOLD}GPGit ${VERSION} https://github.com/NicoHood/gpgit${ALL_OFF}" >&2
-echo "" >&2
-
-if [[ -z "${INTERACTIVE}" ]]; then
-    INTERACTIVE=true
-    interactive "Running GPGit for the first time. This will guide you through all steps of secure source code signing once. If you wish to run interactively again pass the -i option to GPGit. For more options see --help."
-    git config --global gpgit.interactive "false"
 fi
 
 ####################################################################################################
