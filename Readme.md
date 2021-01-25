@@ -121,7 +121,7 @@ Configuration options:
 Examples:
   git config --global gpgit.output ~/gpgit
   git config --local user.signingkey 97312D5EB9D7AE7D0BD4307351DAE9B7C1AE9161
-  git config --local compression "xz zip"
+  git config --local gpgit.compression "xz zip"
 ```
 
 # GPG Quick Start Guide
