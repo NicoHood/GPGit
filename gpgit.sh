@@ -199,7 +199,7 @@ while true ; do
             PRERELEASE="true"
             ;;
         -n|--no-github)
-            GITHUB=""
+            GITHUB="false"
             ;;
         -f|--force)
             FORCE="true"
@@ -297,7 +297,7 @@ GPG_USER="${GPG_USER:-"${USER}"}"
 GPG_EMAIL="$(git config user.email || true)"
 GITHUB_REPO_NAME="${GITHUB_REPO_NAME:-"$(git config gpgit.githubrepo || true)"}"
 GITHUB_REPO_NAME="${GITHUB_REPO_NAME:-"$(git config --local remote.origin.url | sed -e 's/.*github.com[:/]//' | sed -e 's/.git$//')"}"
-GITHUB="${GITHUB:-"$(git config --local remote.origin.url | grep -i -F 'github.com' || true)"}"
+GITHUB="${GITHUB:-"$(git config --local remote.origin.url | grep -i -F -q 'github.com' && echo "true" || echo "false")"}"
 PRERELEASE="${PRERELEASE:-"false"}"
 GPG_BIN="$(git config gpg.program || true)"
 GPG_BIN="${GPG_BIN:-gpg2}"
@@ -320,7 +320,7 @@ fi
 
 # When using a Github remote ask for github token first,
 # as all (when using private repositories) commands require a valid token.
-if [[ -n "${GITHUB}" ]]; then
+if [[ "${GITHUB}" == "true" ]]; then
     check_dependency jq file curl \
         || die "Please install the missing dependencies in order to use Github release asset uploading or disable via --no-github."
 
@@ -441,7 +441,7 @@ if [[ -n "${FORCE}" ]]; then
 
     # Delete existing Github release when using --force option
     # It needs to get deleted before the tag, otherwise a release draft is kept as ghost online.
-    if [[ -n "${GITHUB}" ]]; then
+    if [[ "${GITHUB}" == "true" ]]; then
         # Parse existing Github release
         if ! GITHUB_RELEASE="$(curl --proto-redir =https -s \
                 "https://api.github.com/repos/${GITHUB_REPO_NAME}/releases/tags/${TAG}" \
@@ -566,7 +566,7 @@ msg "5. Upload the release"
 ####################################################################################################
 
 msg2 "5.1 Configure HTTPS download server"
-if [[ -z "${GITHUB}" ]]; then
+if [[ "${GITHUB}" != "true" ]]; then
     plain "Please configure HTTPS for your download server."
 else
     plain "Github uses well configured https."
@@ -602,7 +602,7 @@ function github_upload_asset()
 
 # Upload to Github
 msg2 "5.2 Upload to Github"
-if [[ -z "${GITHUB}" ]]; then
+if [[ "${GITHUB}" != "true" ]]; then
     plain "Please upload the release files manually"
     interactive
 else
