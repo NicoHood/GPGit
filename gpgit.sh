@@ -237,7 +237,7 @@ while true ; do
             # En/disable colors
             if [[ "${2}" == "never" ]]; then
                 ALL_OFF="" BOLD="" BLUE="" GREEN="" RED="" YELLOW="" MAGENTA="" CYAN=""
-            elif [[ "${2}" == "force" ]]; then
+            elif [[ "${2}" == "force" || "${2}" == "always" ]]; then
                 setcolors
             fi
             shift
