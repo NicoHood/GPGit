@@ -163,7 +163,7 @@ unset INTERACTIVE MESSAGE KEYSERVER COMPRESSION HASH OUTPUT PROJECT SIGNINGKEY
 unset TOKEN GPG_USER GPG_EMAIL GITHUB_REPO_NAME GITHUB PRERELEASE BRANCH GPG_BIN
 unset FORCE NEW_SIGNINGKEY
 declare -A GITHUB_ASSET
-declare -a HASH COMPRESSION
+declare -a HASH=() COMPRESSION=()
 
 # Parse input params an ovrwrite possible default or config loaded options
 GETOPT_ARGS="$(getopt -o "hm:C:k:u:s:S:o:O:pnfdi" \
@@ -213,11 +213,11 @@ while true ; do
             shift
             ;;
         --compression)
-            COMPRESSION+=("${2}")
+            IFS=" " read -r -a COMPRESSION <<< "${2}"
             shift
             ;;
         --hash)
-            HASH+=("${2}")
+            IFS=" " read -r -a HASH <<< "${2}"
             shift
             ;;
         --keyserver)
@@ -280,10 +280,12 @@ INTERACTIVE=${INTERACTIVE:-"$(git config gpgit.interactive || true)"}
 MESSAGE="${MESSAGE:-"Release ${TAG}"$'\n\nCreated with GPGit '"${VERSION}"$'\nhttps://github.com/NicoHood/gpgit'}"
 KEYSERVER="${KEYSERVER:-"$(git config gpgit.keyserver || true)"}"
 KEYSERVER="${KEYSERVER:-"hkps://pgp.mit.edu"}"
-COMPRESSION=(${COMPRESSION[@]:-"$(git config gpgit.compression || true)"})
-COMPRESSION=(${COMPRESSION[@]:-xz})
-HASH=(${HASH[@]:-"$(git config gpgit.hash || true)"})
-HASH=(${HASH[@]:-sha512})
+if [[ "${#COMPRESSION[@]}" -eq 0 ]]; then
+    IFS=" " read -r -a COMPRESSION <<< "$(git config --default "xz" gpgit.compression)"
+fi
+if [[ "${#HASH[@]}" -eq 0 ]]; then
+    IFS=" " read -r -a HASH <<< "$(git config --default "sha512" gpgit.hash)"
+fi
 OUTPUT="${OUTPUT:-"$(git config gpgit.output || true)"}"
 OUTPUT="${OUTPUT:-"./gpgit"}"
 PROJECT="${PROJECT:-"$(git config gpgit.project || true)"}"
@@ -497,7 +499,7 @@ fi
 msg2 "4.1 Create compressed archive"
 for util in "${COMPRESSION[@]}"
 do
-    if [[ "${util}" == zip ]]; then
+    if [[ "${util}" == "zip" ]]; then
         FILE="${OUTPUT}/${PROJECT}-${TAG}.${util}"
     else
         FILE="${OUTPUT}/${PROJECT}-${TAG}.tar.${util}"
@@ -505,7 +507,7 @@ do
     if [[ ! -f "${FILE}" || -n "${FORCE}" ]]; then
         plain "Creating new release archive: '${FILE}'"
         interactive
-        if [[ "${util}" == zip ]]; then
+        if [[ "${util}" == "zip" ]]; then
             git archive --format=zip --prefix "${PROJECT}-${TAG}/" "refs/tags/${TAG}" > "${FILE}"
         else
             git archive --format=tar --prefix "${PROJECT}-${TAG}/" "refs/tags/${TAG}" | "${util}" --best > "${FILE}"
