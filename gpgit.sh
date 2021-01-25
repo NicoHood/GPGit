@@ -281,10 +281,16 @@ MESSAGE="${MESSAGE:-"Release ${TAG}"$'\n\nCreated with GPGit '"${VERSION}"$'\nht
 KEYSERVER="${KEYSERVER:-"$(git config gpgit.keyserver || true)"}"
 KEYSERVER="${KEYSERVER:-"hkps://pgp.mit.edu"}"
 if [[ "${#COMPRESSION[@]}" -eq 0 ]]; then
-    IFS=" " read -r -a COMPRESSION <<< "$(git config --default "xz" gpgit.compression)"
+    IFS=" " read -r -a COMPRESSION <<< "$(git config gpgit.compression)"
+    if [[ "${#COMPRESSION[@]}" -eq 0 ]]; then
+        COMPRESSION=("xz")
+    fi
 fi
 if [[ "${#HASH[@]}" -eq 0 ]]; then
-    IFS=" " read -r -a HASH <<< "$(git config --default "sha512" gpgit.hash)"
+    IFS=" " read -r -a HASH <<< "$(git config gpgit.hash)"
+    if [[ "${#HASH[@]}" -eq 0 ]]; then
+        HASH=("sha512")
+    fi
 fi
 OUTPUT="${OUTPUT:-"$(git config gpgit.output || true)"}"
 OUTPUT="${OUTPUT:-"./gpgit"}"
