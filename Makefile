@@ -13,3 +13,6 @@ install:
 uninstall:
 		rm -f $(DESTDIR)$(PREFIX)/bin/gpgit
 		rm -f $(DESTDIR)$(PREFIX)/share/doc/gpgit/Readme.md
+
+test:
+		shellcheck -o all gpgit.sh
