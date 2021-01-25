@@ -476,7 +476,8 @@ fi
 if [[ -z "$(git tag -l "${TAG}")" ]] ; then
     plain "Creating signed Git tag '${TAG}' and pushing it to the remote Git."
     interactive
-    git tag -s -a -m "${MESSAGE}" -u "${SIGNINGKEY}" "${TAG}" "${COMMIT}"
+    git tag -s -a -m "${MESSAGE}" -u "${SIGNINGKEY}" "${TAG}" "${COMMIT}" &> /dev/null \
+        || die "Signing Git tag failed or aborted."
     git push origin "refs/tags/${TAG}" &> /dev/null
 else
     warning "Tag '${TAG}' already exists."
