@@ -320,7 +320,7 @@ NEW_SIGNINGKEY="false"
 # Dependencies: bash, gnupg2, git, tar, xz, coreutils, gawk, grep, sed
 # Optional dependencies: gzip, bzip2, lzip, file, jq, curl
 check_dependency "${GPG_BIN}" "${COMPRESSION[@]}" \
-     || die "Please check your \$PATH variable or install the missing dependencies."
+    || die "Please check your \$PATH variable or install the missing dependencies."
 
 # Print initial welcome message with version information
 echo "${BOLD}GPGit ${VERSION} https://github.com/NicoHood/gpgit${ALL_OFF}" >&2
