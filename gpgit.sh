@@ -163,7 +163,7 @@ declare -a HASH=() COMPRESSION=()
 
 # Parse input params an ovrwrite possible default or config loaded options
 GETOPT_ARGS="$(getopt -o "hm:C:k:u:s:S:o:O:pnfdi" \
-            -l "help,message:,directory:,signingkey:,local-user:,gpg-sign:,output:,pre-release,no-github,force,interactive,token:,compression:,hash:,keyserver:,githubrepo:,project:,debug,color:"\
+            -l "help,message:,directory:,signingkey:,local-user:,gpg-sign:,output:,pre-release,no-github,force,interactive,token:,compression:,hash:,keyserver:,githubrepo:,project:,remote:,debug,color:"\
             -n "gpgit" -- "${@}")" || die "${USAGE_SHORT}"
 eval set -- "${GETOPT_ARGS}"
 
@@ -228,6 +228,10 @@ while true ; do
             PROJECT="${2}"
             shift
             ;;
+        --remote)
+            REMOTE="${2}"
+            shift
+            ;;
         # Internal
         --color)
             # En/disable colors
@@ -272,8 +276,9 @@ fi
 cd "$(git rev-parse --show-toplevel)"
 
 # Initialize variable config/defaults
-REMOTE="origin"
 INTERACTIVE=${INTERACTIVE:-"$(git config gpgit.interactive || true)"}
+REMOTE="${REMOTE:-"$(git for-each-ref --format='%(upstream:remotename)' "$(git symbolic-ref -q HEAD)")"}"
+REMOTE="${REMOTE:-"origin"}"
 MESSAGE="${MESSAGE:-"Release ${TAG}"$'\n\nCreated with GPGit '"${VERSION}"$'\nhttps://github.com/NicoHood/gpgit'}"
 KEYSERVER="${KEYSERVER:-"$(git config gpgit.keyserver || true)"}"
 KEYSERVER="${KEYSERVER:-"hkps://pgp.mit.edu"}"
