@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-VERSION="1.3.4"
+VERSION="1.4.0"
 
 # Avoid any encoding problems
 export LANG=C
