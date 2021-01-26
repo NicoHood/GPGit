@@ -227,7 +227,7 @@ eval set -- "${GETOPT_ARGS}"
 
 # Handle all params
 while true ; do
-    case "$1" in
+    case "${1}" in
         # Command line options
         -h|--help)
             echo "${USAGE}" >&2
@@ -237,7 +237,7 @@ while true ; do
             CHANGELOG="true"
             ;;
         -m|--message)
-            MESSAGE+="$2\\n"
+            MESSAGE+="${2}\\n"
             shift
             ;;
         -C|--directory)
@@ -414,6 +414,7 @@ if [[ "${GITHUB}" == "true" ]]; then
     fi
 fi
 
+
 ####################################################################################################
 msg "1. Generate a new GPG key"
 ####################################################################################################
@@ -548,7 +549,7 @@ if [[ -n "${FORCE}" ]]; then
     git tag -d "${TAG}" &> /dev/null || true
     git push --delete "${REMOTE}" "refs/tags/${TAG}" &> /dev/null || true
 else
-    plain "Fetching Git tags from origin."
+    plain "Fetching Git tags from ${REMOTE}."
     interactive
     git fetch "${REMOTE}" "refs/tags/${TAG}" &> /dev/null || true
 fi
@@ -641,6 +642,7 @@ do
         GITHUB_ASSET["${PROJECT}-${TAG}.tar.${util}.${algorithm}"]="${FILE}.${algorithm}"
     done
 done
+
 
 ####################################################################################################
 msg "5. Upload the release"
@@ -750,6 +752,8 @@ else
             github_upload_asset "${filename}" "${GITHUB_ASSET[${filename}]}"
         fi
     done
+
+    plain "Github release created: https://github.com/${GITHUB_REPO_NAME}/releases/tag/${TAG}"
 fi
 
 if [[ -z "${INTERACTIVE}" ]]; then
