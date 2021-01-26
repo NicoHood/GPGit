@@ -171,38 +171,43 @@ function parse_keepachangelog()
             break
         fi
     done
+    if [[ -z "${changelog}" ]]; then
+        die "No changelog file found. Did you commit the file to git?"
+    fi
 
-    # Process changelog, if found
-    if [[ -n "${changelog}" ]]; then
-        while read -r line ; do
-            # 1. Search for h2 headline and get the first word (the version)
-            # 2. Strip any leading markdown link "["
-            # 3. Strip any trailing markdown link "]" or "](/url)"
-            # 4. Do an exact match against the specified tag
-            if echo "${line}" | \
-              sed -n "s/^## \(\S\+\)\($\| .*\)/\1/p" | \
-              sed "s/\[//g" | \
-              sed "s/\].*//g" | \
-              grep -q -F "${tag}"; then
-                ret+=("${line}")
+    # Process changelog
+    while read -r line ; do
+        # 1. Search for h2 headline and get the first word (the version)
+        # 2. Strip any leading markdown link "["
+        # 3. Strip any trailing markdown link "]" or "](/url)"
+        # 4. Do an exact match against the specified tag
+        if echo "${line}" | \
+          sed -n "s/^## \(\S\+\)\($\| .*\)/\1/p" | \
+          sed "s/\[//g" | \
+          sed "s/\].*//g" | \
+          grep -q -F "${tag}"; then
+            ret+=("${line}")
 
-          # When the tag was already found, add each following line to the output
-          elif [[ "${#ret[@]}" -gt 0 ]]; then
-                # But ignore everything after the next h1 or h2 section (except footnote links)
-                if echo "${line}" | grep -q -E "^##? .+"; then
-                    skip_lines="true"
-                    continue
-                fi
-
-                # Skip links, except the current tag
-                local footnote
-                footnote="$(echo "${line}" | sed -n "s/^\[\(\S\+\)\]: \S\+$/\1/p")"
-                if [[ "${skip_lines}" != "true" && -z "${footnote}" ]] \
-                  || grep -F -q "${tag}" <<< "${footnote}"; then
-                    ret+=("${line}")
-                fi
+        # When the tag was already found, add each following line to the output
+        elif [[ "${#ret[@]}" -gt 0 ]]; then
+            # But ignore everything after the next h1 or h2 section (except footnote links)
+            if echo "${line}" | grep -q -E "^##? .+"; then
+                skip_lines="true"
+                continue
             fi
-        done < <(git show "${commit}:${changelog}")
+
+            # Skip links, except the current tag
+            local footnote
+            footnote="$(echo "${line}" | sed -n "s/^\[\(\S\+\)\]: \S\+$/\1/p")"
+            if [[ "${skip_lines}" != "true" && -z "${footnote}" ]] \
+              || grep -F -q "${tag}" <<< "${footnote}"; then
+                ret+=("${line}")
+            fi
+        fi
+    done < <(git show "${commit}:${changelog}")
+
+    if [[ "${#ret[@]}" -eq 0 ]]; then
+        die "No corresponding changelog section for tag ${tag} found."
     fi
 
     printf '%s\n' "${ret[@]}"
@@ -394,10 +399,8 @@ fi
 
 # Parse changelog
 if [[ "${CHANGELOG}" == "true" ]]; then
-    KEEPACHANGELOG="$(parse_keepachangelog "${TAG}" "${COMMIT}" || true)"
-    if [[ -z "${KEEPACHANGELOG}" ]]; then
-        die "Error parsing changelog. See https://keepachangelog.com/ for more information."
-    fi
+    KEEPACHANGELOG="$(parse_keepachangelog "${TAG}" "${COMMIT}")" \
+        || die "Parsing changelog failed. See https://keepachangelog.com/ for more information."
     MESSAGE="${KEEPACHANGELOG}"$'\n\n'"${MESSAGE}"
 fi
 
