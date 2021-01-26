@@ -458,7 +458,8 @@ if [[ -z "${SIGNINGKEY}" ]]; then
     echo ""
 
     # Generate strongest possible GPG key (ECC or RSA4096, depending on gnupg version)
-    interactive "Will generate the new GPG key with the selected parameters now."
+    plain "Generating the new GPG key with the selected parameters now."
+    interactive
     ${GPG_BIN} --quick-generate-key "${GPG_USER} <${GPG_EMAIL}>" future-default default 1y \
         &> /dev/null || die "GPG key generation aborted."
     SIGNINGKEY="$(${GPG_BIN} --with-colons --list-secret-keys | grep -F -B 2 "${GPG_USER} <${GPG_EMAIL}>" | awk -F: '$1 == "fpr" {print $10;}')"
