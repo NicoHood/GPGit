@@ -7,12 +7,37 @@ This changlog uses the [ISO 8601 date format](https://www.iso.org/iso-8601-date-
 
 ## [Unreleased]
 
+## [1.4.0] - 2021-01-26
+
 ### Added
+
 * Added CHANGELOG.md file with [Keep A Changelog format](https://keepachangelog.com)
+* Added support for parsing changelog via `-c, --changelog`
+* Added [additional quoting for command substitution](https://unix.stackexchange.com/q/118433)
+* Detect default github branch automatically when tagging a specific commit
+* Added [ShellCheck](https://www.shellcheck.net/) makefile `test` target
+* Added detection of used remote/upstream.
+* Show github release link after uploading.
 
 ### Changed
 
 * Explicitly use annotated git tag using `-a`
+* Improved grep handing using -F option
+* Add a better error message if signing git tag failed.
+* Disable interactive mode for first run only when script finishes properly #20
+* Improved compression and hash bash array handling
+
+### Removed
+
+* Remove not required exit command
+* Remove unused MAGENTA and CYAN colors
+
+### Fixed
+
+* Fixed reading private repository information by always specifying the token
+* Fix --no-github param
+* Fixed --force option for github releases #24
+* Added support for BSD based systems #19 (thanks @WoLpH)
 
 ## [1.3.4] - 2020-03-23
 
@@ -142,7 +167,8 @@ This changlog uses the [ISO 8601 date format](https://www.iso.org/iso-8601-date-
 ### Added
 - Initial release of the software
 
-[Unreleased]: https://github.com/NicoHood/gpgit/compare/1.3.4...HEAD
+[Unreleased]: https://github.com/NicoHood/gpgit/compare/1.4.0...HEAD
+[1.4.0]: https://github.com/NicoHood/gpgit/compare/1.3.4...1.4.0
 [1.3.4]: https://github.com/NicoHood/gpgit/compare/1.3.3...1.3.4
 [1.3.3]: https://github.com/NicoHood/gpgit/compare/1.3.2...1.3.3
 [1.3.2]: https://github.com/NicoHood/gpgit/compare/1.3.1...1.3.2

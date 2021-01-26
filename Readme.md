@@ -17,7 +17,7 @@ As we all know, today more than ever before, it is crucial to be able to trust o
 <a href="https://www.buymeacoffee.com/nicohood" target="_blank"><img src="https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png" alt="Buy Me A Coffee" style="height: auto !important;width: auto !important;" ></a>
 
 ### GPGit
-[GPGit][12] is meant to bring GPG to the masses. It is not only a shell script that automates the process of [creating new signed Git releases with GPG][13], but also includes a [quick-start-guide][14] for learning how to use GPG. GPGit integrates perfectly with the [Github Release API][15] for uploading.
+[GPGit][12] is meant to bring GPG to the masses. It is not only a shell script that automates the process of [creating new signed Git releases with GPG][13], but also includes a [quick-start-guide][14] for learning how to use GPG. GPGit integrates perfectly with the [Github Release API][15] for uploading. It can even automatically add a [Keep A Changelog](https://keepachangelog.com/) formatted changelog to the release.
 
 The security status of GNU/Linux projects will be tracked in the [Linux Security Database][16]. If you have any further questions, do not hesitate to [contact me][17] personally. Thanks for your help in making GNU/Linux projects more secure by using GPG signatures.
 
@@ -81,7 +81,7 @@ The script guides you through all 5 steps of the [GPG quick start guide](#gpg-qu
 $ gpgit --help
 Usage: gpgit [options] <tagname> [<commit> | <object>]
 
-GPGit 1.3.1 https://github.com/NicoHood/gpgit
+GPGit 1.4.0 https://github.com/NicoHood/gpgit
 A shell script that automates the process of signing Git sources via GPG.
 
 Mandatory arguments:
@@ -89,6 +89,8 @@ Mandatory arguments:
 
 Optional arguments:
   -h, --help               Show this help message and exit.
+  -c, --changelog          Prepend changelog to the release message using the
+                           https://keepachangelog.com/en/1.0.0/ format.
   -m, --message <msg>      Use the given <msg> as the commit message.
                            If multiple -m options are given, their values are
                            concatenated as separate paragraphs.
@@ -110,6 +112,7 @@ Examples:
 
 Configuration options:
   gpgit.signingkey <keyid>, user.signingkey <keyid>
+  gpgit.changelog <true | false>
   gpgit.output <path>
   gpgit.token <token>
   gpgit.compression <xz | gzip | bzip2 | lzip | zip>
@@ -293,13 +296,13 @@ Create a new "Github Release" to add additional data to the tag. Then drag the .
 
 The script also supports [uploading to Github](https://developer.github.com/v3/repos/releases/) directly. Create a new Github token first and then follow the instructions of the script. How to generate a Github token:
 * Go to ["Settings - Personal access tokens"](https://github.com/settings/tokens)
-* Generate a new token with permissions "public_repo" and "admin:gpg_key". In order to access private repositories you must allow access to the whole "repo" scope.
+* Generate a new token with permissions `public_repo` and `admin:gpg_key`. In order to access private repositories you must allow access to the whole `repo` scope.
 * Store it safely
 
 # Appendix
 
 ## Email Encryption
-You can also use your GPG key for email encryption with [enigmail and thunderbird](https://wiki.archlinux.org/index.php/thunderbird#EnigMail_-_Encryption). [[Read more]](https://www.enigmail.net/index.php/en/)
+You can also use your GPG key for email encryption with [thunderbird](https://support.mozilla.org/en-US/kb/openpgp-thunderbird-howto-and-faq).
 
 ## Contact
 You can get securely in touch with me [here](https://contact.nicohood.de). My GPG key ID is `9731 2D5E B9D7 AE7D 0BD4 3073 51DA E9B7 C1AE 9161`. Don't hesitate to [file a bug at Github](https://github.com/NicoHood/gpgit/issues). More cool projects from me can be found [here](https://www.nicohood.de).
