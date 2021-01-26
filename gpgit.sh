@@ -225,8 +225,15 @@ unset FORCE NEW_SIGNINGKEY REMOTE CHANGELOG
 declare -A GITHUB_ASSET=()
 declare -a HASH=() COMPRESSION=()
 
+# BSD getopt works completely different from gnu-getopt,
+# so check if have an alternative getopt install.
+if [[ -x /usr/local/opt/gnu-getopt/bin/getopt ]]; then
+    export PATH="/usr/local/opt/gnu-getopt/bin/:${PATH}"
+fi
+
 # Parse input params an ovrwrite possible default or config loaded options
-GETOPT_ARGS="$(getopt -o "hcm:C:k:u:s:S:o:O:pnfdi" \
+GETOPT_PARAMS_SHORT="hcm:C:k:u:s:S:o:O:pnfdi"
+GETOPT_ARGS="$(getopt -o "${GETOPT_PARAMS_SHORT}" \
             -l "help,changelog,message:,directory:,signingkey:,local-user:,gpg-sign:,output:,pre-release,no-github,force,interactive,token:,compression:,hash:,keyserver:,githubrepo:,project:,remote:,debug,color:"\
             -n "gpgit" -- "${@}")" || die "${USAGE_SHORT}"
 eval set -- "${GETOPT_ARGS}"
@@ -329,6 +336,12 @@ readonly ALL_OFF BOLD BLUE GREEN RED YELLOW
 if [[ "$#" -lt 1 ]]; then
     die "${USAGE_SHORT}"
 fi
+
+# Sanity check. If we're using the BSD getopt this will be broken:
+if [[ "${GETOPT_PARAMS_SHORT}" == "${1}" ]]; then
+    die "GPGit requires GNU getopt to function."
+fi
+
 TAG="${1}"
 shift
 COMMIT="${1:-"HEAD"}"
