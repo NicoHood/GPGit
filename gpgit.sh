@@ -43,6 +43,8 @@ ${BOLD}Mandatory arguments:${ALL_OFF}
 
 ${BOLD}Optional arguments:${ALL_OFF}
   -h, --help               Show this help message and exit.
+  -c, --changelog          Prepend changelog to the release message using the
+                           https://keepachangelog.com/en/1.0.0/ format.
   -m, --message <msg>      Use the given <msg> as the commit message.
                            If multiple -m options are given, their values are
                            concatenated as separate paragraphs.
@@ -149,6 +151,62 @@ function check_dependency()
     return "${ret}"
 }
 
+# Extracts the relevant changelog section for the provided tag.
+# See keep a changelog spec:
+# https://keepachangelog.com/en/1.0.0/
+function parse_keepachangelog()
+{
+    local tag="${1}"
+    local commit="${2}"
+    local changelog=""
+    local skip_lines="false"
+    local ret=()
+
+    # Find Changelog file in git (not on disk!)
+    for filename in CHANGELOG.md CHANGELOG Changelog.md Changelog changelog.md changelog
+    do
+        if git cat-file -e "${commit}:${filename}" &>/dev/null; then
+            changelog="${filename}"
+            break
+        fi
+    done
+
+    # Process changelog, if found
+    if [[ -n "${changelog}" ]]; then
+        while read -r line ; do
+            # 1. Search for h2 headline and get the first word (the version)
+            # 2. Strip any leading markdown link "["
+            # 3. Strip any trailing markdown link "]" or "](/url)"
+            # 4. Do an exact match against the specified tag
+            if echo "${line}" | \
+              sed -n "s/^## \(\S\+\)\($\| .*\)/\1/p" | \
+              sed "s/\[//g" | \
+              sed "s/\].*//g" | \
+              grep -q -F "${tag}"; then
+                ret+=("${line}")
+
+          # When the tag was already found, add each following line to the output
+          elif [[ "${#ret[@]}" -gt 0 ]]; then
+                # But ignore everything after the next h1 or h2 section (except footnote links)
+                if echo "${line}" | grep -q -E "^##? .+"; then
+                    skip_lines="true"
+                    continue
+                fi
+
+                # Skip links, except the current tag
+                local footnote
+                footnote="$(echo "${line}" | sed -n "s/^\[\(\S\+\)\]: \S\+$/\1/p")"
+                if [[ "${skip_lines}" != "true" && -z "${footnote}" ]] \
+                  || grep -F -q "${tag}" <<< "${footnote}"; then
+                    ret+=("${line}")
+                fi
+            fi
+        done < <(git show "${commit}:${changelog}")
+    fi
+
+    printf '%s\n' "${ret[@]}"
+}
+
 # Trap errors
 set -o errexit -o errtrace -u
 trap 'die "Error on or near line ${LINENO}. Please report this issue: https://github.com/NicoHood/gpgit/issues"' ERR
@@ -157,13 +215,13 @@ trap kill_exit SIGTERM SIGINT SIGHUP
 # Initialize variables
 unset INTERACTIVE MESSAGE KEYSERVER COMPRESSION HASH OUTPUT PROJECT SIGNINGKEY
 unset TOKEN GPG_USER GPG_EMAIL GITHUB_REPO_NAME GITHUB PRERELEASE BRANCH GPG_BIN
-unset FORCE NEW_SIGNINGKEY REMOTE
+unset FORCE NEW_SIGNINGKEY REMOTE CHANGELOG
 declare -A GITHUB_ASSET=()
 declare -a HASH=() COMPRESSION=()
 
 # Parse input params an ovrwrite possible default or config loaded options
-GETOPT_ARGS="$(getopt -o "hm:C:k:u:s:S:o:O:pnfdi" \
-            -l "help,message:,directory:,signingkey:,local-user:,gpg-sign:,output:,pre-release,no-github,force,interactive,token:,compression:,hash:,keyserver:,githubrepo:,project:,remote:,debug,color:"\
+GETOPT_ARGS="$(getopt -o "hcm:C:k:u:s:S:o:O:pnfdi" \
+            -l "help,changelog,message:,directory:,signingkey:,local-user:,gpg-sign:,output:,pre-release,no-github,force,interactive,token:,compression:,hash:,keyserver:,githubrepo:,project:,remote:,debug,color:"\
             -n "gpgit" -- "${@}")" || die "${USAGE_SHORT}"
 eval set -- "${GETOPT_ARGS}"
 
@@ -174,6 +232,9 @@ while true ; do
         -h|--help)
             echo "${USAGE}" >&2
             exit 0
+            ;;
+        -c|--changelog)
+            CHANGELOG="true"
             ;;
         -m|--message)
             MESSAGE+="$2\\n"
@@ -279,7 +340,8 @@ cd "$(git rev-parse --show-toplevel)"
 INTERACTIVE=${INTERACTIVE:-"$(git config gpgit.interactive || true)"}
 REMOTE="${REMOTE:-"$(git for-each-ref --format='%(upstream:remotename)' "$(git symbolic-ref -q HEAD)")"}"
 REMOTE="${REMOTE:-"origin"}"
-MESSAGE="${MESSAGE:-"Release ${TAG}"$'\n\nCreated with GPGit '"${VERSION}"$'\nhttps://github.com/NicoHood/gpgit'}"
+CHANGELOG="${CHANGELOG:-false}"
+MESSAGE="${MESSAGE:-"Release created with GPGit ${VERSION}"$'\nhttps://github.com/NicoHood/gpgit'}"
 KEYSERVER="${KEYSERVER:-"$(git config gpgit.keyserver || true)"}"
 KEYSERVER="${KEYSERVER:-"hkps://pgp.mit.edu"}"
 if [[ "${#COMPRESSION[@]}" -eq 0 ]]; then
@@ -326,6 +388,15 @@ echo "" >&2
 
 if [[ -z "${INTERACTIVE}" ]]; then
     interactive "Running GPGit for the first time. This will guide you through all steps of secure source code signing once. If you wish to run interactively again pass the -i option to GPGit. For more options see --help."
+fi
+
+# Parse changelog
+if [[ "${CHANGELOG}" == "true" ]]; then
+    KEEPACHANGELOG="$(parse_keepachangelog "${TAG}" "${COMMIT}" || true)"
+    if [[ -z "${KEEPACHANGELOG}" ]]; then
+        die "Error parsing changelog. See https://keepachangelog.com/ for more information."
+    fi
+    MESSAGE="${KEEPACHANGELOG}"$'\n\n'"${MESSAGE}"
 fi
 
 # When using a Github remote ask for github token first,
