@@ -66,6 +66,7 @@ ${BOLD}Examples:${ALL_OFF}
 
 ${BOLD}Configuration options:${ALL_OFF}
   gpgit.signingkey <keyid>, user.signingkey <keyid>
+  gpgit.changelog <true | false>
   gpgit.output <path>
   gpgit.token <token>
   gpgit.compression <xz | gzip | bzip2 | lzip | zip>
@@ -340,7 +341,8 @@ cd "$(git rev-parse --show-toplevel)"
 INTERACTIVE=${INTERACTIVE:-"$(git config gpgit.interactive || true)"}
 REMOTE="${REMOTE:-"$(git for-each-ref --format='%(upstream:remotename)' "$(git symbolic-ref -q HEAD)")"}"
 REMOTE="${REMOTE:-"origin"}"
-CHANGELOG="${CHANGELOG:-false}"
+CHANGELOG="${CHANGELOG:-"$(git config gpgit.changelog || true)"}"
+CHANGELOG="${CHANGELOG:-"false"}"
 MESSAGE="${MESSAGE:-"Release created with GPGit ${VERSION}"$'\nhttps://github.com/NicoHood/gpgit'}"
 KEYSERVER="${KEYSERVER:-"$(git config gpgit.keyserver || true)"}"
 KEYSERVER="${KEYSERVER:-"hkps://pgp.mit.edu"}"
