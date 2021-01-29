@@ -360,13 +360,13 @@ MESSAGE="${MESSAGE:-"Release created with GPGit ${VERSION}"$'\nhttps://github.co
 KEYSERVER="${KEYSERVER:-"$(git config gpgit.keyserver || true)"}"
 KEYSERVER="${KEYSERVER:-"hkps://keyserver.ubuntu.com"}"
 if [[ "${#COMPRESSION[@]}" -eq 0 ]]; then
-    IFS=" " read -r -a COMPRESSION <<< "$(git config gpgit.compression)"
+    IFS=" " read -r -a COMPRESSION <<< "$(git config gpgit.compression || true)"
     if [[ "${#COMPRESSION[@]}" -eq 0 ]]; then
         COMPRESSION=("xz")
     fi
 fi
 if [[ "${#HASH[@]}" -eq 0 ]]; then
-    IFS=" " read -r -a HASH <<< "$(git config gpgit.hash)"
+    IFS=" " read -r -a HASH <<< "$(git config gpgit.hash || true)"
     if [[ "${#HASH[@]}" -eq 0 ]]; then
         HASH=("sha512")
     fi
