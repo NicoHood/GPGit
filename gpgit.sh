@@ -444,6 +444,11 @@ if [[ "${GITHUB}" == "auto" ]]; then
     if git config --local "remote.${REMOTE}.url" | grep -Fiq 'github.com' \
       && check_dependency jq file curl; then
         GITHUB="true"
+        if [[ -z "${TOKEN}" ]]; then
+            plain "A Github repository was detected, but no token was provided."
+            plain "You can disable Github release uploading with:"
+            plain "git config gpgit.github false"
+        fi
     else
         GITHUB="false"
     fi
