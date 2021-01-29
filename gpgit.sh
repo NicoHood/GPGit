@@ -358,7 +358,7 @@ CHANGELOG="${CHANGELOG:-"$(git config gpgit.changelog || true)"}"
 CHANGELOG="${CHANGELOG:-"auto"}"
 MESSAGE="${MESSAGE:-"Release created with GPGit ${VERSION}"$'\nhttps://github.com/NicoHood/gpgit'}"
 KEYSERVER="${KEYSERVER:-"$(git config gpgit.keyserver || true)"}"
-KEYSERVER="${KEYSERVER:-"hkps://pgp.mit.edu"}"
+KEYSERVER="${KEYSERVER:-"hkps://keyserver.ubuntu.com"}"
 if [[ "${#COMPRESSION[@]}" -eq 0 ]]; then
     IFS=" " read -r -a COMPRESSION <<< "$(git config gpgit.compression)"
     if [[ "${#COMPRESSION[@]}" -eq 0 ]]; then
