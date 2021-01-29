@@ -63,15 +63,15 @@ ${BOLD}Examples:${ALL_OFF}
 
 ${BOLD}Configuration options:${ALL_OFF}
   gpgit.signingkey <keyid>, user.signingkey <keyid>
-  gpgit.changelog <auto | true | false>
   gpgit.output <path>
   gpgit.token <token>
   gpgit.compression <xz | gzip | bzip2 | lzip | zip>
   gpgit.hash <sha512 | sha384 | sha256 | sha1 | md5>
-  gpgit.keyserver <keyserver>
+  gpgit.changelog <auto | true | false>
   gpgit.github <auto | true | false>
   gpgit.githubrepo <username/projectname>
   gpgit.project <projectname>
+  gpgit.keyserver <keyserver>
 
 ${BOLD}Examples:${ALL_OFF}
   git config --global gpgit.output ~/gpgit
