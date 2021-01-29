@@ -529,7 +529,7 @@ if [[ "${NEW_SIGNINGKEY}" == "true" ]]; then
 else
     msg2 "2.1 Send GPG key to a key server"
     plain "Make sure your key is available on a keyserver:"
-    plain "${GPG_BIN} --search-keys ${SIGNINGKEY}"
+    plain "${GPG_BIN} --keyserver ${KEYSERVER} --search-keys ${SIGNINGKEY}"
     plain "${GPG_BIN} --keyserver ${KEYSERVER} --send-keys ${SIGNINGKEY}"
     interactive
 fi
