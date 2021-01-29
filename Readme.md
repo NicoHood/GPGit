@@ -157,7 +157,7 @@ Here are a few examples how to keep a passphrase strong but easy to remember:
 * [Creating a strong password](https://support.google.com/accounts/answer/32040?hl=en)
 * [How to Create a Secure Password](https://open.buffer.com/creating-a-secure-password/)
 * [Mooltipass](https://www.themooltipass.com/)
-* [Keepass](http://keepass.info/)
+* [Keepass](https://keepass.info/), [KeepassXC](https://keepassxc.org/)
 * [PasswordCard](https://www.passwordcard.org/en)
 
 ### 1.2 Key generation
