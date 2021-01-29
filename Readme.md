@@ -58,10 +58,10 @@ sudo apt-get install bash gnupg2 git tar xz-utils coreutils gawk grep sed
 sudo apt-get install gzip bzip lzip file jq curl
 
 # Download and verify source
-VERSION=1.3.4
+VERSION=1.4.0
 wget "https://github.com/NicoHood/gpgit/releases/download/${VERSION}/gpgit-${VERSION}.tar.xz"
 wget "https://github.com/NicoHood/gpgit/releases/download/${VERSION}/gpgit-${VERSION}.tar.xz.asc"
-gpg2 --keyserver hkps://pgp.mit.edu --recv-keys 97312D5EB9D7AE7D0BD4307351DAE9B7C1AE9161
+gpg2 --keyserver hkps://keyserver.ubuntu.com --recv-keys 97312D5EB9D7AE7D0BD4307351DAE9B7C1AE9161
 gpg2 --verify "gpgit-${VERSION}.tar.xz.asc" "gpgit-${VERSION}.tar.xz"
 
 # Extract, install and run GPGit
@@ -109,15 +109,15 @@ Examples:
 
 Configuration options:
   gpgit.signingkey <keyid>, user.signingkey <keyid>
-  gpgit.changelog <auto | true | false>
   gpgit.output <path>
   gpgit.token <token>
   gpgit.compression <xz | gzip | bzip2 | lzip | zip>
   gpgit.hash <sha512 | sha384 | sha256 | sha1 | md5>
-  gpgit.keyserver <keyserver>
+  gpgit.changelog <auto | true | false>
   gpgit.github <auto | true | false>
   gpgit.githubrepo <username/projectname>
   gpgit.project <projectname>
+  gpgit.keyserver <keyserver>
 
 Examples:
   git config --global gpgit.output ~/gpgit
@@ -193,11 +193,11 @@ To make the public key widely available, upload it to a key server. Now the user
 
 ```bash
 # Publish key
-gpg2 --keyserver hkps://pgp.mit.edu --send-keys <fingerprint>
+gpg2 --keyserver hkps://keyserver.ubuntu.com --send-keys <fingerprint>
 
 # Import key
 # Alternative keyserver: hkps://hkps.pool.sks-keyservers.net
-gpg2 --keyserver hkps://pgp.mit.edu --recv-keys <fingerprint>
+gpg2 --keyserver hkps://keyserver.ubuntu.com --recv-keys <fingerprint>
 ```
 
 ### 2.2 Publish full fingerprint

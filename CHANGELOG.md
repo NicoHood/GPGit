@@ -7,7 +7,7 @@ This changlog uses the [ISO 8601 date format](https://www.iso.org/iso-8601-date-
 
 ## [Unreleased]
 
-## [1.4.0] - 2021-01-26
+## [1.4.0] - 2021-01-29
 
 ### Added
 
@@ -26,6 +26,7 @@ This changlog uses the [ISO 8601 date format](https://www.iso.org/iso-8601-date-
 * Add a better error message if signing git tag failed.
 * Disable interactive mode for first run only when script finishes properly #20
 * Improved compression and hash bash array handling
+* Changed default keyserver to `hkps://keyserver.ubuntu.com` as `hkps://pgp.mit.edu` is offline most of the time.
 
 ### Deprecated
 * Changed `-n`, `--no-github` parameters to `--github false`.
