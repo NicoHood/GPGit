@@ -155,23 +155,11 @@ function check_dependency()
 # https://keepachangelog.com/en/1.0.0/
 function parse_keepachangelog()
 {
-    local tag="${1}"
-    local commit="${2}"
-    local changelog=""
+    local changelog="${1}"
+    local tag="${2}"
+    local commit="${3}"
     local skip_lines="false"
     local ret=()
-
-    # Find Changelog file in git (not on disk!)
-    for filename in CHANGELOG.md CHANGELOG Changelog.md Changelog changelog.md changelog
-    do
-        if git cat-file -e "${commit}:${filename}" &>/dev/null; then
-            changelog="${filename}"
-            break
-        fi
-    done
-    if [[ -z "${changelog}" ]]; then
-        die "No changelog file found. Did you commit the file to git?"
-    fi
 
     # Process changelog
     while read -r line ; do
@@ -205,10 +193,12 @@ function parse_keepachangelog()
     done < <(git show "${commit}:${changelog}")
 
     if [[ "${#ret[@]}" -eq 0 ]]; then
-        die "No corresponding changelog section for tag ${tag} found."
+        echo "No corresponding changelog section for tag ${tag} found."
+        return 1
     fi
 
     printf '%s\n' "${ret[@]}"
+    return 0
 }
 
 # Trap errors
@@ -219,7 +209,7 @@ trap kill_exit SIGTERM SIGINT SIGHUP
 # Initialize variables
 unset INTERACTIVE MESSAGE KEYSERVER COMPRESSION HASH OUTPUT PROJECT SIGNINGKEY
 unset TOKEN GPG_USER GPG_EMAIL GITHUB_REPO_NAME GITHUB PRERELEASE BRANCH GPG_BIN
-unset FORCE NEW_SIGNINGKEY REMOTE CHANGELOG
+unset FORCE NEW_SIGNINGKEY REMOTE CHANGELOG CHANGELOG_FILE
 declare -A GITHUB_ASSET=()
 declare -a HASH=() COMPRESSION=()
 
@@ -363,6 +353,7 @@ cd "$(git rev-parse --show-toplevel)"
 INTERACTIVE=${INTERACTIVE:-"$(git config gpgit.interactive || true)"}
 REMOTE="${REMOTE:-"$(git for-each-ref --format='%(upstream:remotename)' "$(git symbolic-ref -q HEAD)")"}"
 REMOTE="${REMOTE:-"origin"}"
+CHANGELOG_FILE=""
 CHANGELOG="${CHANGELOG:-"$(git config gpgit.changelog || true)"}"
 CHANGELOG="${CHANGELOG:-"auto"}"
 MESSAGE="${MESSAGE:-"Release created with GPGit ${VERSION}"$'\nhttps://github.com/NicoHood/gpgit'}"
@@ -415,11 +406,37 @@ if [[ -z "${INTERACTIVE}" ]]; then
     interactive "Running GPGit for the first time. This will guide you through all steps of secure source code signing once. If you wish to run interactively again pass the -i option to GPGit. For more options see --help."
 fi
 
-# Parse changelog
-if [[ "${CHANGELOG}" == "true" ]]; then
-    KEEPACHANGELOG="$(parse_keepachangelog "${TAG}" "${COMMIT}")" \
-        || die "Parsing changelog failed. See https://keepachangelog.com/ for more information."
-    MESSAGE="${KEEPACHANGELOG}"$'\n\n'"${MESSAGE}"
+# Preprend changelog to tag message, if available
+if [[ "${CHANGELOG}" == "auto" || "${CHANGELOG}" == "true" ]]; then
+    # Find Changelog file in git (not on disk!)
+    if [[ -n "${CHANGELOG_FILE}" ]]; then
+        if ! git cat-file -e "${COMMIT}:${CHANGELOG_FILE}" &>/dev/null; then
+            CHANGELOG_FILE=""
+        fi
+    else
+        for filename in CHANGELOG.md Changelog.md changelog.md CHANGELOG Changelog changelog
+        do
+            if git cat-file -e "${COMMIT}:${filename}" &>/dev/null; then
+                CHANGELOG_FILE="${filename}"
+                break
+            fi
+        done
+    fi
+
+    # Parse Keep a Changelog
+    if [[ -z "${CHANGELOG_FILE}" ]]; then
+        if [[ "${CHANGELOG}" != "auto" ]]; then
+            die "Changelog file not found. Did you commit the file to git?"
+        fi
+    else
+        if ! KEEPACHANGELOG="$(parse_keepachangelog "${CHANGELOG_FILE}" "${TAG}" "${COMMIT}")"; then
+            if [[ "${CHANGELOG}" != "auto" ]]; then
+                die "${KEEPACHANGELOG-"Parsing changelog failed"}. See https://keepachangelog.com/ for more information."
+            fi
+        else
+            MESSAGE="${KEEPACHANGELOG}"$'\n\n'"${MESSAGE}"
+        fi
+    fi
 fi
 
 # Autodetect github repository
