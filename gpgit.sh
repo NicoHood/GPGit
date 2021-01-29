@@ -31,7 +31,7 @@ if [[ -t 2 ]]; then
 fi
 
 # Help page
-USAGE_SHORT="Usage: gpgit [-h] [-m <msg>] [-C <path>] [-u <keyid>] [-o <path>] [-p] [-n] [-f] [-i] <tagname> [<commit> | <object>]"
+USAGE_SHORT="Usage: gpgit [-h] [-m <msg>] [-C <path>] [-u <keyid>] [-o <path>] [-p] [-f] [-i] <tagname> [<commit> | <object>]"
 read -r -d '' USAGE << EOF
 Usage: gpgit [options] <tagname> [<commit> | <object>]
 
@@ -43,8 +43,6 @@ ${BOLD}Mandatory arguments:${ALL_OFF}
 
 ${BOLD}Optional arguments:${ALL_OFF}
   -h, --help               Show this help message and exit.
-  -c, --changelog          Prepend changelog to the release message using the
-                           https://keepachangelog.com/en/1.0.0/ format.
   -m, --message <msg>      Use the given <msg> as the commit message.
                            If multiple -m options are given, their values are
                            concatenated as separate paragraphs.
@@ -53,7 +51,6 @@ ${BOLD}Optional arguments:${ALL_OFF}
   -u, --local-user <keyid> Use the given GPG key (same as --signingkey).
   -o, --output <path>      Safe all release assets to the specified <path>.
   -p, --pre-release        Flag as Github pre-release.
-  -n, --no-github          Disable Github API functionallity.
   -f, --force              Force the recreation of Git tag and release assets.
   -i, --interactive        Run in interactive mode, step-by-step.
       --<option>           Temporary set a 'gpgit.<option>' from config below.
@@ -66,12 +63,13 @@ ${BOLD}Examples:${ALL_OFF}
 
 ${BOLD}Configuration options:${ALL_OFF}
   gpgit.signingkey <keyid>, user.signingkey <keyid>
-  gpgit.changelog <true | false>
+  gpgit.changelog <auto | true | false>
   gpgit.output <path>
   gpgit.token <token>
   gpgit.compression <xz | gzip | bzip2 | lzip | zip>
   gpgit.hash <sha512 | sha384 | sha256 | sha1 | md5>
   gpgit.keyserver <keyserver>
+  gpgit.github <auto | true | false>
   gpgit.githubrepo <username/projectname>
   gpgit.project <projectname>
 
@@ -232,9 +230,9 @@ if [[ -x /usr/local/opt/gnu-getopt/bin/getopt ]]; then
 fi
 
 # Parse input params an ovrwrite possible default or config loaded options
-GETOPT_PARAMS_SHORT="hcm:C:k:u:s:S:o:O:pnfdi"
+GETOPT_PARAMS_SHORT="hcm:C:k:u:s:S:o:O:pfdi"
 GETOPT_ARGS="$(getopt -o "${GETOPT_PARAMS_SHORT}" \
-            -l "help,changelog,message:,directory:,signingkey:,local-user:,gpg-sign:,output:,pre-release,no-github,force,interactive,token:,compression:,hash:,keyserver:,githubrepo:,project:,remote:,debug,color:"\
+            -l "help,message:,directory:,signingkey:,local-user:,gpg-sign:,output:,pre-release,force,interactive,changelog:,token:,compression:,hash:,keyserver:,github:,githubrepo:,project:,remote:,debug,color:"\
             -n "gpgit" -- "${@}")" || die "${USAGE_SHORT}"
 eval set -- "${GETOPT_ARGS}"
 
@@ -245,9 +243,6 @@ while true ; do
         -h|--help)
             echo "${USAGE}" >&2
             exit 0
-            ;;
-        -c|--changelog)
-            CHANGELOG="true"
             ;;
         -m|--message)
             MESSAGE+="${2}\\n"
@@ -268,9 +263,6 @@ while true ; do
         -p|--prerelease)
             PRERELEASE="true"
             ;;
-        -n|--no-github)
-            GITHUB="false"
-            ;;
         -f|--force)
             FORCE="true"
             ;;
@@ -278,6 +270,10 @@ while true ; do
             INTERACTIVE="true"
             ;;
         # Additional config options
+        --changelog)
+            CHANGELOG="${2}"
+            shift
+            ;;
         --token)
             TOKEN="${2}"
             shift
@@ -292,6 +288,10 @@ while true ; do
             ;;
         --keyserver)
             KEYSERVER="${2}"
+            shift
+            ;;
+        --github)
+            GITHUB="${2}"
             shift
             ;;
         --githubrepo)
@@ -360,7 +360,7 @@ INTERACTIVE=${INTERACTIVE:-"$(git config gpgit.interactive || true)"}
 REMOTE="${REMOTE:-"$(git for-each-ref --format='%(upstream:remotename)' "$(git symbolic-ref -q HEAD)")"}"
 REMOTE="${REMOTE:-"origin"}"
 CHANGELOG="${CHANGELOG:-"$(git config gpgit.changelog || true)"}"
-CHANGELOG="${CHANGELOG:-"false"}"
+CHANGELOG="${CHANGELOG:-"auto"}"
 MESSAGE="${MESSAGE:-"Release created with GPGit ${VERSION}"$'\nhttps://github.com/NicoHood/gpgit'}"
 KEYSERVER="${KEYSERVER:-"$(git config gpgit.keyserver || true)"}"
 KEYSERVER="${KEYSERVER:-"hkps://pgp.mit.edu"}"
@@ -389,7 +389,8 @@ GPG_USER="${GPG_USER:-"${USER}"}"
 GPG_EMAIL="$(git config user.email || true)"
 GITHUB_REPO_NAME="${GITHUB_REPO_NAME:-"$(git config gpgit.githubrepo || true)"}"
 GITHUB_REPO_NAME="${GITHUB_REPO_NAME:-"$(git config --local "remote.${REMOTE}.url" | sed -e 's/.*github.com[:/]//' | sed -e 's/.git$//')"}"
-GITHUB="${GITHUB:-"$(git config --local "remote.${REMOTE}.url" | grep -i -F -q 'github.com' && echo "true" || echo "false")"}"
+GITHUB="${GITHUB:-"$(git config gpgit.github || true)"}"
+GITHUB="${GITHUB:-auto}"
 PRERELEASE="${PRERELEASE:-"false"}"
 GPG_BIN="$(git config gpg.program || true)"
 GPG_BIN="${GPG_BIN:-gpg2}"
@@ -417,11 +418,21 @@ if [[ "${CHANGELOG}" == "true" ]]; then
     MESSAGE="${KEEPACHANGELOG}"$'\n\n'"${MESSAGE}"
 fi
 
+# Autodetect github repository
+if [[ "${GITHUB}" == "auto" ]]; then
+    if git config --local "remote.${REMOTE}.url" | grep -Fiq 'github.com' \
+      && check_dependency jq file curl; then
+        GITHUB="true"
+    else
+        GITHUB="false"
+    fi
+fi
+
 # When using a Github remote ask for github token first,
 # as all (when using private repositories) commands require a valid token.
 if [[ "${GITHUB}" == "true" ]]; then
     check_dependency jq file curl \
-        || die "Please install the missing dependencies in order to use Github release asset uploading or disable via --no-github."
+        || die "Please install the missing dependencies in order to use Github release asset uploading."
 
     if [[ -z "${TOKEN}" ]]; then
         plain "Please enter your Github token or generate a new one (permission: 'public_repo'):"
