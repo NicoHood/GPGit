@@ -73,6 +73,8 @@ gpgit --help
 ## Script Usage
 The script guides you through all 5 steps of the [GPG quick start guide](#gpg-quick-start-guide). Run GPGit with the tag name as parameter. All other options will get auto detected. When running the script for the first time GPGit runs in interactive (`-i`) mode and guide you through all steps of secure source code signing.
 
+If you add and commit a `CHANGELOG.md` file to your Git with the [Keep a Changelog](https://keepachangelog.com/) format, GPGit will autodetect that file and add the corresponding changelog section to the tag message and Github release notes.
+
 ### Sample Usage
 ![screenshot](img/screenshot.png)
 
