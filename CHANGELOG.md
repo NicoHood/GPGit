@@ -12,7 +12,7 @@ This changlog uses the [ISO 8601 date format](https://www.iso.org/iso-8601-date-
 ### Added
 
 * Added CHANGELOG.md file with [Keep A Changelog format](https://keepachangelog.com)
-* Added support for parsing changelog via `-c, --changelog`
+* Added support for automatic [Keep A Changelog format](https://keepachangelog.com) parsing
 * Added [additional quoting for command substitution](https://unix.stackexchange.com/q/118433)
 * Detect default github branch automatically when tagging a specific commit
 * Added [ShellCheck](https://www.shellcheck.net/) makefile `test` target
@@ -27,16 +27,18 @@ This changlog uses the [ISO 8601 date format](https://www.iso.org/iso-8601-date-
 * Disable interactive mode for first run only when script finishes properly #20
 * Improved compression and hash bash array handling
 
-### Removed
+### Deprecated
+* Changed `-n`, `--no-github` parameters to `--github false`.
 
+### Removed
 * Remove not required exit command
 * Remove unused MAGENTA and CYAN colors
 
 ### Fixed
 
 * Fixed reading private repository information by always specifying the token
-* Fix --no-github param
-* Fixed --force option for github releases #24
+* Fix `--no-github` parameter
+* Fixed `--force` option for github releases #24
 * Added support for BSD based systems #19 (thanks @WoLpH)
 
 ## [1.3.4] - 2020-03-23

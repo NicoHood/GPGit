@@ -89,8 +89,6 @@ Mandatory arguments:
 
 Optional arguments:
   -h, --help               Show this help message and exit.
-  -c, --changelog          Prepend changelog to the release message using the
-                           https://keepachangelog.com/en/1.0.0/ format.
   -m, --message <msg>      Use the given <msg> as the commit message.
                            If multiple -m options are given, their values are
                            concatenated as separate paragraphs.
@@ -99,7 +97,6 @@ Optional arguments:
   -u, --local-user <keyid> Use the given GPG key (same as --signingkey).
   -o, --output <path>      Safe all release assets to the specified <path>.
   -p, --pre-release        Flag as Github pre-release.
-  -n, --no-github          Disable Github API functionallity.
   -f, --force              Force the recreation of Git tag and release assets.
   -i, --interactive        Run in interactive mode, step-by-step.
       --<option>           Temporary set a 'gpgit.<option>' from config below.
@@ -112,12 +109,13 @@ Examples:
 
 Configuration options:
   gpgit.signingkey <keyid>, user.signingkey <keyid>
-  gpgit.changelog <true | false>
+  gpgit.changelog <auto | true | false>
   gpgit.output <path>
   gpgit.token <token>
   gpgit.compression <xz | gzip | bzip2 | lzip | zip>
   gpgit.hash <sha512 | sha384 | sha256 | sha1 | md5>
   gpgit.keyserver <keyserver>
+  gpgit.github <auto | true | false>
   gpgit.githubrepo <username/projectname>
   gpgit.project <projectname>
 
@@ -305,4 +303,4 @@ The script also supports [uploading to Github](https://developer.github.com/v3/r
 You can also use your GPG key for email encryption with [thunderbird](https://support.mozilla.org/en-US/kb/openpgp-thunderbird-howto-and-faq).
 
 ## Contact
-You can get securely in touch with me [here](https://contact.nicohood.de). My GPG key ID is `9731 2D5E B9D7 AE7D 0BD4 3073 51DA E9B7 C1AE 9161`. Don't hesitate to [file a bug at Github](https://github.com/NicoHood/gpgit/issues). More cool projects from me can be found [here](https://www.nicohood.de).
+You can get securely in touch with me [here](https://contact.nicohood.de). My GPG key ID is `9731 2D5E B9D7 AE7D 0BD4 3073 51DA E9B7 C1AE 9161`. Don't hesitate to [file a bug at Github](https://github.com/NicoHood/gpgit/issues). More cool projects from me can be found [on my Website](https://www.nicohood.de).
