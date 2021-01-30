@@ -778,8 +778,13 @@ else
             warning "Publishing release on default Github branch '${BRANCH}'."
         fi
 
-        API_JSON="$(printf '{"tag_name": "%s","target_commitish": "%s","name": "%s","body": "%s","draft": false,"prerelease": %s}' \
-                   "${TAG}" "${BRANCH}" "${TAG}" "${MESSAGE//$'\n'/'\n'}" "${PRERELEASE}")"
+        API_JSON="$(jq -n -C \
+          --arg tag_name "${TAG}" \
+          --arg target_commitish "${BRANCH}" \
+          --arg name "${TAG}" \
+          --arg body "${MESSAGE}" \
+          --arg prerelease "${PRERELEASE}" \
+          '{tag_name: $tag_name, target_commitish: $target_commitish, name: $name, body: $body, draft: false, prerelease: $prerelease }')"
         if ! GITHUB_RELEASE="$(curl --proto-redir =https -s --data "${API_JSON}" \
                 "https://api.github.com/repos/${GITHUB_REPO_NAME}/releases" \
                 -H "Accept: application/vnd.github.v3+json" \
