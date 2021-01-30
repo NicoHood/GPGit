@@ -7,6 +7,10 @@ This changlog uses the [ISO 8601 date format](https://www.iso.org/iso-8601-date-
 
 ## [Unreleased]
 
+### Fixed
+
+* Fixed Github API json escaping issue
+
 ## [1.4.0] - 2021-01-29
 
 ### Added
