@@ -778,7 +778,7 @@ else
             warning "Publishing release on default Github branch '${BRANCH}'."
         fi
 
-        API_JSON="$(jq -n -C \
+        API_JSON="$(jq -n -c -M \
           --arg tag_name "${TAG}" \
           --arg target_commitish "${BRANCH}" \
           --arg name "${TAG}" \
