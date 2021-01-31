@@ -52,13 +52,14 @@ The security status of GNU/Linux projects will be tracked in the [Linux Security
 * [Arch Linux](https://archlinux.org/packages/community/any/gpgit/) `sudo pacman -S gpgit`
 
 ### Manual Installation
+
 ```bash
 # Install dependencies and optional dependencies
 sudo apt-get install bash gnupg2 git tar xz-utils coreutils gawk grep sed
 sudo apt-get install gzip bzip lzip file jq curl
 
 # Download and verify source
-VERSION=1.4.0
+VERSION=1.4.1
 wget "https://github.com/NicoHood/gpgit/releases/download/${VERSION}/gpgit-${VERSION}.tar.xz"
 wget "https://github.com/NicoHood/gpgit/releases/download/${VERSION}/gpgit-${VERSION}.tar.xz.asc"
 gpg2 --keyserver hkps://keyserver.ubuntu.com --recv-keys 97312D5EB9D7AE7D0BD4307351DAE9B7C1AE9161
@@ -83,7 +84,7 @@ If you add and commit a `CHANGELOG.md` file to your Git with the [Keep a Changel
 $ gpgit --help
 Usage: gpgit [options] <tagname> [<commit> | <object>]
 
-GPGit 1.4.0 https://github.com/NicoHood/gpgit
+GPGit 1.4.1 https://github.com/NicoHood/gpgit
 A shell script that automates the process of signing Git sources via GPG.
 
 Mandatory arguments:
