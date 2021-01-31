@@ -1,5 +1,26 @@
 #!/usr/bin/env bash
-VERSION="1.4.0"
+
+# Copyright (c) 2016-2021 NicoHood
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+# EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+# MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+# IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+# DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+# OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE
+# OR OTHER DEALINGS IN THE SOFTWARE.
+
+VERSION="1.4.1"
 
 # Avoid any encoding problems
 export LANG=C
@@ -255,6 +276,7 @@ while true ; do
             ;;
         # DEPRECATED: use '--github false' or git config 'gpgit.github false'
         -n|--no-github)
+            INTERACTIVE=false warning "Parameter '--no-github' is deprecated. Please use '--github false' instead."
             GITHUB="false"
             ;;
         -f|--force)
@@ -778,8 +800,13 @@ else
             warning "Publishing release on default Github branch '${BRANCH}'."
         fi
 
-        API_JSON="$(printf '{"tag_name": "%s","target_commitish": "%s","name": "%s","body": "%s","draft": false,"prerelease": %s}' \
-                   "${TAG}" "${BRANCH}" "${TAG}" "${MESSAGE//$'\n'/'\n'}" "${PRERELEASE}")"
+        API_JSON="$(jq -n -c -M \
+          --arg tag_name "${TAG}" \
+          --arg target_commitish "${BRANCH}" \
+          --arg name "${TAG}" \
+          --arg body "${MESSAGE}" \
+          --argjson prerelease "${PRERELEASE}" \
+          '{tag_name: $tag_name, target_commitish: $target_commitish, name: $name, body: $body, draft: false, prerelease: $prerelease}')"
         if ! GITHUB_RELEASE="$(curl --proto-redir =https -s --data "${API_JSON}" \
                 "https://api.github.com/repos/${GITHUB_REPO_NAME}/releases" \
                 -H "Accept: application/vnd.github.v3+json" \

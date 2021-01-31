@@ -7,6 +7,17 @@ This changlog uses the [ISO 8601 date format](https://www.iso.org/iso-8601-date-
 
 ## [Unreleased]
 
+## [1.4.1] - 2021-01-31
+
+### Changed
+
+* Update license date and add license to script
+
+### Fixed
+
+* Fixed Github API json escaping issue
+* Added depcrecated warning about `--no-github` parameter
+
 ## [1.4.0] - 2021-01-29
 
 ### Added
@@ -170,7 +181,8 @@ This changlog uses the [ISO 8601 date format](https://www.iso.org/iso-8601-date-
 ### Added
 - Initial release of the software
 
-[Unreleased]: https://github.com/NicoHood/gpgit/compare/1.4.0...HEAD
+[Unreleased]: https://github.com/NicoHood/gpgit/compare/1.4.1...HEAD
+[1.4.1]: https://github.com/NicoHood/gpgit/compare/1.4.0...1.4.1
 [1.4.0]: https://github.com/NicoHood/gpgit/compare/1.3.4...1.4.0
 [1.3.4]: https://github.com/NicoHood/gpgit/compare/1.3.3...1.3.4
 [1.3.3]: https://github.com/NicoHood/gpgit/compare/1.3.2...1.3.3
