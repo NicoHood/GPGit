@@ -255,6 +255,7 @@ while true ; do
             ;;
         # DEPRECATED: use '--github false' or git config 'gpgit.github false'
         -n|--no-github)
+            INTERACTIVE=false warning "Parameter '--no-github' is deprecated. Please use '--github false' instead."
             GITHUB="false"
             ;;
         -f|--force)
