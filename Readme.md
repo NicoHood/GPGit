@@ -56,7 +56,7 @@ The security status of GNU/Linux projects will be tracked in the [Linux Security
 ```bash
 # Install dependencies and optional dependencies
 sudo apt-get install bash gnupg2 git tar xz-utils coreutils gawk grep sed
-sudo apt-get install gzip bzip lzip file jq curl
+sudo apt-get install gzip bzip lzip zstd file jq curl
 
 # Download and verify source
 VERSION=1.4.1
@@ -114,7 +114,7 @@ Configuration options:
   gpgit.signingkey <keyid>, user.signingkey <keyid>
   gpgit.output <path>
   gpgit.token <token>
-  gpgit.compression <xz | gzip | bzip2 | lzip | zip>
+  gpgit.compression <xz | gzip | bzip2 | lzip | zstd | zip>
   gpgit.hash <sha512 | sha384 | sha256 | sha1 | md5>
   gpgit.changelog <auto | true | false>
   gpgit.github <auto | true | false>

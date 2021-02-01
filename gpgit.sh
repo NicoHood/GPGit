@@ -86,7 +86,7 @@ ${BOLD}Configuration options:${ALL_OFF}
   gpgit.signingkey <keyid>, user.signingkey <keyid>
   gpgit.output <path>
   gpgit.token <token>
-  gpgit.compression <xz | gzip | bzip2 | lzip | zip>
+  gpgit.compression <xz | gzip | bzip2 | lzip | zstd | zip>
   gpgit.hash <sha512 | sha384 | sha256 | sha1 | md5>
   gpgit.changelog <auto | true | false>
   gpgit.github <auto | true | false>
@@ -416,7 +416,7 @@ NEW_SIGNINGKEY="false"
 
 # Check if dependencies are available
 # Dependencies: bash, gnupg2, git, tar, xz, coreutils, gawk, grep, sed
-# Optional dependencies: gzip, bzip2, lzip, file, jq, curl
+# Optional dependencies: gzip, bzip2, lzip, zstd, file, jq, curl
 check_dependency "${GPG_BIN}" "${COMPRESSION[@]}" \
     || die "Please check your \$PATH variable or install the missing dependencies."
 
@@ -668,7 +668,7 @@ do
         if [[ "${util}" == "zip" ]]; then
             git archive --format=zip --prefix "${PROJECT}-${TAG}/" "refs/tags/${TAG}" > "${FILE}"
         else
-            git archive --format=tar --prefix "${PROJECT}-${TAG}/" "refs/tags/${TAG}" | "${util}" --best > "${FILE}"
+            git archive --format=tar --prefix "${PROJECT}-${TAG}/" "refs/tags/${TAG}" | "${util}" > "${FILE}"
         fi
     else
         warning "Found existing archive '${FILE}'."

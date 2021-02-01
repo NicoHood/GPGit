@@ -7,6 +7,10 @@ This changlog uses the [ISO 8601 date format](https://www.iso.org/iso-8601-date-
 
 ## [Unreleased]
 
+### Added
+
+* zstd compression support
+
 ## [1.4.1] - 2021-01-31
 
 ### Changed
