@@ -757,7 +757,7 @@ function github_upload_asset()
     # Abort in API error
     message="$(echo "${RESULT}" | jq -r .message)"
     if [[ "${message}" != "null" ]]; then
-        die "Github API message: '${message}' Check your token configuration: https://github.com/settings/tokens"
+        die "Github API message: '${message}'. Check your token configuration: https://github.com/settings/tokens"
     fi
 }
 
@@ -817,7 +817,7 @@ else
         # Abort on API error
         message="$(echo "${GITHUB_RELEASE}" | jq -r .message)"
         if [[ "${message}" != "null" ]]; then
-            die "Github API message: '${message}' Check your token configuration: https://github.com/settings/tokens"
+            die "Github API message: '${message}'. Check your token configuration: https://github.com/settings/tokens"
         fi
 
         # Safe new ID
