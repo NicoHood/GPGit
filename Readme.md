@@ -267,7 +267,7 @@ git archive --format=tar --prefix gpgit-1.0.0/ 1.0.0 | xz > gpgit-1.0.0.tar.xz
 ### 4.2 Sign the archive
 Type the filename of the tarball that you want to sign and then run:
 ```bash
-gpg2 --digest-algo SHA512 --armor --detach-sign gpgit-1.0.0.tar.xz
+gpg2 --personal-digest-preferences SHA512 --armor --detach-sign gpgit-1.0.0.tar.xz
 ```
 **Do not blindly sign the Github source downloads** unless you have compared its content with the local files via `diff.` [[Read more]](https://wiki.archlinux.org/index.php/GnuPG#Make_a_detached_signature)
 
