@@ -305,5 +305,19 @@ The script also supports [uploading to Github](https://developer.github.com/v3/r
 ## Email Encryption
 You can also use your GPG key for email encryption with [thunderbird](https://support.mozilla.org/en-US/kb/openpgp-thunderbird-howto-and-faq).
 
+## Update key expire date
+
+After renewing the GPG key expire date make sure to [publish your GPG key](https://github.com/NicoHood/gpgit#2-publish-your-key) again to the keyserver and update your website accordingly. A more detailed instruction can be found at [G-Loaded Journal](https://www.g-loaded.eu/2010/11/01/change-expiration-date-gpg-key/).
+
+```
+gpg2 --edit-key <fingerprint>
+gpg> expire
+gpg> 1y
+gpg> key 1
+gpg> expire
+gpg> 1y
+gpg> save
+```
+
 ## Contact
 You can get securely in touch with me [here](https://contact.nicohood.de). My GPG key ID is `9731 2D5E B9D7 AE7D 0BD4 3073 51DA E9B7 C1AE 9161`. Don't hesitate to [file a bug at Github](https://github.com/NicoHood/gpgit/issues). More cool projects from me can be found [on my Website](https://www.nicohood.de).
