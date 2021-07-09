@@ -299,6 +299,7 @@ The script also supports [uploading to Github](https://developer.github.com/v3/r
 * Go to ["Settings - Personal access tokens"](https://github.com/settings/tokens)
 * Generate a new token with permissions `public_repo` and `admin:gpg_key`. In order to access private repositories you must allow access to the whole `repo` scope.
 * Store it safely
+* You can also store the token inside the git config: `git config --global gpgit.token <token>`
 
 # Appendix
 
