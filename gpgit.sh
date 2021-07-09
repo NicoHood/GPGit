@@ -242,6 +242,11 @@ if [[ -x /usr/local/opt/gnu-getopt/bin/getopt ]]; then
     export PATH="/usr/local/opt/gnu-getopt/bin/:${PATH}"
 fi
 
+# Use gnu date on mac
+if command -v gdate &> /dev/null; then
+    alias date="gdate"
+fi
+
 # Parse input params an ovrwrite possible default or config loaded options
 GETOPT_PARAMS_SHORT="hvcm:C:k:u:s:S:o:O:a:t:pnfdi"
 GETOPT_ARGS="$(getopt -o "${GETOPT_PARAMS_SHORT}" \
@@ -378,7 +383,7 @@ shift
 COMMIT="${1:-"HEAD"}"
 
 # Check if run inside Git directory
-check_dependency git sed grep awk md5sum shasum || die "Please check your \$PATH variable or install the missing dependency."
+check_dependency git sed grep awk md5sum shasum date || die "Please check your \$PATH variable or install the missing dependency."
 if [[ "$(git rev-parse --is-inside-work-tree 2>/dev/null)" != "true" ]]; then
     die "Not a Git repository: $(pwd)"
 fi
@@ -551,9 +556,18 @@ else
     GPG_USER_EMAIL="$(echo "${SIGNINGKEY_OUTPUT}" | awk -F: '$1 == "uid" {print $10; exit}')"
     plain "Using existing GPG key: '${GPG_USER_EMAIL}'"
     plain "Fingerprint: '${SIGNINGKEY}'"
-    interactive
-fi
 
+    # Check key expire date
+    GPG_EXPIRE_DATE="$(echo "${SIGNINGKEY_OUTPUT}" | awk -F: '$1 == "pub" {print $7; exit}')"
+    CURRENT_DATE="${EPOCHSECONDS:-"$(date '+%s')"}"
+    if [[ "${GPG_EXPIRE_DATE}" -lt "${CURRENT_DATE}" ]]; then
+        die "GPG key expired on $(date -d "@${GPG_EXPIRE_DATE}" +%F)"
+    elif [[ "${GPG_EXPIRE_DATE}" -lt "$(( "${CURRENT_DATE}" + 7776000 ))" ]]; then
+        warning "GPG key will expire in less than 3 month: $(date -d "@${GPG_EXPIRE_DATE}" +%F)"
+    else
+        interactive
+    fi
+fi
 
 ####################################################################################################
 msg "2. Publish your key"
