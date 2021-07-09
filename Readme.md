@@ -164,7 +164,7 @@ Here are a few examples how to keep a passphrase strong but easy to remember:
 ### 1.2 Key generation
 If you don't have a GPG key yet, create a new one first. You can use RSA (4096 bits) or ECC (Curve 25519) for a strong key. GPG offers you the option to use the most future-proof key algorithm available. Use the most recent version gnupg2, not gnupg1!
 
-Ed25519 ECC GPG keys are currently [not supported by Github](https://help.github.com/articles/generating-a-new-gpg-key/#supported-gpg-key-algorithms). To generate an ECC key use `future-default` instead of `rsa4096` as parameter.
+Ed25519 ECC GPG keys are still not supported by every software/platform. To generate an RSA key use `rsa4096`  instead of `future-default` as parameter.
 
 **Make sure that your secret key is stored somewhere safe and use a unique strong password.**
 
@@ -185,9 +185,9 @@ uid                      John Doe <john@doe.com>
 sub   cv25519 2017-09-24 [E]
 ```
 
-The generated key has the fingerprint `6718A9A63030E182A86FEE152F8E73B1D445CCD3` in this example. Share it with others so they can verify your source. [[Read more]](https://wiki.archlinux.org/index.php/GnuPG#Create_key_pair)
+The generated key has the fingerprint `6718A9A63030E182A86FEE152F8E73B1D445CCD3` in this example. Share it with others so they can verify your source. [[Read more]](https://wiki.archlinux.org/index.php/GnuPG#Create_a_key_pair)
 
-If you ever move your installation make sure to backup `~/.gnupg/` as it contains the **private key** and the **revocation certificate**. Handle it with care. [[Read more]](https://wiki.archlinux.org/index.php/GnuPG#Revoking_a_key)
+If you ever move your installation make sure to backup `~/.gnupg/` as it contains the **private key** and the **revocation certificate**. Handle it with care. [[Read more]](https://wiki.archlinux.org/index.php/GnuPG#Revoke_a_key)
 
 ## 2. Publish your key
 
@@ -207,7 +207,7 @@ gpg2 --keyserver hkps://keyserver.ubuntu.com --recv-keys <fingerprint>
 To make it easy for everyone else to find your key it is crucial that you publish the [**full fingerprint**](https://lkml.org/lkml/2016/8/15/445) on a trusted platform, such as your website or Github. To give the key more trust other users can sign your key too. [[Read more]](https://wiki.debian.org/Keysigning)
 
 ### 2.3 Associate GPG key with Github
-To make Github display your commits as "verified" you also need to add your public [GPG key to your Github profile](https://github.com/settings/keys). [[Read more]](https://help.github.com/articles/generating-a-gpg-key/)
+To make Github display your commits as "verified" you also need to add your public [GPG key to your Github profile](https://github.com/settings/keys). [[Read more]](https://docs.github.com/github/authenticating-to-github/adding-a-new-gpg-key-to-your-github-account)
 
 ```bash
 # List keys + full fingerprint
@@ -288,7 +288,7 @@ sha512sum gpgit-1.0.0.tar.xz > gpgit-1.0.0.tar.xz.sha512
 
 ## 5. Upload the release
 ### 5.1 Configure HTTPS download server
-* [Why HTTPS Matters](https://developers.google.com/web/fundamentals/security/encrypt-in-transit/why-https)
+* [Why HTTPS Matters](https://web.dev/why-https-matters/)
 * [Let's Encrypt](https://letsencrypt.org/)
 * [SSL Server Test](https://www.ssllabs.com/ssltest/)
 
