@@ -51,15 +51,59 @@ The security status of GNU/Linux projects will be tracked in the [Linux Security
 ### Distribution Packages
 * [Arch Linux](https://archlinux.org/packages/community/any/gpgit/) `sudo pacman -S gpgit`
 
-### Manual Installation
+### Debian
+
+First install the following dependencies, then follow the manual installation instruction.
 
 ```bash
-# Install dependencies and optional dependencies
-sudo apt-get install bash gnupg2 git tar xz-utils coreutils gawk grep sed
-sudo apt-get install gzip bzip lzip zstd file jq curl
+# Install dependencies
+brew install bash git xz awk grep gnu-sed gnu-getopt coreutils
+# Optional dependencies
+brew install gzip bzip2 lzip zstd jq curl
+```
 
+### MacOS
+
+First install the following dependencies with [Homebrew](https://brew.sh/), then follow the manual installation instructions.
+
+```bash
+# Install dependencies
+sudo apt-get install bash gnupg2 git tar xz-utils coreutils gawk grep sed util-linux
+# Optional dependencies
+sudo apt-get install gzip bzip lzip zstd file jq curl
+```
+
+### Manual Installation
+
+#### Dependencies
+
+* bash
+* gnupg2
+* git
+* tar
+* xz
+* grep
+* sed
+* gnu awk
+* gnu getopt (util-linux)
+* gnu date (coreutils)
+
+#### Optional Dependencies
+
+* gzip (Compression option)
+* zstd (Compression option)
+* bzip (Compression option)
+* lzip (Compression option)
+* file (Github API upload)
+* jq (Github API upload)
+* curl (Github API upload)
+* shellcheck (Development: `make test`)
+
+#### Installation Instructions
+
+```bash
 # Download and verify source
-VERSION=1.4.1
+VERSION=1.5.0
 wget "https://github.com/NicoHood/gpgit/releases/download/${VERSION}/gpgit-${VERSION}.tar.xz"
 wget "https://github.com/NicoHood/gpgit/releases/download/${VERSION}/gpgit-${VERSION}.tar.xz.asc"
 gpg2 --keyserver hkps://keyserver.ubuntu.com --recv-keys 97312D5EB9D7AE7D0BD4307351DAE9B7C1AE9161
@@ -84,7 +128,7 @@ If you add and commit a `CHANGELOG.md` file to your Git with the [Keep a Changel
 $ gpgit --help
 Usage: gpgit [options] <tagname> [<commit> | <object>]
 
-GPGit 1.4.1 https://github.com/NicoHood/gpgit
+GPGit 1.5.0 https://github.com/NicoHood/gpgit
 A shell script that automates the process of signing Git sources via GPG.
 
 Mandatory arguments:
@@ -99,8 +143,9 @@ Optional arguments:
                            current working directory.
   -u, --local-user <keyid> Use the given GPG key (same as --signingkey).
   -o, --output <path>      Safe all release assets to the specified <path>.
+  -a, --asset              Add additional Github assets, e.g. software bundles.
+  -t, --title              Custom Github release title (instead of tag name).
   -p, --pre-release        Flag as Github pre-release.
-  -a, --asset              Add additional assets, such as precompiled software.
   -f, --force              Force the recreation of Git tag and release assets.
   -i, --interactive        Run in interactive mode, step-by-step.
       --<option>           Temporary set a 'gpgit.<option>' from config below.
@@ -138,7 +183,7 @@ GPGit guides you through 5 simple steps to get your software project ready with 
 2. [Publish your key](#2-publish-your-key)
     1. [Send GPG key to a key server](#21-send-gpg-key-to-a-key-server)
     2. [Publish full fingerprint](#22-publish-full-fingerprint)
-    3. [Associate GPG key with Github](#23-associate-gpg-key-with-github)    
+    3. [Associate GPG key with Github](#23-associate-gpg-key-with-github)
 3. [Use Git with GPG](#3-use-git-with-gpg)
     1. [Configure Git GPG key](#31-configure-git-gpg-key)
     2. [Enble commit signing](#32-enable-commit-signing)
