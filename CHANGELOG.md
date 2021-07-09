@@ -7,9 +7,20 @@ This changlog uses the [ISO 8601 date format](https://www.iso.org/iso-8601-date-
 
 ## [Unreleased]
 
+## [1.5.0] - 2021-07-09
+
 ### Added
 
 * zstd compression support
+* Added .editorconfig
+* Added key expire readme tutorial [#26](https://github.com/NicoHood/gpgit/issues/26)
+* Added `--version` option
+* Added `--asset` option [#32](https://github.com/NicoHood/gpgit/issues/32)
+* Added `--title` option [#28](https://github.com/NicoHood/gpgit/issues/28)
+
+### Fixed
+
+* Fixed Readme Links
 
 ## [1.4.1] - 2021-01-31
 
@@ -185,7 +196,8 @@ This changlog uses the [ISO 8601 date format](https://www.iso.org/iso-8601-date-
 ### Added
 - Initial release of the software
 
-[Unreleased]: https://github.com/NicoHood/gpgit/compare/1.4.1...HEAD
+[Unreleased]: https://github.com/NicoHood/gpgit/compare/1.5.0...HEAD
+[1.4.1]: https://github.com/NicoHood/gpgit/compare/1.4.1...1.5.0
 [1.4.1]: https://github.com/NicoHood/gpgit/compare/1.4.0...1.4.1
 [1.4.0]: https://github.com/NicoHood/gpgit/compare/1.3.4...1.4.0
 [1.3.4]: https://github.com/NicoHood/gpgit/compare/1.3.3...1.3.4
