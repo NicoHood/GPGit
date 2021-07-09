@@ -241,9 +241,9 @@ if [[ -x /usr/local/opt/gnu-getopt/bin/getopt ]]; then
 fi
 
 # Parse input params an ovrwrite possible default or config loaded options
-GETOPT_PARAMS_SHORT="hcm:C:k:u:s:S:o:O:pnfdi"
+GETOPT_PARAMS_SHORT="hvcm:C:k:u:s:S:o:O:pnfdi"
 GETOPT_ARGS="$(getopt -o "${GETOPT_PARAMS_SHORT}" \
-            -l "help,message:,directory:,signingkey:,local-user:,gpg-sign:,output:,pre-release,no-github,force,interactive,changelog:,token:,compression:,hash:,keyserver:,github:,githubrepo:,project:,remote:,debug,color:"\
+            -l "help,version,message:,directory:,signingkey:,local-user:,gpg-sign:,output:,pre-release,no-github,force,interactive,changelog:,token:,compression:,hash:,keyserver:,github:,githubrepo:,project:,remote:,debug,color:"\
             -n "gpgit" -- "${@}")" || die "${USAGE_SHORT}"
 eval set -- "${GETOPT_ARGS}"
 
@@ -253,6 +253,10 @@ while true ; do
         # Command line options
         -h|--help)
             echo "${USAGE}" >&2
+            exit 0
+            ;;
+        -v|--version)
+            echo "${VERSION}"
             exit 0
             ;;
         -m|--message)
