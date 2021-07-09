@@ -48,8 +48,15 @@ The security status of GNU/Linux projects will be tracked in the [Linux Security
 
 ## Installation
 
-### Distribution Packages
-* [Arch Linux](https://archlinux.org/packages/community/any/gpgit/) `sudo pacman -S gpgit`
+### Arch Linux
+
+GPGit is available as [official Arch Linux distribution package](https://archlinux.org/packages/community/any/gpgit/):
+
+```bash
+sudo pacman -S gpgit
+# Optional dependencies for Github API uploading
+sudo pacman -S curl jq
+```
 
 ### Debian
 
@@ -57,9 +64,9 @@ First install the following dependencies, then follow the manual installation in
 
 ```bash
 # Install dependencies
-brew install bash git xz awk grep gnu-sed gnu-getopt coreutils
+sudo apt-get install bash gnupg2 git tar xz-utils coreutils gawk grep sed util-linux
 # Optional dependencies
-brew install gzip bzip2 lzip zstd jq curl
+sudo apt-get install gzip bzip lzip zstd file jq curl
 ```
 
 ### MacOS
@@ -68,9 +75,9 @@ First install the following dependencies with [Homebrew](https://brew.sh/), then
 
 ```bash
 # Install dependencies
-sudo apt-get install bash gnupg2 git tar xz-utils coreutils gawk grep sed util-linux
+brew install bash git xz awk grep gnu-sed gnu-getopt coreutils
 # Optional dependencies
-sudo apt-get install gzip bzip lzip zstd file jq curl
+brew install gzip bzip2 lzip zstd jq curl
 ```
 
 ### Manual Installation
