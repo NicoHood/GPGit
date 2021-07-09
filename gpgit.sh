@@ -428,7 +428,7 @@ GITHUB_REPO_NAME="${GITHUB_REPO_NAME:-"$(git config gpgit.githubrepo || true)"}"
 GITHUB_REPO_NAME="${GITHUB_REPO_NAME:-"$(git config --local "remote.${REMOTE}.url" | sed -e 's/.*github.com[:/]//' | sed -e 's/.git$//')"}"
 GITHUB="${GITHUB:-"$(git config gpgit.github || true)"}"
 GITHUB="${GITHUB:-auto}"
-GITHUB_TITLE="${GITHUB_TITLE:-"${TAG}"}"
+GITHUB_TITLE="${GITHUB_TITLE:-}"
 PRERELEASE="${PRERELEASE:-"false"}"
 GPG_BIN="$(git config gpg.program || true)"
 GPG_BIN="${GPG_BIN:-gpg2}"
@@ -510,8 +510,18 @@ if [[ "${GITHUB}" == "true" ]]; then
         plain "git config --global gpgit.token <token>"
         read -rs TOKEN
     fi
+else
+    # Fail if Github specific options were used, but API upload is disabled.
+    if [[ "${PRERELEASE}" != "false" ]]; then
+        die "Option --prerelease can only be used when Github API upload is enabled."
+    fi
+    if [[ -n "${GITHUB_TITLE}" ]]; then
+        die "Option --title can only be used when Github API upload is enabled."
+    fi
+    if [[ "${#GITHUB_ASSET[@]}" -gt 0 ]]; then
+        die "Option --asset can only be used when Github API upload is enabled."
+    fi
 fi
-
 
 ####################################################################################################
 msg "1. Generate a new GPG key"
@@ -833,7 +843,7 @@ else
         API_JSON="$(jq -n -c -M \
           --arg tag_name "${TAG}" \
           --arg target_commitish "${BRANCH}" \
-          --arg name "${GITHUB_TITLE}" \
+          --arg name "${GITHUB_TITLE:-"${TAG}"}" \
           --arg body "${MESSAGE}" \
           --argjson prerelease "${PRERELEASE}" \
           '{tag_name: $tag_name, target_commitish: $target_commitish, name: $name, body: $body, draft: false, prerelease: $prerelease}')"
