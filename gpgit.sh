@@ -72,6 +72,7 @@ ${BOLD}Optional arguments:${ALL_OFF}
   -u, --local-user <keyid> Use the given GPG key (same as --signingkey).
   -o, --output <path>      Safe all release assets to the specified <path>.
   -p, --pre-release        Flag as Github pre-release.
+  -a, --asset              Add additional assets, such as precompiled software.
   -f, --force              Force the recreation of Git tag and release assets.
   -i, --interactive        Run in interactive mode, step-by-step.
       --<option>           Temporary set a 'gpgit.<option>' from config below.
@@ -241,9 +242,9 @@ if [[ -x /usr/local/opt/gnu-getopt/bin/getopt ]]; then
 fi
 
 # Parse input params an ovrwrite possible default or config loaded options
-GETOPT_PARAMS_SHORT="hvcm:C:k:u:s:S:o:O:pnfdi"
+GETOPT_PARAMS_SHORT="hvcm:C:k:u:s:S:o:O:pa:nfdi"
 GETOPT_ARGS="$(getopt -o "${GETOPT_PARAMS_SHORT}" \
-            -l "help,version,message:,directory:,signingkey:,local-user:,gpg-sign:,output:,pre-release,no-github,force,interactive,changelog:,token:,compression:,hash:,keyserver:,github:,githubrepo:,project:,remote:,debug,color:"\
+            -l "help,version,message:,directory:,signingkey:,local-user:,gpg-sign:,output:,pre-release,asset:,no-github,force,interactive,changelog:,token:,compression:,hash:,keyserver:,github:,githubrepo:,project:,remote:,debug,color:"\
             -n "gpgit" -- "${@}")" || die "${USAGE_SHORT}"
 eval set -- "${GETOPT_ARGS}"
 
@@ -277,6 +278,11 @@ while true ; do
             ;;
         -p|--prerelease)
             PRERELEASE="true"
+            ;;
+        -a|--asset)
+            [[ -f "${2}" ]] || die "Asset '${2}' not a valid file."
+            GITHUB_ASSET["$(basename "${2}")"]="${2}"
+            shift
             ;;
         # DEPRECATED: use '--github false' or git config 'gpgit.github false'
         -n|--no-github)
