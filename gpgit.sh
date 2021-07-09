@@ -71,8 +71,9 @@ ${BOLD}Optional arguments:${ALL_OFF}
                            current working directory.
   -u, --local-user <keyid> Use the given GPG key (same as --signingkey).
   -o, --output <path>      Safe all release assets to the specified <path>.
+  -a, --asset              Add additional Github assets, e.g. software bundles.
+  -t, --title              Custom Github release title (instead of tag name).
   -p, --pre-release        Flag as Github pre-release.
-  -a, --asset              Add additional assets, such as precompiled software.
   -f, --force              Force the recreation of Git tag and release assets.
   -i, --interactive        Run in interactive mode, step-by-step.
       --<option>           Temporary set a 'gpgit.<option>' from config below.
@@ -231,7 +232,7 @@ trap kill_exit SIGTERM SIGINT SIGHUP
 # Initialize variables
 unset INTERACTIVE MESSAGE KEYSERVER COMPRESSION HASH OUTPUT PROJECT SIGNINGKEY
 unset TOKEN GPG_USER GPG_EMAIL GITHUB_REPO_NAME GITHUB PRERELEASE BRANCH GPG_BIN
-unset FORCE NEW_SIGNINGKEY REMOTE CHANGELOG CHANGELOG_FILE
+unset FORCE NEW_SIGNINGKEY REMOTE CHANGELOG CHANGELOG_FILE GITHUB_TITLE
 declare -A GITHUB_ASSET=()
 declare -a HASH=() COMPRESSION=()
 
@@ -242,9 +243,9 @@ if [[ -x /usr/local/opt/gnu-getopt/bin/getopt ]]; then
 fi
 
 # Parse input params an ovrwrite possible default or config loaded options
-GETOPT_PARAMS_SHORT="hvcm:C:k:u:s:S:o:O:pa:nfdi"
+GETOPT_PARAMS_SHORT="hvcm:C:k:u:s:S:o:O:a:t:pnfdi"
 GETOPT_ARGS="$(getopt -o "${GETOPT_PARAMS_SHORT}" \
-            -l "help,version,message:,directory:,signingkey:,local-user:,gpg-sign:,output:,pre-release,asset:,no-github,force,interactive,changelog:,token:,compression:,hash:,keyserver:,github:,githubrepo:,project:,remote:,debug,color:"\
+            -l "help,version,message:,directory:,signingkey:,local-user:,gpg-sign:,output:,asset:,title:,pre-release,no-github,force,interactive,changelog:,token:,compression:,hash:,keyserver:,github:,githubrepo:,project:,remote:,debug,color:"\
             -n "gpgit" -- "${@}")" || die "${USAGE_SHORT}"
 eval set -- "${GETOPT_ARGS}"
 
@@ -276,13 +277,17 @@ while true ; do
             SIGNINGKEY="${2}"
             shift
             ;;
-        -p|--prerelease)
-            PRERELEASE="true"
-            ;;
         -a|--asset)
             [[ -f "${2}" ]] || die "Asset '${2}' not a valid file."
             GITHUB_ASSET["$(basename "${2}")"]="${2}"
             shift
+            ;;
+        -t|--title)
+            GITHUB_TITLE="${2}"
+            shift
+            ;;
+        -p|--prerelease)
+            PRERELEASE="true"
             ;;
         # DEPRECATED: use '--github false' or git config 'gpgit.github false'
         -n|--no-github)
@@ -418,6 +423,7 @@ GITHUB_REPO_NAME="${GITHUB_REPO_NAME:-"$(git config gpgit.githubrepo || true)"}"
 GITHUB_REPO_NAME="${GITHUB_REPO_NAME:-"$(git config --local "remote.${REMOTE}.url" | sed -e 's/.*github.com[:/]//' | sed -e 's/.git$//')"}"
 GITHUB="${GITHUB:-"$(git config gpgit.github || true)"}"
 GITHUB="${GITHUB:-auto}"
+GITHUB_TITLE="${GITHUB_TITLE:-"${TAG}"}"
 PRERELEASE="${PRERELEASE:-"false"}"
 GPG_BIN="$(git config gpg.program || true)"
 GPG_BIN="${GPG_BIN:-gpg2}"
@@ -813,7 +819,7 @@ else
         API_JSON="$(jq -n -c -M \
           --arg tag_name "${TAG}" \
           --arg target_commitish "${BRANCH}" \
-          --arg name "${TAG}" \
+          --arg name "${GITHUB_TITLE}" \
           --arg body "${MESSAGE}" \
           --argjson prerelease "${PRERELEASE}" \
           '{tag_name: $tag_name, target_commitish: $target_commitish, name: $name, body: $body, draft: false, prerelease: $prerelease}')"
