@@ -7,7 +7,7 @@ This changlog uses the [ISO 8601 date format](https://www.iso.org/iso-8601-date-
 
 ## [Unreleased]
 
-## [1.5.0] - 2021-07-09
+## [1.5.0] - 2021-07-11
 
 ### Added
 
