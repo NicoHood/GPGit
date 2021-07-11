@@ -242,6 +242,11 @@ if [[ -x /usr/local/opt/gnu-getopt/bin/getopt ]]; then
     export PATH="/usr/local/opt/gnu-getopt/bin/:${PATH}"
 fi
 
+# Prefere gnu tools, if available (on MAC)
+if [[ -x /usr/local/opt/coreutils/libexec/gnubin ]]; then
+    export PATH="/usr/local/opt/coreutils/libexec/gnubin/:${PATH}"
+fi
+
 # Use gnu date on mac
 if command -v gdate &> /dev/null; then
     alias date="gdate"
