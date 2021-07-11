@@ -20,7 +20,7 @@
 # OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE
 # OR OTHER DEALINGS IN THE SOFTWARE.
 
-VERSION="1.4.1"
+VERSION="1.5.0"
 
 # Avoid any encoding problems
 export LANG=C
@@ -71,6 +71,8 @@ ${BOLD}Optional arguments:${ALL_OFF}
                            current working directory.
   -u, --local-user <keyid> Use the given GPG key (same as --signingkey).
   -o, --output <path>      Safe all release assets to the specified <path>.
+  -a, --asset              Add additional Github assets, e.g. software bundles.
+  -t, --title              Custom Github release title (instead of tag name).
   -p, --pre-release        Flag as Github pre-release.
   -f, --force              Force the recreation of Git tag and release assets.
   -i, --interactive        Run in interactive mode, step-by-step.
@@ -86,7 +88,7 @@ ${BOLD}Configuration options:${ALL_OFF}
   gpgit.signingkey <keyid>, user.signingkey <keyid>
   gpgit.output <path>
   gpgit.token <token>
-  gpgit.compression <xz | gzip | bzip2 | lzip | zip>
+  gpgit.compression <xz | gzip | bzip2 | lzip | zstd | zip>
   gpgit.hash <sha512 | sha384 | sha256 | sha1 | md5>
   gpgit.changelog <auto | true | false>
   gpgit.github <auto | true | false>
@@ -230,7 +232,7 @@ trap kill_exit SIGTERM SIGINT SIGHUP
 # Initialize variables
 unset INTERACTIVE MESSAGE KEYSERVER COMPRESSION HASH OUTPUT PROJECT SIGNINGKEY
 unset TOKEN GPG_USER GPG_EMAIL GITHUB_REPO_NAME GITHUB PRERELEASE BRANCH GPG_BIN
-unset FORCE NEW_SIGNINGKEY REMOTE CHANGELOG CHANGELOG_FILE
+unset FORCE NEW_SIGNINGKEY REMOTE CHANGELOG CHANGELOG_FILE GITHUB_TITLE
 declare -A GITHUB_ASSET=()
 declare -a HASH=() COMPRESSION=()
 
@@ -240,10 +242,20 @@ if [[ -x /usr/local/opt/gnu-getopt/bin/getopt ]]; then
     export PATH="/usr/local/opt/gnu-getopt/bin/:${PATH}"
 fi
 
+# Prefere gnu tools, if available (on MAC)
+if [[ -x /usr/local/opt/coreutils/libexec/gnubin ]]; then
+    export PATH="/usr/local/opt/coreutils/libexec/gnubin/:${PATH}"
+fi
+
+# Use gnu date on mac
+if command -v gdate &> /dev/null; then
+    alias date="gdate"
+fi
+
 # Parse input params an ovrwrite possible default or config loaded options
-GETOPT_PARAMS_SHORT="hcm:C:k:u:s:S:o:O:pnfdi"
+GETOPT_PARAMS_SHORT="hvcm:C:k:u:s:S:o:O:a:t:pnfdi"
 GETOPT_ARGS="$(getopt -o "${GETOPT_PARAMS_SHORT}" \
-            -l "help,message:,directory:,signingkey:,local-user:,gpg-sign:,output:,pre-release,no-github,force,interactive,changelog:,token:,compression:,hash:,keyserver:,github:,githubrepo:,project:,remote:,debug,color:"\
+            -l "help,version,message:,directory:,signingkey:,local-user:,gpg-sign:,output:,asset:,title:,pre-release,no-github,force,interactive,changelog:,token:,compression:,hash:,keyserver:,github:,githubrepo:,project:,remote:,debug,color:"\
             -n "gpgit" -- "${@}")" || die "${USAGE_SHORT}"
 eval set -- "${GETOPT_ARGS}"
 
@@ -253,6 +265,10 @@ while true ; do
         # Command line options
         -h|--help)
             echo "${USAGE}" >&2
+            exit 0
+            ;;
+        -v|--version)
+            echo "${VERSION}"
             exit 0
             ;;
         -m|--message)
@@ -269,6 +285,15 @@ while true ; do
             ;;
         -k|-u|-s|-S|--signingkey|--local-user|--gpg-sign)
             SIGNINGKEY="${2}"
+            shift
+            ;;
+        -a|--asset)
+            [[ -f "${2}" ]] || die "Asset '${2}' not a valid file."
+            GITHUB_ASSET["$(basename "${2}")"]="${2}"
+            shift
+            ;;
+        -t|--title)
+            GITHUB_TITLE="${2}"
             shift
             ;;
         -p|--prerelease)
@@ -363,7 +388,7 @@ shift
 COMMIT="${1:-"HEAD"}"
 
 # Check if run inside Git directory
-check_dependency git sed grep awk md5sum shasum || die "Please check your \$PATH variable or install the missing dependency."
+check_dependency git sed grep awk md5sum shasum date || die "Please check your \$PATH variable or install the missing dependency."
 if [[ "$(git rev-parse --is-inside-work-tree 2>/dev/null)" != "true" ]]; then
     die "Not a Git repository: $(pwd)"
 fi
@@ -408,6 +433,7 @@ GITHUB_REPO_NAME="${GITHUB_REPO_NAME:-"$(git config gpgit.githubrepo || true)"}"
 GITHUB_REPO_NAME="${GITHUB_REPO_NAME:-"$(git config --local "remote.${REMOTE}.url" | sed -e 's/.*github.com[:/]//' | sed -e 's/.git$//')"}"
 GITHUB="${GITHUB:-"$(git config gpgit.github || true)"}"
 GITHUB="${GITHUB:-auto}"
+GITHUB_TITLE="${GITHUB_TITLE:-}"
 PRERELEASE="${PRERELEASE:-"false"}"
 GPG_BIN="$(git config gpg.program || true)"
 GPG_BIN="${GPG_BIN:-gpg2}"
@@ -416,7 +442,7 @@ NEW_SIGNINGKEY="false"
 
 # Check if dependencies are available
 # Dependencies: bash, gnupg2, git, tar, xz, coreutils, gawk, grep, sed
-# Optional dependencies: gzip, bzip2, lzip, file, jq, curl
+# Optional dependencies: gzip, bzip2, lzip, zstd, file, jq, curl
 check_dependency "${GPG_BIN}" "${COMPRESSION[@]}" \
     || die "Please check your \$PATH variable or install the missing dependencies."
 
@@ -489,8 +515,18 @@ if [[ "${GITHUB}" == "true" ]]; then
         plain "git config --global gpgit.token <token>"
         read -rs TOKEN
     fi
+else
+    # Fail if Github specific options were used, but API upload is disabled.
+    if [[ "${PRERELEASE}" != "false" ]]; then
+        die "Option --prerelease can only be used when Github API upload is enabled."
+    fi
+    if [[ -n "${GITHUB_TITLE}" ]]; then
+        die "Option --title can only be used when Github API upload is enabled."
+    fi
+    if [[ "${#GITHUB_ASSET[@]}" -gt 0 ]]; then
+        die "Option --asset can only be used when Github API upload is enabled."
+    fi
 fi
-
 
 ####################################################################################################
 msg "1. Generate a new GPG key"
@@ -535,9 +571,18 @@ else
     GPG_USER_EMAIL="$(echo "${SIGNINGKEY_OUTPUT}" | awk -F: '$1 == "uid" {print $10; exit}')"
     plain "Using existing GPG key: '${GPG_USER_EMAIL}'"
     plain "Fingerprint: '${SIGNINGKEY}'"
-    interactive
-fi
 
+    # Check key expire date
+    GPG_EXPIRE_DATE="$(echo "${SIGNINGKEY_OUTPUT}" | awk -F: '$1 == "pub" {print $7; exit}')"
+    CURRENT_DATE="${EPOCHSECONDS:-"$(date '+%s')"}"
+    if [[ "${GPG_EXPIRE_DATE}" -lt "${CURRENT_DATE}" ]]; then
+        die "GPG key expired on $(date -d "@${GPG_EXPIRE_DATE}" +%F)"
+    elif [[ "${GPG_EXPIRE_DATE}" -lt "$(( "${CURRENT_DATE}" + 7776000 ))" ]]; then
+        warning "GPG key will expire in less than 3 month: $(date -d "@${GPG_EXPIRE_DATE}" +%F)"
+    else
+        interactive
+    fi
+fi
 
 ####################################################################################################
 msg "2. Publish your key"
@@ -668,7 +713,7 @@ do
         if [[ "${util}" == "zip" ]]; then
             git archive --format=zip --prefix "${PROJECT}-${TAG}/" "refs/tags/${TAG}" > "${FILE}"
         else
-            git archive --format=tar --prefix "${PROJECT}-${TAG}/" "refs/tags/${TAG}" | "${util}" --best > "${FILE}"
+            git archive --format=tar --prefix "${PROJECT}-${TAG}/" "refs/tags/${TAG}" | "${util}" > "${FILE}"
         fi
     else
         warning "Found existing archive '${FILE}'."
@@ -757,7 +802,7 @@ function github_upload_asset()
     # Abort in API error
     message="$(echo "${RESULT}" | jq -r .message)"
     if [[ "${message}" != "null" ]]; then
-        die "Github API message: '${message}' Check your token configuration: https://github.com/settings/tokens"
+        die "Github API message: '${message}'. Check your token configuration: https://github.com/settings/tokens"
     fi
 }
 
@@ -803,7 +848,7 @@ else
         API_JSON="$(jq -n -c -M \
           --arg tag_name "${TAG}" \
           --arg target_commitish "${BRANCH}" \
-          --arg name "${TAG}" \
+          --arg name "${GITHUB_TITLE:-"${TAG}"}" \
           --arg body "${MESSAGE}" \
           --argjson prerelease "${PRERELEASE}" \
           '{tag_name: $tag_name, target_commitish: $target_commitish, name: $name, body: $body, draft: false, prerelease: $prerelease}')"
@@ -817,7 +862,7 @@ else
         # Abort on API error
         message="$(echo "${GITHUB_RELEASE}" | jq -r .message)"
         if [[ "${message}" != "null" ]]; then
-            die "Github API message: '${message}' Check your token configuration: https://github.com/settings/tokens"
+            die "Github API message: '${message}'. Check your token configuration: https://github.com/settings/tokens"
         fi
 
         # Safe new ID

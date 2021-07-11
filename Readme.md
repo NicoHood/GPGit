@@ -48,18 +48,71 @@ The security status of GNU/Linux projects will be tracked in the [Linux Security
 
 ## Installation
 
-### Distribution Packages
-* [Arch Linux](https://archlinux.org/packages/community/any/gpgit/) `sudo pacman -S gpgit`
+### Arch Linux
+
+GPGit is available as [official Arch Linux distribution package](https://archlinux.org/packages/community/any/gpgit/):
+
+```bash
+sudo pacman -S gpgit
+# Optional dependencies for Github API uploading
+sudo pacman -S curl jq
+```
+
+### Debian
+
+First install the following dependencies, then follow the manual installation instruction.
+
+```bash
+# Install dependencies
+sudo apt-get install bash gnupg2 git tar xz-utils coreutils gawk grep sed util-linux
+# Optional dependencies
+sudo apt-get install gzip bzip lzip zstd file jq curl
+```
+
+### MacOS
+
+First install the following dependencies with [Homebrew](https://brew.sh/), then follow the manual installation instructions.
+
+```bash
+# Install dependencies
+brew install bash git xz gnu-getopt coreutils
+# Install a GPG suite, such as https://gpgtools.org/
+brew install --ask gpg-suite
+# Optional dependencies
+brew install gzip bzip2 lzip zstd jq curl
+```
 
 ### Manual Installation
 
-```bash
-# Install dependencies and optional dependencies
-sudo apt-get install bash gnupg2 git tar xz-utils coreutils gawk grep sed
-sudo apt-get install gzip bzip lzip file jq curl
+#### Dependencies
 
+* bash
+* gnupg2
+* git
+* tar
+* xz
+* grep
+* sed
+* gnu awk
+* gnu getopt (util-linux)
+* gnu date (coreutils)
+
+#### Optional Dependencies
+
+* gzip (Compression option)
+* zstd (Compression option)
+* bzip (Compression option)
+* lzip (Compression option)
+* file (Github API upload)
+* jq (Github API upload)
+* curl (Github API upload)
+* shellcheck (Development: `make test`)
+
+#### Installation Instructions
+
+```bash
 # Download and verify source
-VERSION=1.4.1
+VERSION=1.5.0
 wget "https://github.com/NicoHood/gpgit/releases/download/${VERSION}/gpgit-${VERSION}.tar.xz"
 wget "https://github.com/NicoHood/gpgit/releases/download/${VERSION}/gpgit-${VERSION}.tar.xz.asc"
 gpg2 --keyserver hkps://keyserver.ubuntu.com --recv-keys 97312D5EB9D7AE7D0BD4307351DAE9B7C1AE9161
@@ -84,7 +137,7 @@ If you add and commit a `CHANGELOG.md` file to your Git with the [Keep a Changel
 $ gpgit --help
 Usage: gpgit [options] <tagname> [<commit> | <object>]
 
-GPGit 1.4.1 https://github.com/NicoHood/gpgit
+GPGit 1.5.0 https://github.com/NicoHood/gpgit
 A shell script that automates the process of signing Git sources via GPG.
 
 Mandatory arguments:
@@ -99,6 +152,8 @@ Optional arguments:
                            current working directory.
   -u, --local-user <keyid> Use the given GPG key (same as --signingkey).
   -o, --output <path>      Safe all release assets to the specified <path>.
+  -a, --asset              Add additional Github assets, e.g. software bundles.
+  -t, --title              Custom Github release title (instead of tag name).
   -p, --pre-release        Flag as Github pre-release.
   -f, --force              Force the recreation of Git tag and release assets.
   -i, --interactive        Run in interactive mode, step-by-step.
@@ -114,7 +169,7 @@ Configuration options:
   gpgit.signingkey <keyid>, user.signingkey <keyid>
   gpgit.output <path>
   gpgit.token <token>
-  gpgit.compression <xz | gzip | bzip2 | lzip | zip>
+  gpgit.compression <xz | gzip | bzip2 | lzip | zstd | zip>
   gpgit.hash <sha512 | sha384 | sha256 | sha1 | md5>
   gpgit.changelog <auto | true | false>
   gpgit.github <auto | true | false>
@@ -137,7 +192,7 @@ GPGit guides you through 5 simple steps to get your software project ready with 
 2. [Publish your key](#2-publish-your-key)
     1. [Send GPG key to a key server](#21-send-gpg-key-to-a-key-server)
     2. [Publish full fingerprint](#22-publish-full-fingerprint)
-    3. [Associate GPG key with Github](#23-associate-gpg-key-with-github)    
+    3. [Associate GPG key with Github](#23-associate-gpg-key-with-github)
 3. [Use Git with GPG](#3-use-git-with-gpg)
     1. [Configure Git GPG key](#31-configure-git-gpg-key)
     2. [Enble commit signing](#32-enable-commit-signing)
@@ -164,7 +219,7 @@ Here are a few examples how to keep a passphrase strong but easy to remember:
 ### 1.2 Key generation
 If you don't have a GPG key yet, create a new one first. You can use RSA (4096 bits) or ECC (Curve 25519) for a strong key. GPG offers you the option to use the most future-proof key algorithm available. Use the most recent version gnupg2, not gnupg1!
 
-Ed25519 ECC GPG keys are currently [not supported by Github](https://help.github.com/articles/generating-a-new-gpg-key/#supported-gpg-key-algorithms). To generate an ECC key use `future-default` instead of `rsa4096` as parameter.
+Ed25519 ECC GPG keys are still not supported by every software/platform. To generate an RSA key use `rsa4096`  instead of `future-default` as parameter.
 
 **Make sure that your secret key is stored somewhere safe and use a unique strong password.**
 
@@ -185,7 +240,7 @@ uid                      John Doe <john@doe.com>
 sub   cv25519 2017-09-24 [E]
 ```
 
-The generated key has the fingerprint `6718A9A63030E182A86FEE152F8E73B1D445CCD3` in this example. Share it with others so they can verify your source. [[Read more]](https://wiki.archlinux.org/index.php/GnuPG#Create_key_pair)
+The generated key has the fingerprint `6718A9A63030E182A86FEE152F8E73B1D445CCD3` in this example. Share it with others so they can verify your source. [[Read more]](https://wiki.archlinux.org/index.php/GnuPG#Create_a_key_pair)
 
 If you ever move your installation make sure to backup `~/.gnupg/` as it contains the **private key** and the **revocation certificate**. Handle it with care. [[Read more]](https://wiki.archlinux.org/index.php/GnuPG#Revoke_a_key)
 
@@ -207,7 +262,7 @@ gpg2 --keyserver hkps://keyserver.ubuntu.com --recv-keys <fingerprint>
 To make it easy for everyone else to find your key it is crucial that you publish the [**full fingerprint**](https://lkml.org/lkml/2016/8/15/445) on a trusted platform, such as your website or Github. To give the key more trust other users can sign your key too. [[Read more]](https://wiki.debian.org/Keysigning)
 
 ### 2.3 Associate GPG key with Github
-To make Github display your commits as "verified" you also need to add your public [GPG key to your Github profile](https://github.com/settings/keys). [[Read more]](https://help.github.com/articles/generating-a-gpg-key/)
+To make Github display your commits as "verified" you also need to add your public [GPG key to your Github profile](https://github.com/settings/keys). [[Read more]](https://docs.github.com/github/authenticating-to-github/adding-a-new-gpg-key-to-your-github-account)
 
 ```bash
 # List keys + full fingerprint
@@ -267,7 +322,7 @@ git archive --format=tar --prefix gpgit-1.0.0/ 1.0.0 | xz > gpgit-1.0.0.tar.xz
 ### 4.2 Sign the archive
 Type the filename of the tarball that you want to sign and then run:
 ```bash
-gpg2 --digest-algo SHA512 --armor --detach-sign gpgit-1.0.0.tar.xz
+gpg2 --personal-digest-preferences SHA512 --armor --detach-sign gpgit-1.0.0.tar.xz
 ```
 **Do not blindly sign the Github source downloads** unless you have compared its content with the local files via `diff.` [[Read more]](https://wiki.archlinux.org/index.php/GnuPG#Make_a_detached_signature)
 
@@ -288,7 +343,7 @@ sha512sum gpgit-1.0.0.tar.xz > gpgit-1.0.0.tar.xz.sha512
 
 ## 5. Upload the release
 ### 5.1 Configure HTTPS download server
-* [Why HTTPS Matters](https://developers.google.com/web/fundamentals/security/encrypt-in-transit/why-https)
+* [Why HTTPS Matters](https://web.dev/why-https-matters/)
 * [Let's Encrypt](https://letsencrypt.org/)
 * [SSL Server Test](https://www.ssllabs.com/ssltest/)
 
@@ -305,6 +360,20 @@ The script also supports [uploading to Github](https://developer.github.com/v3/r
 
 ## Email Encryption
 You can also use your GPG key for email encryption with [thunderbird](https://support.mozilla.org/en-US/kb/openpgp-thunderbird-howto-and-faq).
+
+## Update key expire date
+
+After renewing the GPG key expire date make sure to [publish your GPG key](https://github.com/NicoHood/gpgit#2-publish-your-key) again to the keyserver and update your website accordingly. A more detailed instruction can be found at [G-Loaded Journal](https://www.g-loaded.eu/2010/11/01/change-expiration-date-gpg-key/).
+
+```
+gpg2 --edit-key <fingerprint>
+gpg> expire
+gpg> 1y
+gpg> key 1
+gpg> expire
+gpg> 1y
+gpg> save
+```
 
 ## Contact
 You can get securely in touch with me [here](https://contact.nicohood.de). My GPG key ID is `9731 2D5E B9D7 AE7D 0BD4 3073 51DA E9B7 C1AE 9161`. Don't hesitate to [file a bug at Github](https://github.com/NicoHood/gpgit/issues). More cool projects from me can be found [on my Website](https://www.nicohood.de).
