@@ -75,7 +75,9 @@ First install the following dependencies with [Homebrew](https://brew.sh/), then
 
 ```bash
 # Install dependencies
-brew install bash git xz awk grep gnu-sed gnu-getopt coreutils
+brew install bash git xz gnu-getopt coreutils
+# Install a GPG suite, such as https://gpgtools.org/
+brew install --ask gpg-suite
 # Optional dependencies
 brew install gzip bzip2 lzip zstd jq curl
 ```
