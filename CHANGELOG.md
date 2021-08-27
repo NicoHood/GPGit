@@ -197,7 +197,7 @@ This changlog uses the [ISO 8601 date format](https://www.iso.org/iso-8601-date-
 - Initial release of the software
 
 [Unreleased]: https://github.com/NicoHood/gpgit/compare/1.5.0...HEAD
-[1.4.1]: https://github.com/NicoHood/gpgit/compare/1.4.1...1.5.0
+[1.5.0]: https://github.com/NicoHood/gpgit/compare/1.4.1...1.5.0
 [1.4.1]: https://github.com/NicoHood/gpgit/compare/1.4.0...1.4.1
 [1.4.0]: https://github.com/NicoHood/gpgit/compare/1.3.4...1.4.0
 [1.3.4]: https://github.com/NicoHood/gpgit/compare/1.3.3...1.3.4
