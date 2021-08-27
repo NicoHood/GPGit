@@ -848,7 +848,7 @@ else
         API_JSON="$(jq -n -c -M \
           --arg tag_name "${TAG}" \
           --arg target_commitish "${BRANCH}" \
-          --arg name "${GITHUB_TITLE:-"${TAG}"}" \
+          --arg name "${GITHUB_TITLE:-"${PROJECT} ${TAG}"}" \
           --arg body "${MESSAGE}" \
           --argjson prerelease "${PRERELEASE}" \
           '{tag_name: $tag_name, target_commitish: $target_commitish, name: $name, body: $body, draft: false, prerelease: $prerelease}')"
