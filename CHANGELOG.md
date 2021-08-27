@@ -7,6 +7,10 @@ This changlog uses the [ISO 8601 date format](https://www.iso.org/iso-8601-date-
 
 ## [Unreleased]
 
+### Changed
+
+* Added project name (and tag) to GitHub release title
+
 ## [1.5.0] - 2021-07-11
 
 ### Added
