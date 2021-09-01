@@ -91,6 +91,7 @@ ${BOLD}Configuration options:${ALL_OFF}
   gpgit.compression <xz | gzip | bzip2 | lzip | zstd | zip>
   gpgit.hash <sha512 | sha384 | sha256 | sha1 | md5>
   gpgit.changelog <auto | true | false>
+  gpgit.remote <remote>
   gpgit.github <auto | true | false>
   gpgit.githubrepo <username/projectname>
   gpgit.project <projectname>
@@ -232,9 +233,9 @@ trap kill_exit SIGTERM SIGINT SIGHUP
 # Initialize variables
 unset INTERACTIVE MESSAGE KEYSERVER COMPRESSION HASH OUTPUT PROJECT SIGNINGKEY
 unset TOKEN GPG_USER GPG_EMAIL GITHUB_REPO_NAME GITHUB PRERELEASE BRANCH GPG_BIN
-unset FORCE NEW_SIGNINGKEY REMOTE CHANGELOG CHANGELOG_FILE GITHUB_TITLE
+unset FORCE NEW_SIGNINGKEY REMOTE CHANGELOG CHANGELOG_FILE GITHUB_TITLE ALL_REMOTES
 declare -A GITHUB_ASSET=()
-declare -a HASH=() COMPRESSION=()
+declare -a HASH=() COMPRESSION=() ALL_REMOTES=()
 
 # BSD getopt works completely different from gnu-getopt,
 # so check if have an alternative getopt install.
@@ -398,8 +399,19 @@ cd "$(git rev-parse --show-toplevel)"
 
 # Initialize variable config/defaults
 INTERACTIVE=${INTERACTIVE:-"$(git config gpgit.interactive || true)"}
-REMOTE="${REMOTE:-"$(git for-each-ref --format='%(upstream:remotename)' "$(git symbolic-ref -q HEAD)")"}"
-REMOTE="${REMOTE:-"origin"}"
+REMOTE="${REMOTE:-"$(git config gpgit.remote || true)"}"
+REMOTE="${REMOTE:-"$(git for-each-ref --format='%(upstream:remotename)' "$(git symbolic-ref -q "${COMMIT}" || true)")"}"
+# Try to autodetect default remote, if only one remote is set (and not more!)
+if [[ -z "${REMOTE}" ]]; then
+    readarray -t ALL_REMOTES <<< "$(git remote)"
+    if [[ "${#ALL_REMOTES[@]}" -eq 1 ]]; then
+        REMOTE="${ALL_REMOTES[0]}"
+    else
+        # When tagging a commit directly and using multiple remotes,
+        # it is not possible for us to detect a remote. We have to ask.
+        die "Could not auto detect remote name. Please specify with --remote."
+    fi
+fi
 CHANGELOG_FILE=""
 CHANGELOG="${CHANGELOG:-"$(git config gpgit.changelog || true)"}"
 CHANGELOG="${CHANGELOG:-"auto"}"

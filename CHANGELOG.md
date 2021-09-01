@@ -11,6 +11,10 @@ This changlog uses the [ISO 8601 date format](https://www.iso.org/iso-8601-date-
 
 * Added project name (and tag) to GitHub release title
 
+### Fixed
+
+* Improved remote name detection and throw an error if that is not possible.
+
 ## [1.5.0] - 2021-07-11
 
 ### Added
