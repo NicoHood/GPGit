@@ -14,6 +14,7 @@ This changlog uses the [ISO 8601 date format](https://www.iso.org/iso-8601-date-
 ### Fixed
 
 * Improved remote name detection and throw an error if that is not possible.
+* Fixed error with unbound color variables and improved error reporting of it.
 
 ## [1.5.0] - 2021-07-11
 

@@ -28,7 +28,6 @@ export LANG=C
 function setcolors()
 {
     # Prefer terminal safe colored and bold text when tput is supported
-    unset ALL_OFF BOLD BLUE GREEN RED YELLOW
     if tput setaf 0 &>/dev/null; then
         ALL_OFF="$(tput sgr0)"
         BOLD="$(tput bold)"
@@ -46,14 +45,31 @@ function setcolors()
     fi
 }
 
+function unsetcolors()
+{
+    ALL_OFF=""
+    BOLD=""
+    BLUE=""
+    GREEN=""
+    RED=""
+    YELLOW=""
+}
+
 # Check if messages are to be printed using color
+unset ALL_OFF BOLD BLUE GREEN RED YELLOW
 if [[ -t 2 ]]; then
     setcolors
+else
+    unsetcolors
 fi
 
 # Help page
 USAGE_SHORT="Usage: gpgit [-h] [-m <msg>] [-C <path>] [-u <keyid>] [-o <path>] [-p] [-f] [-i] <tagname> [<commit> | <object>]"
-read -r -d '' USAGE << EOF
+
+# This should be a function in order to correctly apply all colors
+function print_usage()
+{
+    cat << EOF
 Usage: gpgit [options] <tagname> [<commit> | <object>]
 
 GPGit ${VERSION} https://github.com/NicoHood/gpgit
@@ -102,6 +118,7 @@ ${BOLD}Examples:${ALL_OFF}
   git config --local user.signingkey 97312D5EB9D7AE7D0BD4307351DAE9B7C1AE9161
   git config --local gpgit.compression "xz zip"
 EOF
+}
 
 function interactive()
 {
@@ -265,7 +282,7 @@ while true ; do
     case "${1}" in
         # Command line options
         -h|--help)
-            echo "${USAGE}" >&2
+            print_usage >&2
             exit 0
             ;;
         -v|--version)
@@ -352,9 +369,11 @@ while true ; do
         --color)
             # En/disable colors
             if [[ "${2}" == "never" ]]; then
-                ALL_OFF="" BOLD="" BLUE="" GREEN="" RED="" YELLOW=""
+                unsetcolors
             elif [[ "${2}" == "force" || "${2}" == "always" ]]; then
                 setcolors
+            elif [[ "${2}" != "auto" ]]; then
+                die "Unknown option '${2}' for --color parameter."
             fi
             shift
             ;;
