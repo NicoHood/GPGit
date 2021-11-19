@@ -764,7 +764,8 @@ do
     if [[ ! -f "${FILE}.asc" || -n "${FORCE}" ]]; then
         plain "Creating GPG signature: '${FILE}.asc'"
         interactive
-        ${GPG_BIN} --digest-algo SHA512 -u "${SIGNINGKEY}" --output "${FILE}.asc" --armor --detach-sign --batch --yes "${FILE}"
+        ${GPG_BIN} --digest-algo SHA512 -u "${SIGNINGKEY}" --output "${FILE}.asc" --armor --detach-sign --batch --yes "${FILE}" &> /dev/null \
+            || die "Signing archive failed or aborted."
     else
         warning "Found existing signature '${FILE}.asc'."
     fi
