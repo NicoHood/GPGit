@@ -167,7 +167,7 @@ function die()
 
 function kill_exit
 {
-    echo ""
+    echo "" >&2
     INTERACTIVE="false"
     warning "Exited due to user intervention."
     exit 1
