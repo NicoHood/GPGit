@@ -50,7 +50,7 @@ The security status of GNU/Linux projects will be tracked in the [Linux Security
 
 ### Arch Linux
 
-GPGit is available as [official Arch Linux distribution package](https://archlinux.org/packages/community/any/gpgit/):
+GPGit is available as [official Arch Linux distribution package](https://archlinux.org/packages/extra/any/gpgit/):
 
 ```bash
 sudo pacman -S gpgit
